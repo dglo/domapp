@@ -1,0 +1,13 @@
+/**
+ * Brief description of the function.  Further details which will be
+ * displayed in the full entry, but not in the top index.
+ *
+ * @param firstParam parameter description
+ * @param p2 another parameter description
+ *
+ * @return 0 if nothing was done, negative value on error
+ *
+ * @see relatedFunc to do something similar
+*/
+
+

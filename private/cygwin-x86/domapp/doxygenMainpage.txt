@@ -1,0 +1,16 @@
+/**
+ * @mainpage Title for the Project Page.
+ * $Author: mcp $
+ * $Date: 2003-01-28 02:00:25 $
+ *
+ * @section ration Rationale
+ *
+ * Raison d'etre
+ *
+ * @section details Implementation details
+ *
+ * @subsection lang Why we're implementing the project in COBOL
+ *
+ * etc.
+ */
+
