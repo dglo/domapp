@@ -3,6 +3,7 @@
 
 
 /* private per instance data */
+#define MSG_HDR_LEN 8
 typedef struct {
 	union HEAD{
 	 struct HD {
@@ -14,19 +15,21 @@ typedef struct {
 	  UBYTE msgID;
 	  UBYTE status;
 	 } hd;
-	 UBYTE h[8];
-	} head;
-  
+	 UBYTE h[MSG_HDR_LEN];
+	} head;  
   UBYTE *data;
 } MESSAGE_STRUCT;
 
 #define MESSAGE_FLAG_VALUE 1
 #define PACKET_SIZE_VALUE 8 
-#define MAXDATA_VALUE 4096
+#define MAXDATA_VALUE (4096 - MSG_HDR_LEN)
 
 #define FPGA_TRIG_FIFO 0
 #define FPGA_CMD_FIFO 1
 #define FPGA_DATA_FIFO 2
+
+#define MEM_ERROR -1
+#define MEM_SUCCESS 0
 
 /* create functions */
 void Message_init(MESSAGE_STRUCT *msgStruct);

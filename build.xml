@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE project [
+    <!ENTITY pjt-targets SYSTEM "file:../resources/pjt-with-c-build.xml">
+]>
+
+<project name="hal" default="report" >
+	<description>
+Build the library and documentation for the "hal" project.
+	</description>
+	&pjt-targets;
+</project>

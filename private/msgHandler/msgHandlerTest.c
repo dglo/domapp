@@ -1,4 +1,4 @@
-/* msgHandlerTest.c */
+
 
 #include <pthread.h>
 #include "msgHandler/msgHandlerTest.h"
@@ -69,48 +69,48 @@ int msgHandlerTest() {
     messageBuffers_init();
 
     /* create message queues for msgHandler */
-    RD=Message_createQueue(RD_QUEUE);
+    RD = Message_createQueue(RD_QUEUE);
     if(RD < 0) {
-	errorMsg="messageTest: cannot create message queue RD";
+	errorMsg = "messageTest: cannot create message queue RD";
 	return ERROR;
     }
 
-    SD=Message_createQueue(SD_QUEUE);
+    SD = Message_createQueue(SD_QUEUE);
     if(SD < 0) {
-	errorMsg="messageTest: cannot create message queue SD";
+	errorMsg = "messageTest: cannot create message queue SD";
 	return ERROR;
     }
 
-    SC=Message_createQueue(SC_QUEUE);
+    SC = Message_createQueue(SC_QUEUE);
     if(SC < 0) {
-	errorMsg="messageTest: cannot create message queue SC";
+	errorMsg = "messageTest: cannot create message queue SC";
 	return ERROR;
     }
 
-    EC=Message_createQueue(EC_QUEUE);
+    EC = Message_createQueue(EC_QUEUE);
     if(EC < 0) {
-	errorMsg="messageTest: cannot create message queue EC";
+	errorMsg = "messageTest: cannot create message queue EC";
 	return ERROR;
     }
 
-    DA=Message_createQueue(DA_QUEUE);
+    DA = Message_createQueue(DA_QUEUE);
     if(DA < 0) {
-	errorMsg="messageTest: cannot create message queue DA";
+	errorMsg = "messageTest: cannot create message queue DA";
 	return ERROR;
     }
 
-    TM=Message_createQueue(TM_QUEUE);
+    TM = Message_createQueue(TM_QUEUE);
     if(TM < 0) {
-	errorMsg="messageTest: cannot create message queue TM";
+	errorMsg = "messageTest: cannot create message queue TM";
 	return ERROR;
     }
 
-    i=pthread_create(&msgHandlerID,NULL,msgHandler,0);
+    i = pthread_create(&msgHandlerID,NULL,msgHandler,0);
 
     /* allocate a buffer for use during tests */
-    oneBuffer=messageBuffers_allocate();
+    oneBuffer = messageBuffers_allocate();
     if(oneBuffer == 0) {
-	errorMsg="messageTest: unable to allocate message buffer";
+	errorMsg = "messageTest: unable to allocate message buffer";
 	return ERROR;
     }
 
@@ -120,28 +120,23 @@ int msgHandlerTest() {
 
     Message_send(oneBuffer,RD);
 
-    for(i=0;i<10;i++) {
-        receive=Message_receive(&twoBuffer,SD);
- 	if(receive!=0) {
+    for(i = 0; i < 10; i++) {
+        receive = Message_receive(&twoBuffer,SD);
+ 	if(receive == MEM_SUCCESS) {
 	    break;
 	}
 	sleep(1);
     }
 
-    if (((Message_getStatus(twoBuffer)!=SUCCESS) ||
-	(Message_dataLen(twoBuffer)!=GET_SERVICE_STATE_LEN)) ||
-	(Message_getSubtype(twoBuffer)!=GET_SERVICE_STATE)) {
+    if (((Message_getStatus(twoBuffer) != SUCCESS) ||
+	(Message_dataLen(twoBuffer) != GET_SERVICE_STATE_LEN)) ||
+	(Message_getSubtype(twoBuffer) != GET_SERVICE_STATE)) {
 
-   	    errorMsg="msgHandlerTest: error in GET_SERVICE_STATE";
+   	    errorMsg = "msgHandlerTest: error in GET_SERVICE_STATE";
 	    return ERROR;
     }
 
-    printf("type: %d\n",Message_getType(twoBuffer));
-    printf("subtype: %d\n",Message_getSubtype(twoBuffer));
-    printf("status: %d\n",Message_getStatus(twoBuffer));
-    printf("datalength: %d\n",Message_dataLen(twoBuffer));
-
-    errorMsg="messageTest: success";
+    errorMsg = "messageTest: success";
     return 0;
 }
 

@@ -10,7 +10,8 @@
 #define MAX_TYPE 255
 #define MAX_SUBTYPE 255
 #define MAX_STATUS 255
-#define TEST_QUEUE 1234
+#define TEST_QUEUE 1
+#define TEST_FORWARD_QUEUE 2
 
 /* storage */
 char *errorMsg;
@@ -29,6 +30,7 @@ int messageTest() {
     UBYTE status;
     int dataLen;
     int queue;
+    int fwdQueue;
     int send;
     int receive;
 
@@ -91,8 +93,13 @@ int messageTest() {
 	return ERROR;
     }
 
-    /* create a message queue */
+    /* create a message queues */
     queue=Message_createQueue(TEST_QUEUE);
+    if(queue < 0) {
+	errorMsg="messageTest: cannot create message queue";
+	return ERROR;
+    }
+    fwdQueue=Message_createQueue(TEST_FORWARD_QUEUE);
     if(queue < 0) {
 	errorMsg="messageTest: cannot create message queue";
 	return ERROR;
@@ -100,7 +107,7 @@ int messageTest() {
 
     /* check that we can return from non blocking receive */
     receive=Message_receive_nonblock(oneBuffer,queue);
-    if (receive != -1) {
+    if (receive != MEM_ERROR) {
 	errorMsg=
 	"messageTest: incorrect return from non blocking call on empty queue";
 	return ERROR;
@@ -108,19 +115,38 @@ int messageTest() {
 
     /* send a message to the above queue */
     send=Message_send(oneBuffer,queue);
+    if(send == MEM_ERROR) {
+	errorMsg = "messageTest: unable to send message";
+	return ERROR;
+    }
 
     /* receive message from the above queue */
     receive=Message_receive(&twoBuffer,queue);
-
-    /* check for correct message */
-    if(oneBuffer != twoBuffer) {
+    if((receive == MEM_ERROR) || 
+	(oneBuffer != twoBuffer)) {
 	errorMsg="messageTest: incorrect send/receive message pair";
   	return ERROR;
     }
 
+    /* now forward it to another queue */
+    send=Message_forward(twoBuffer,fwdQueue);
+    if(send == MEM_ERROR) {
+	errorMsg="messageTest: unable to forward message";
+	return ERROR;
+    }
+
+    /* check that its the correct message */
+    oneBuffer=0;
+    receive=Message_receive(&oneBuffer,fwdQueue);
+    if((receive == MEM_ERROR) ||
+	(oneBuffer != twoBuffer)) {
+	errorMsg = "messageTest: error in forwarding message";
+	return ERROR;
+    }
+
     /* check that we can return from non blocking receive */
     receive=Message_receive_nonblock(oneBuffer,queue);
-    if (receive != -1) {
+    if (receive != MEM_ERROR) {
 	errorMsg=
 	"messageTest: incorrect return from non blocking call on empty queue";
 	return ERROR;
