@@ -1,8 +1,8 @@
 /* runMessageTest.c */
 
 #include "domapp_common/DOMtypes.h"
-#include "domapp_common/PacketFormatInfo.h"
-#include "domapp_common/MessageAPIstatus.h"
+#include "domapp_common/packetFormatInfo.h"
+#include "domapp_common/messageAPIstatus.h"
 #include "message/message.h"
 #include "message/messageBuffersTest.h"
 	

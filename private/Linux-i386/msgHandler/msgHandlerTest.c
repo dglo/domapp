@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include "msgHandler/msgHandlerTest.h"
 #include "domapp_common/DOMtypes.h"
-#include "domapp_common/PacketFormatInfo.h"
+#include "domapp_common/packetFormatInfo.h"
 #include "domapp_common/messageAPIstatus.h"
 #include "domapp_common/commonMessageAPIstatus.h"
 #include "message/message.h"

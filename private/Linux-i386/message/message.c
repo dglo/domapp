@@ -1,14 +1,14 @@
 /* message.c */
 
 #include "domapp_common/DOMtypes.h"
-#include "domapp_common/PacketFormatInfo.h"
-#include "domapp_common/MessageAPIstatus.h"
+#include "domapp_common/packetFormatInfo.h"
+#include "domapp_common/messageAPIstatus.h"
 #include "message/message.h"
 
 /* includes for cygwin message passing fcns */
 #include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
+#include <linux/ipc.h> /**< JEJ changed from sys to linux */
+#include <linux/msg.h> /**< JEJ changed from sys to linux */
  
 /* defines for cygwin messaging */
 #define NORMAL_MSG 1
@@ -25,7 +25,7 @@ void Message_init(MESSAGE_STRUCT *msg) {
   msg->data= (UBYTE*) 0;   
 }
 
-/* cygwin msg struct to use for transfers */
+/* IPC msg struct to use for transfers */
 struct msgbuf message;
 size_t msgLen=sizeof(MESSAGE_STRUCT *);
 

@@ -1,7 +1,7 @@
 /**
  * @mainpage Title for the Project Page.
- * $Author: mcp $
- * $Date: 2003-01-28 02:00:25 $
+ * $Author: jacobsen $
+ * $Date: 2003-01-28 20:45:38 $
  *
  * @section ration Rationale
  *
