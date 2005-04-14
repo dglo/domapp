@@ -1,6 +1,0 @@
-/** Maximum internal buffer size */
-//#define MAXBUF    32
-
-/** Name of next available queue */
-//const char *nextQueue;
-

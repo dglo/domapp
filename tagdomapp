@@ -1,0 +1,120 @@
+#!/usr/bin/perl
+
+# tagdomapp
+# John Jacobsen, NPX Designs, Inc., jacobsen\@npxdesigns.com
+# Started: Mon Jun 14 15:08:27 2004
+
+package TAGDOMAPP;
+use strict;
+
+print "Welcome to $0.\n";
+
+my $tag;
+my $bfd_or_tag;
+my $deliver;
+
+do {
+    print "(N)ew tag or (B)FD-based tag? "; 
+    my $resp = <STDIN>; chomp $resp;
+    if($resp =~ /^n/i) {
+	$bfd_or_tag = "TAG";
+	print "Enter tag name: "; $tag = <STDIN>; chomp $tag;
+    } elsif($resp =~ /b/i) {
+	$bfd_or_tag = "BFD";
+	my $log = `cvs log project.mk | grep V`;
+	my $def = "";
+	print "List of existing tags:\n$log\n";
+	if($log =~ /(V\d\d-\d\d-\d\d)/) { $def = $1; }
+	print "Enter most recent BFD tag for this project [$def]: ";
+	my $bfd = <STDIN>; chomp $bfd;
+	if($bfd eq "") { $bfd = $def; }
+	my $major;
+	my $minor;
+	my $bug;
+	if($bfd =~ /V(\d\d)-(\d\d)-(\d\d)/) {
+	    $major = $1;
+	    $minor = $2;
+	    $bug   = $3;
+	    print "Are you creating a (major), (minor), or (bug) release? ";
+	    my $resp = <STDIN>; chomp $resp;
+	    if($resp =~ /^ma/) {
+		$major++;
+		$minor = 0;
+		$bug   = 0;
+		$deliver = "-j";
+		$tag = sprintf "V%02d-%02d-%02d", $major, $minor, $bug;
+	    } elsif($resp =~ /^mi/) {
+		$minor++;
+		$bug = 0;
+		$deliver = "-n";
+                $tag = sprintf "V%02d-%02d-%02d", $major, $minor, $bug;
+	    } elsif($resp =~ /^b/) {
+		$bug++;
+		$deliver = "-b";
+                $tag = sprintf "V%02d-%02d-%02d", $major, $minor, $bug;
+	    } else {
+		print "Huh?\n";
+	    }
+	}
+    } 
+} until defined $tag;
+
+print "Create new release with release tag \"$tag\"? ";
+chomp(my $resp = <STDIN>);
+exit if($resp !~ /^y/i);
+
+print "Did you update RELEASE_NOTES for $tag? ";
+chomp(my $resp = <STDIN>);
+exit if($resp !~ /^y/i);
+
+my $header = "private/domapp/version.h";
+die "Can't find current $header!  Old version of domapp?\n" unless -f $header;
+print "Updating $header...\n";
+print `cvs update -A $header`;
+
+sub create_header {
+    my $tag = shift;
+    print "Creating new $header...\n";
+    open H, ">$header" || die "Can't open $header: $!\n";
+    print H "#define DOMAPP_RELEASE \"$tag\"\n";
+    close H;
+    print "New $header is:\n".`cat $header`;
+}
+create_header $tag;
+
+print "Result of cvs diff --brief:\n".`cvs diff --brief`;
+
+print "Commit current version of domapp to CVS? ";
+chomp(my $resp = <STDIN>);
+if($resp =~ /^y/i) {
+    print `cvs commit -m "Tagging current version as $tag..."`;
+}
+
+if($bfd_or_tag eq "TAG") {
+    print "Tag current release as $tag? ";
+    chomp(my $resp = <STDIN>);
+    if($resp =~ /^y/i) {
+	print `cd ..; cvs tag $tag domapp; cd domapp`;
+    }
+} elsif($bfd_or_tag eq "BFD") {
+    print "Deliver $tag? ";
+    chomp(my $resp = <STDIN>);
+    if($resp =~ /^y/i) {
+	chdir "..";
+	system "bfd deliver $deliver domapp";
+	chdir "domapp";
+    }
+}
+
+print "Pollute header file to show HEAD? ";
+chomp(my $resp = <STDIN>);
+if($resp =~ /^y/i) {
+    create_header "HEAD!";
+    print `cvs commit -m "Mod of version.h to show HEAD..." $header`;
+}
+
+print "\n\nDone.\n";
+
+
+__END__
+

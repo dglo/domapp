@@ -1,0 +1,9 @@
+domapp Release Notes -- jacobsen@npxdesigns.com
+=========================================================
+
+domapp V00-00-00
+
+- First version of "real" domapp -- still uses test FPGA/HAL
+- Refactored, cleaned up and simplified from testdomapp
+
+=========================================================
