@@ -21,7 +21,7 @@ do {
 	print "Enter tag name: "; $tag = <STDIN>; chomp $tag;
     } elsif($resp =~ /b/i) {
 	$bfd_or_tag = "BFD";
-	my $log = `cvs log project.mk | grep V`;
+	my $log = `cvs log tagdomapp | grep V`;
 	my $def = "";
 	print "List of existing tags:\n$log\n";
 	if($log =~ /(V\d\d-\d\d-\d\d)/) { $def = $1; }

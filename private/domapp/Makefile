@@ -1,9 +1,14 @@
 .SUFFIXES: .c .o .elf .srec .xml .html .tab .bin
 
-HEADERS = version.h lbm.h
+HEADERS = *.h
 
 .c.o: $(HEADERS)
+	echo $(HEADERS)
 	$(CC) -c -I. $(CFLAGS) $<
+
+# Pick up new version tags
+msgHandler.o: $(HEADERS) msgHandler.c
+	$(CC) -c -I. $(CFLAGS) msgHandler.c
 
 .S.o:
 	$(CPP) $(CPPFLAGS) -o $*.i $<
@@ -19,14 +24,12 @@ HEADERS = version.h lbm.h
 all: ../domapp.bin.gz
 
 clean:
-	cd ../../dom-ws/epxa10/domapp && rm -f *.o *.i *.bin *.elf
-
-msgHandler.o: msgHandler.c version.h
+	rm -f *.o *.i *.bin *.elf
 
 OBJS = \
         commonServices.o     domSControlRoutines.o \
         compressEvent.o      expControl.o          \
-        dataAccess.o         messageBuffers.o      \
+        dataAccess.o         \
         dataAccessRoutines.o genericMsgSendRecv.o  \
         DOMdataCompression.o moniDataAccess.o      \
         domSControl.o        msgHandler.o          \

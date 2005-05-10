@@ -1,4 +1,20 @@
-domapp Release Notes -- jacobsen@npxdesigns.com
+
+Release notes for production domapp -- jacobsen@npxdesigns.com
+
+=========================================================
+
+domapp V00-00-01  5/10/2005
+       Requires domapp.sbi: (not yet tagged in CVS)
+       Test with domhub-tools: V00-00-00
+
+Known issues:
+- Flasher stuff still not implemented/tested
+- Supernova stuff not implemented/tested
+- Data compression not implemented/tested
+
+Upgrades/bug fixes:
+- Buffered pedestal data now supported (REAL/DOMAPP FPGA!!!)
+
 =========================================================
 
 domapp V00-00-00

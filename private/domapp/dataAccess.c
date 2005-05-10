@@ -72,7 +72,6 @@ void dataAccessInit(void) {
     initFillMsgWithData();
     initFormatEngineeringEvent(DEF_FADC_SAMP_CNT, DEF_ATWD01_MASK, DEF_ATWD23_MASK);
     initDOMdataCompression(MAXDATA_VALUE);
-
 }
 
 /* data access  Entry Point */
@@ -192,7 +191,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
       
       /*  check for available data */ 
     case DATA_ACC_DATA_AVAIL:
-      data[0] = checkDataAvailable();
+      data[0] = isDataAvailable();
       Message_setStatus(M, SUCCESS);
       Message_setDataLen(M, DAC_ACC_DATA_AVAIL_LEN);
       break;
@@ -200,18 +199,12 @@ void dataAccess(MESSAGE_STRUCT *M) {
       /*  check for available data */ 
     case DATA_ACC_GET_DATA:
       // try to fill in message buffer with waveform data
-      tmpInt = fillMsgWithData(data);
+      tmpInt = fillMsgWithData(data, MAXDATA_VALUE);
       Message_setDataLen(M, tmpInt);
       Message_setStatus(M, SUCCESS);
       break;
       
-    case DATA_ACC_RESET_LBM:
-      emptyLBMQ();
-      Message_setDataLen(M, 0);
-      Message_setStatus(M, SUCCESS);
-      break;
-
-      /* JEJ: Deal with configurable intervals for monitoring events */
+       /* JEJ: Deal with configurable intervals for monitoring events */
     case DATA_ACC_SET_MONI_IVAL:
       moniHdwrIval = FPGA_HAL_TICKS_PER_SEC * unformatLong(Message_getData(M));
       moniConfIval = FPGA_HAL_TICKS_PER_SEC * unformatLong(Message_getData(M)+sizeof(ULONG));
@@ -301,12 +294,6 @@ void dataAccess(MESSAGE_STRUCT *M) {
       /* unknown service request (i.e. message */
       /*	subtype), respond accordingly */
 
-    case DATA_ACC_TEST_SW_COMP:
-      insertTestEvents();
-      Message_setDataLen(M, 0);
-      Message_setStatus(M, SUCCESS);
-      break;
-
     case DATA_ACC_SET_BASELINE_THRESHOLD:
       setFADCRoadGradeThreshold(unformatShort(data));
       for(ichip=0;ichip<2;ichip++) {
@@ -383,7 +370,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
       wasEnabled = hal_FB_isEnabled();
       Message_setDataLen(M, 0);
       if(!wasEnabled) {
-	if(hal_FB_enable(&config, &valid, &reset)) {
+	if(hal_FB_enable(&config, &valid, &reset, DOM_FPGA_DOMAPP)) {
 	  datacs.lastErrorID = DAC_Cant_Enable_FB;
 	  strcpy(datacs.lastErrorStr, DAC_CANT_ENABLE_FB);
 	  datacs.lastErrorSeverity = WARNING_ERROR;

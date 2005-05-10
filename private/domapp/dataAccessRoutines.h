@@ -15,9 +15,9 @@ BOOLEAN forceRunReset(void);
 
 void initFillMsgWithData(void);
 
-BOOLEAN checkDataAvailable(void);
+int isDataAvailable(void);
 
-int fillMsgWithData(UBYTE *msgBuffer);
+int fillMsgWithData(UBYTE *msgBuffer, int bsize);
 
 void initFormatEngineeringEvent(UBYTE, UBYTE, UBYTE);
 

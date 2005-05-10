@@ -3,13 +3,14 @@
  * Routines to store and fetch monitoring data from a circular buffer
  * John Jacobsen, JJ IT Svcs, for LBNL/IceCube
  * May, 2003
- * $Id: moniDataAccess.c,v 1.3 2005-04-14 21:30:45 jacobsen Exp $
+ * $Id: moniDataAccess.c,v 1.6 2005-05-10 20:36:04 jacobsen Exp $
  * CURRENTLY NOT THREAD SAFE -- need to implement moni[Un]LockWriteIndex
  */
 
 
 #include "hal/DOM_MB_types.h"
 #include "hal/DOM_MB_hal.h"
+#include "hal/DOM_MB_domapp.h"
 #include "message.h"
 #include "messageAPIstatus.h"
 #include "commonServices.h"
@@ -211,7 +212,7 @@ void mprintf(char *fmt, ...) {
 #define BUFLEN 512
   char buf[BUFLEN];
   va_list ap;
-  unsigned long long time = hal_FPGA_TEST_get_local_clock();
+  unsigned long long time = hal_FPGA_DOMAPP_get_local_clock();
   va_start(ap, fmt);
   int n = vsnprintf(buf, BUFLEN, fmt, ap);
   va_end(ap);
@@ -292,16 +293,8 @@ void moniInsertConfigStateMessage(unsigned long long time) {
     boardID = halGetBoardIDRaw();
     HVID    = halHVSerialRaw();
 
-#ifdef NOSWAP
-    memcpy(mc.dom_mb_id, (void *) &boardID, 6);
-    memcpy(mc.hw_base_id, (void *) &HVID, 8);
-#else
     swapOrder(mc.hw_base_id, (void *) &HVID, 8);
     swapOrder(mc.dom_mb_id, (void *) &boardID, 6);
-#endif
-
-
-
 
     mc.spare1               = moniBEShort(0);         
     mc.fpga_build_num       = moniBEShort(hal_FPGA_query_build());
@@ -408,8 +401,6 @@ void moniInsertHdwrStateMessage(unsigned long long time, USHORT temperature,
     mh.PMT_BASE_HV_SET_VALUE     = moniBEShort(halReadBaseDAC());
     mh.PMT_BASE_HV_MONITOR_VALUE = moniBEShort(halReadBaseADC());
     mh.DOM_MB_TEMPERATURE        = moniBEShort(temperature);
-    //spe                          = (ULONG)hal_FPGA_TEST_get_spe_rate();
-    //mpe                          = (ULONG)hal_FPGA_TEST_get_mpe_rate();
     mh.SPE_RATE                  = moniBELong(spe_sum);
     mh.MPE_RATE                  = moniBELong(mpe_sum);
   }
@@ -512,13 +503,13 @@ void moniInsertLCWindowChangeMessage(unsigned long long time,
 
 /* unsigned long long moniGetTimeAsUnsigned(void) {  */
 /*   /\* Fix signed-like peculiarity in HAL *\/ */
-/*   //return hal_FPGA_TEST_get_local_clock() & 0xFFFFFFFF; */
-/*   return hal_FPGA_TEST_get_local_clock(); */
+/*   //return hal_FPGA_DOMAPP_get_local_clock() & 0xFFFFFFFF; */
+/*   return hal_FPGA_DOMAPP_get_local_clock(); */
 /* } */
 
 void moniPuts(char *s) {
   unsigned long long time;
-  time = hal_FPGA_TEST_get_local_clock();
+  time = hal_FPGA_DOMAPP_get_local_clock();
   moniInsertDiagnosticMessage(s, time, strlen(s));
 }
 
@@ -542,7 +533,7 @@ void moniRunTests() {
 
   //n = snprintf(buf, BSIZ, "STARTING SELF TEST");
     
-  time = hal_FPGA_TEST_get_local_clock();
+  time = hal_FPGA_DOMAPP_get_local_clock();
 
   /* Make sure buffer empty */
   ms = moniFetchRec(&mr);
@@ -572,7 +563,7 @@ void moniRunTests() {
 
   /* Fill small set of records */
   for(irec=0; irec < NSMALL; irec++) {
-    time = hal_FPGA_TEST_get_local_clock();
+    time = hal_FPGA_DOMAPP_get_local_clock();
     moniInsertDiagnosticMessage(msg,time,strlen(msg));
   }
 
@@ -662,7 +653,7 @@ void moniRunTests() {
 
   /* store and fetch a bunch of times */
   for(irec=0; irec < MONI_CIRCBUF_RECS*2; irec++) {
-    time = hal_FPGA_TEST_get_local_clock();
+    time = hal_FPGA_DOMAPP_get_local_clock();
     moniInsertDiagnosticMessage(msg,time,strlen(msg));
     ms = moniFetchRec(&mr);
     if(ms != MONI_OK && ms != MONI_WRAPPED && ms != MONI_OVERFLOW) {
@@ -681,12 +672,13 @@ void moniRunTests() {
   moniInsertDiagnosticMessage("MONI SELF TEST OK", time, 17);
 
   /* These all seem to work: 
-     moniInsertSetDACMessage(hal_FPGA_TEST_get_local_clock(), 1, 2);
-     moniInsertSetPMT_HV_Message(hal_FPGA_TEST_get_local_clock(), 3);
-     moniInsertSetPMT_HV_Limit_Message(hal_FPGA_TEST_get_local_clock(), 4);
-     moniInsertEnablePMT_HV_Message(hal_FPGA_TEST_get_local_clock());
-     moniInsertDisablePMT_HV_Message(hal_FPGA_TEST_get_local_clock());
+     moniInsertSetDACMessage(hal_FPGA_DOMAPP_get_local_clock(), 1, 2);
+     moniInsertSetPMT_HV_Message(hal_FPGA_DOMAPP_get_local_clock(), 3);
+     moniInsertSetPMT_HV_Limit_Message(hal_FPGA_DOMAPP_get_local_clock(), 4);
+     moniInsertEnablePMT_HV_Message(hal_FPGA_DOMAPP_get_local_clock());
+     moniInsertDisablePMT_HV_Message(hal_FPGA_DOMAPP_get_local_clock());
   */
+
   return;
 
 }

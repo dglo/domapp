@@ -1,7 +1,6 @@
 /* message.c */
 
 #include "DOMtypes.h"
-#include "packetFormatInfo.h"
 #include "messageAPIstatus.h"
 #include "message.h"
 #include "string.h"
@@ -11,17 +10,16 @@ const int messageFlag= MESSAGE_FLAG_VALUE;
 
 /* Default Constructor empty ignore message */
 void Message_init(MESSAGE_STRUCT *msg) {
-  msg->head.hd.mt= 0; 	      
-  msg->head.hd.dlenLO= 0;
-  msg->head.hd.dlenHI= 0;
-  //msg->data= (UBYTE*) 0;   
+  msg->head.hd.mt     = 0; 	      
+  msg->head.hd.dlenLO = 0;
+  msg->head.hd.dlenHI = 0;
   memset(msg->data, 0, MAXDATA_VALUE);
 }
 
 /* structs and storage for messaging system */
-#define MESSAGE_QUEUE_SIZE 32
-#define NUM_MESSAGE_QUEUES 16
-#define RECEIVER_WAITING 1
+#define MESSAGE_QUEUE_SIZE  32
+#define NUM_MESSAGE_QUEUES  16
+#define RECEIVER_WAITING    1
 #define NO_RECEIVER_WAITING 0
 
 typedef struct {
@@ -35,52 +33,29 @@ MESSAGE_QUEUE_LIST msgQueueList[NUM_MESSAGE_QUEUES];
 
 /* public functions */
 
-UBYTE Message_getType(MESSAGE_STRUCT *msgStruct)
-{
- return msgStruct->head.hd.mt;
+UBYTE Message_getType(MESSAGE_STRUCT *msgStruct) { return msgStruct->head.hd.mt; }
+
+UBYTE Message_getSubtype(MESSAGE_STRUCT *msgStruct) { return msgStruct->head.hd.mst; }
+
+UBYTE Message_getStatus(MESSAGE_STRUCT *msgStruct) { return msgStruct->head.hd.status; }
+
+UBYTE* Message_getData(MESSAGE_STRUCT *msgStruct) { return msgStruct->data; }
+
+int Message_dataLen(MESSAGE_STRUCT *msgStruct) { 
+  return (msgStruct->head.hd.dlenLO + 
+	  (msgStruct->head.hd.dlenHI << 8) );
 }
 
-UBYTE Message_getSubtype(MESSAGE_STRUCT *msgStruct)
-{
- return msgStruct->head.hd.mst;
-}
+void Message_setType(MESSAGE_STRUCT *msgStruct,UBYTE t) { msgStruct->head.hd.mt= t; }
 
-UBYTE Message_getStatus(MESSAGE_STRUCT *msgStruct)
-{
- return msgStruct->head.hd.status;
-}
+void Message_setSubtype(MESSAGE_STRUCT *msgStruct, UBYTE st) { msgStruct->head.hd.mst= st; }
 
-UBYTE* Message_getData(MESSAGE_STRUCT *msgStruct)
-{
-	return msgStruct->data;
-}
-
-int Message_dataLen(MESSAGE_STRUCT *msgStruct)
-{
-	return (msgStruct->head.hd.dlenLO + 
-		(msgStruct->head.hd.dlenHI << 8) );
-}
-
-void Message_setType(MESSAGE_STRUCT *msgStruct,UBYTE t)
-{
- msgStruct->head.hd.mt= t; 	     
-}
-
-void Message_setSubtype(MESSAGE_STRUCT *msgStruct,
-	UBYTE st)
-{
- msgStruct->head.hd.mst= st;
-}
-
-void Message_setStatus(MESSAGE_STRUCT *msgStruct,
-	UBYTE status)
-{
- msgStruct->head.hd.status= status;
+void Message_setStatus(MESSAGE_STRUCT *msgStruct, UBYTE status) {
+  msgStruct->head.hd.status= status;
 }
 
 void Message_setData(MESSAGE_STRUCT *msgStruct,
-		     UBYTE *d, int l)
-{
+		     UBYTE *d, int l) {
   int len = l > MAXDATA_VALUE ? MAXDATA_VALUE : l;
   memcpy(msgStruct->data, d, len);
   msgStruct->head.hd.dlenLO= len & 0xff;
@@ -88,8 +63,7 @@ void Message_setData(MESSAGE_STRUCT *msgStruct,
 }
 
 void Message_setDataLen(MESSAGE_STRUCT *msgStruct,
-	int l)
-{
+	int l) {
  if(l > MAXDATA_VALUE) {
     l=MAXDATA_VALUE;
  }
