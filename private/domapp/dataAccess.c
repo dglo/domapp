@@ -21,6 +21,8 @@ Modification: 5/10/04 Jacobsen :-- put more than one monitoring rec. per request
 #include "hal/DOM_MB_types.h"
 #include "hal/DOM_MB_hal.h"
 #include "hal/DOM_MB_fpga.h"
+#include "hal/DOM_MB_domapp.h"
+
 #include "message.h"
 #include "dataAccess.h"
 #include "messageAPIstatus.h"
@@ -35,17 +37,17 @@ Modification: 5/10/04 Jacobsen :-- put more than one monitoring rec. per request
 #include "DSCmessageAPIstatus.h"
 #include "lbm.h"
 
-/* extern functions */
 extern void formatLong(ULONG value, UBYTE *buf);
-
-/* external data */
 extern UBYTE DOM_state;
+extern USHORT pulser_rate;
+USHORT atwdRGthresh[2][4], fadcRGthresh;
 
-/* global storage */
-UBYTE FPGA_trigger_mode=CPU_TRIG_MODE;
-int FPGA_ATWD_select   = 0;
-int SW_compression     = 0;
-int SW_compression_fmt = 0;
+UBYTE FPGA_trigger_mode = CPU_TRIG_MODE;
+UBYTE dataFormat        = FMT_ENG;
+UBYTE compMode          = CMP_NONE;
+int FPGA_ATWD_select    = 0;
+int SW_compression      = 0;
+int SW_compression_fmt  = 0;
 /* Format masks: default, and configured by request */
 #define DEF_FADC_SAMP_CNT  255
 #define DEF_ATWD01_MASK    0xFF
@@ -72,6 +74,9 @@ void dataAccessInit(void) {
     initFillMsgWithData();
     initFormatEngineeringEvent(DEF_FADC_SAMP_CNT, DEF_ATWD01_MASK, DEF_ATWD23_MASK);
     initDOMdataCompression(MAXDATA_VALUE);
+
+    /* Even though pulser isn't running, set rate appropriately for heartbeat events */
+    hal_FPGA_DOMAPP_cal_pulser_rate((double) pulser_rate);
 }
 
 /* data access  Entry Point */
@@ -79,16 +84,13 @@ void dataAccess(MESSAGE_STRUCT *M) {
     char * idptr;
     UBYTE *data;
     int tmpInt;
-    //UBYTE tmpByte;
     UBYTE *tmpPtr;
-    //USHORT tmpShort;
     MONI_STATUS ms;
     unsigned long long moniHdwrIval, moniConfIval;
     struct moniRec aMoniRec;
     int total_moni_len, moniBytes, len;
-    int ichip, ich;
     int config, valid, reset; /* For hal_FB_enable */
-    int wasEnabled;
+    int wasEnabled, ichip, ich;
     /* get address of data portion. */
     /* Receiver ALWAYS links a message */
     /* to a valid data buffer-even */ 
@@ -199,7 +201,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
       /*  check for available data */ 
     case DATA_ACC_GET_DATA:
       // try to fill in message buffer with waveform data
-      tmpInt = fillMsgWithData(data, MAXDATA_VALUE);
+      tmpInt = fillMsgWithData(data, MAXDATA_VALUE, dataFormat, compMode);
       Message_setDataLen(M, tmpInt);
       Message_setStatus(M, SUCCESS);
       break;
@@ -290,78 +292,75 @@ void dataAccess(MESSAGE_STRUCT *M) {
       Message_setStatus(M, SUCCESS);
       initFormatEngineeringEvent(data[0], data[1], data[2]);
       break;
-      /*----------------------------------- */
-      /* unknown service request (i.e. message */
-      /*	subtype), respond accordingly */
-
+    
     case DATA_ACC_SET_BASELINE_THRESHOLD:
-      setFADCRoadGradeThreshold(unformatShort(data));
+      fadcRGthresh = unformatShort(data);
       for(ichip=0;ichip<2;ichip++) {
 	for(ich=0; ich<4; ich++) {
-	  setATWDRoadGradeThreshold(unformatShort(data // base pointer
-						  + 2  // skip fadc value
-						  + ichip*8 // ATWD0 or 1
-						  + ich*2   // select channel
-						  ), ichip, ich);
+	  atwdRGthresh[ichip][ich] = unformatShort(data + 2 + ichip*8 + ich*2);
 	}
       }
-      
+      mprintf("Warning: DATA_ACC_SET_BASELINE_THRESHOLD: NOT setting values in hardware (no HAL interface)");
       Message_setDataLen(M, 0);
       Message_setStatus(M, SUCCESS);
       break;
 
     case DATA_ACC_GET_BASELINE_THRESHOLD:
-      formatShort(getFADCRoadGradeThreshold(), data);
+      formatShort(fadcRGthresh, data); 
       for(ichip=0;ichip<2;ichip++) {
         for(ich=0; ich<4; ich++) {
-	  formatShort(getATWDRoadGradeThreshold(ichip, ich),
-		      data // base pointer
-		      + 2  // skip fadc value
-		      + ichip*8 // ATWD0 or 1
-		      + ich*2   // select channel
-		      );
-	}
+          formatShort(atwdRGthresh[ichip][ich], 
+                      data // base pointer
+                      + 2  // skip fadc value
+                      + ichip*8 // ATWD0 or 1
+                      + ich*2   // select channel
+                      );
+        }
       }
       Message_setDataLen(M, 18);
       Message_setStatus(M, SUCCESS);
       break;
 
-    case DATA_ACC_SET_SW_DATA_COMPRESSION:
-      if(data[0] != 0 && data[0] != 1) {
+    case DATA_ACC_SET_DATA_FORMAT:
+      if(data[0] != FMT_ENG && data[0] != FMT_RG) {
+	strcpy(datacs.lastErrorStr, DAC_ERS_BAD_ARGUMENT);
 	datacs.lastErrorID = DAC_Bad_Argument;
-        strcpy(datacs.lastErrorStr, DAC_ERS_BAD_ARGUMENT);
-        datacs.lastErrorSeverity = WARNING_ERROR;
+	datacs.lastErrorSeverity = SEVERE_ERROR;
 	Message_setDataLen(M, 0);
-        Message_setStatus(M, WARNING_ERROR);
+	Message_setStatus(M, SEVERE_ERROR);
 	break;
       }
-      SW_compression = data[0];
-      Message_setDataLen(M, 0);
-      Message_setStatus(M, SUCCESS);
-      break;
+      dataFormat = data[0];
+      mprintf("Set data format to %d", dataFormat);
 
-    case DATA_ACC_GET_SW_DATA_COMPRESSION:
-      data[0] = SW_compression ? 1 : 0;
-      Message_setDataLen(M, 1);
+      Message_setDataLen(M, 0);
       Message_setStatus(M, SUCCESS);
       break;
       
-    case DATA_ACC_SET_SW_DATA_COMPRESSION_FORMAT:
-      Message_setDataLen(M, 0);
-      if(data[0] != 0) {
-	/* 0 is only supported format at the moment */
-	datacs.lastErrorID = DAC_Bad_Compr_Format;
-	strcpy(datacs.lastErrorStr, DAC_ERS_BAD_COMPR_FORMAT);
-	datacs.lastErrorSeverity = WARNING_ERROR;
-	Message_setStatus(M, WARNING_ERROR);
-	break;
-      } 
-      SW_compression_fmt = (int) data[0];
+    case DATA_ACC_GET_DATA_FORMAT:
+      data[0] = dataFormat;
+      Message_setDataLen(M, 1);
       Message_setStatus(M, SUCCESS);
       break;
 
-    case DATA_ACC_GET_SW_DATA_COMPRESSION_FORMAT:
-      data[0] = (UBYTE) SW_compression_fmt;
+    case DATA_ACC_SET_COMP_MODE:
+      if(data[0] != CMP_NONE && data[0] != CMP_RG) {
+        strcpy(datacs.lastErrorStr, DAC_ERS_BAD_ARGUMENT);
+        datacs.lastErrorID = DAC_Bad_Argument;
+        datacs.lastErrorSeverity = SEVERE_ERROR;
+        Message_setDataLen(M, 0);
+        Message_setStatus(M, SEVERE_ERROR);
+        break;
+      }
+      compMode = data[0];
+      mprintf("Set compression mode to %d", compMode);
+
+      Message_setDataLen(M, 0);
+      Message_setStatus(M, SUCCESS);
+      break;
+
+    case DATA_ACC_GET_COMP_MODE:
+      data[0] = compMode;
       Message_setDataLen(M, 1);
       Message_setStatus(M, SUCCESS);
       break;

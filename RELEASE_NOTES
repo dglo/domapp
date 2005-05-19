@@ -3,7 +3,23 @@ Release notes for production domapp -- jacobsen@npxdesigns.com
 
 =========================================================
 
-domapp V00-00-01  5/10/2005
+domapp V00-00-02  5/19/2005  NOT A PRODUCTION RELEASE
+       Requires domapp.sbi: (not yet tagged in CVS)
+       Test with domhub-tools: V00-00-01
+
+Known issues:
+- Flasher stuff still not implemented/tested
+- Supernova stuff not implemented/tested
+- During data compression, uncompressed pedestal hits often go
+  missing or show up as compressed data
+- Programming of roadgrader thresholds not implemented in HAL
+
+Upgrades/bug fixes:
+- Most real FPGA stuff supported now
+
+=========================================================
+
+domapp V00-00-01  5/10/2005  NOT A PRODUCTION RELEASE
        Requires domapp.sbi: (not yet tagged in CVS)
        Test with domhub-tools: V00-00-00
 

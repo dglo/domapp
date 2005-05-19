@@ -3,7 +3,7 @@
     Start Date: May 4, 1999
     Modifications by John Jacobsen 2004 
                   to implement configurable engineering events
-    Modifications by Jacobsen 2005 to support production FPGA
+    Modifications by Jacobsen 2005 to support production (domapp) FPGA
 */
 
 #include <stddef.h>
@@ -14,7 +14,6 @@
 // DOM-related includes
 #include "hal/DOM_MB_fpga.h"
 #include "hal/DOM_MB_domapp.h"
-#include "hal/DOM_FPGA_domapp_regs.h"
 #include "hal/DOM_MB_pld.h"
 #include "hal/DOM_FPGA_regs.h"
 #include "hal/DOM_MB_types.h"
@@ -34,6 +33,8 @@
 extern unsigned short atwdpedavg[2][4][128];
 extern unsigned short fadcpedavg[256];
 extern USHORT atwdThreshold[2][4], fadcThreshold;
+extern USHORT pulser_rate;
+extern int pulser_running;
 
 /* LC mode, defined via slow control */
 extern UBYTE LCmode;
@@ -91,21 +92,21 @@ unsigned lbmp;
 #define TIMELBM
 #undef TIMELBM
 #ifdef TIMELBM
-#define TBEG(b) bench_start(b)
-#define TEND(b) bench_end(b)
-#define TSHOW(a,b) bench_show(a,b)
+# define TBEG(b) bench_start(b)
+# define TEND(b) bench_end(b)
+# define TSHOW(a,b) bench_show(a,b)
 static bench_rec_t bformat, breadout, bbuffer, bcompress;
 #else
-#define TBEG(b)
-#define TEND(b)
-#define TSHOW(a,b)
+# define TBEG(b)
+# define TEND(b)
+# define TSHOW(a,b)
 #endif
 
 
 BOOLEAN beginFBRun(USHORT bright, USHORT window, USHORT delay, USHORT mask, USHORT rate) {
 #warning all this flasher stuff is old and needs to be redone
 #define MAXHVOFFADC 5
-  USHORT hvadc = halReadBaseADC();
+  USHORT hvadc = domappReadBaseADC();
   if(hvadc > MAXHVOFFADC) {
     mprintf("Can't start flasher board run: DOM HV ADC=%hu.", hvadc);
     return FALSE;
@@ -182,7 +183,49 @@ BOOLEAN endFBRun() {
 
 inline BOOLEAN FBRunIsInProgress(void) { return DOM_state==DOM_FB_RUN_IN_PROGRESS; }
 
-BOOLEAN beginRun() {
+void setSPETrigMode(void) {
+  /* Allow for SPE data to be acquired, or periodic forced triggers */
+  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE
+			       | HAL_FPGA_DOMAPP_TRIGGER_FORCED);
+  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
+}
+
+void setSPEPulserTrigMode(void) {
+  /* Disallow periodic forced triggers.  Collect SPEs simulated by
+     on-board front-end pulser */
+  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE);
+  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER);
+}
+
+void setFBTrigMode(void) {
+  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FLASHER);
+  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FLASHER);
+}
+
+void setPeriodicForcedTrigMode(void) {
+  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FORCED);
+  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
+}
+
+USHORT domappReadBaseADC() { 
+  /* When the lines below are uncommented, shut off triggers first because HV read 
+     crosstalks into ATWDs (or their inputs) */
+  //hal_FPGA_DOMAPP_disable_daq();
+  USHORT adc = halReadBaseADC();
+  //hal_FPGA_DOMAPP_enable_daq();
+  return adc;
+}
+
+unsigned long long domappHVSerialRaw(void) {
+  /* Ditto as above: Kael seems to think we also may need to disable triggers when reading 
+     out the PMT base ID */
+  //hal_FPGA_DOMAPP_disable_daq();
+  unsigned long long s = halHVSerialRaw();
+  //hal_FPGA_DOMAPP_enable_daq();
+  return s;
+}
+
+BOOLEAN beginRun(UBYTE compressionMode) {
   nTrigsReadOut = 0;
 
   if(DOM_state!=DOM_IDLE) {
@@ -191,36 +234,49 @@ BOOLEAN beginRun() {
     DOM_state=DOM_RUN_IN_PROGRESS;
     mprintf("Started run!");
     hal_FPGA_DOMAPP_disable_daq();
-    halUSleep(1000); /* make sure atwd is done... */
+    hal_FPGA_DOMAPP_lbm_reset();
+    halUSleep(10000); /* make sure atwd is done... */
     hal_FPGA_DOMAPP_lbm_reset();
     lbmp = hal_FPGA_DOMAPP_lbm_pointer();
 
-    switch(FPGA_trigger_mode) { // This gets set by a DATA_ACCESS message
-    case TEST_DISC_TRIG_MODE:
-      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE);
-      break;
-    case FB_TRIG_MODE:
-      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FLASHER);
-      break;
-    case CPU_TRIG_MODE: 
-    default:
-      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FORCED);
-      break;
+    if(pulser_running) {
+      pulser_running = 0;
+      if(FPGA_trigger_mode == TEST_DISC_TRIG_MODE) {
+	setSPEPulserTrigMode();
+      } else {
+	mprintf("WARNING: pulser running but trigger mode (%d) is disallowed. "
+		"Won't allow triggers!", FPGA_trigger_mode);
+      }
+    } else {
+      /* Default mode */
+      switch(FPGA_trigger_mode) { // This gets set by a DATA_ACCESS message
+      case FB_TRIG_MODE:        setFBTrigMode();   break;
+      case TEST_DISC_TRIG_MODE: setSPETrigMode();  break; // can change when pulser starts
+      case CPU_TRIG_MODE: 
+      default:                  setPeriodicForcedTrigMode(); break;
+      }
     }
 
-    
-    hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_REPEAT);
+    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
+
     //hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_FORCED);
-    hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
+    hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_REPEAT);    
     hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_ATWD_FADC);
     hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_TESTING);
-    hal_FPGA_DOMAPP_cal_pulser_rate(10.0);
     hal_FPGA_DOMAPP_enable_atwds(HAL_FPGA_DOMAPP_ATWD_A|HAL_FPGA_DOMAPP_ATWD_B);
     hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);
     hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_WRAP);
-    hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_STOP);
-    hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_OFF);
-    hal_FPGA_DOMAPP_rate_monitor_enable(0);
+    //hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_STOP);
+    if(compressionMode == CMP_NONE) {
+      hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_OFF);
+    } else if(compressionMode == CMP_RG) {
+      hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_ON);
+    } else {
+      mprintf("beginRun: ERROR: invalid compression mode given (%d)", (int) compressionMode);
+      return FALSE;
+    }
+    hal_FPGA_DOMAPP_rate_monitor_enable(HAL_FPGA_DOMAPP_RATE_MONITOR_SPE|
+					HAL_FPGA_DOMAPP_RATE_MONITOR_MPE);
 
     hal_FPGA_DOMAPP_enable_daq(); /* <-- Can get triggers NOW */
 
@@ -245,6 +301,7 @@ BOOLEAN endRun() {
 	mprintf("Disabling FPGA internal data acquisition... LBM=%u",
 		hal_FPGA_DOMAPP_lbm_pointer());
 	hal_FPGA_DOMAPP_disable_daq();
+	hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_OFF);
 	mprintf("Ended run");
 	return TRUE;
     }
@@ -257,9 +314,7 @@ BOOLEAN forceRunReset() {
 
 inline BOOLEAN runIsInProgress(void) { return DOM_state==DOM_RUN_IN_PROGRESS; }
 
-void initFillMsgWithData(void) {
-}
-
+void initFillMsgWithData(void) { }
 
 #define FPGA_DOMAPP_LBM_BLOCKSIZE 2048 /* BYTES not words */
 #define FPGA_DOMAPP_LBM_BLOCKMASK (FPGA_DOMAPP_LBM_BLOCKSIZE-1)
@@ -270,7 +325,7 @@ int isDataAvailable() {
 }
 
 /* Stolen from Arthur: access lookback event at idx, but changed to byte sense */
-static inline unsigned char *lbmEvent(unsigned idx) {
+unsigned char *lbmEvent(unsigned idx) {
    return
      ((unsigned char *) hal_FPGA_DOMAPP_lbm_address()) + (idx & WHOLE_LBM_MASK);
 }
@@ -294,14 +349,6 @@ static int haveOverflow(unsigned lbmp) {
 }
 
 int engEventSize(void) { return 1550; } // Make this smarter
-
-struct tstevt {
-  unsigned short tlo;
-  unsigned short one;
-  unsigned long  thi;
-  unsigned long  trigbits;
-  unsigned short tdead;
-};
 
 int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   unsigned char * e = lbmEvent(lbmp);
@@ -373,7 +420,8 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   *msgp++ = 0;               // Spare
   msgp = TimeMove(msgp, stamp); // Timestamp
 
-  //mprintf("Got timestamp 0x%04lx%08lx",  (unsigned long) ((stamp>>32)&0xFFFFFFFF), (unsigned long) (stamp&0xFFFFFFFF));
+  //mprintf("Got timestamp 0x%04lx%08lx",  
+  //        (unsigned long) ((stamp>>32)&0xFFFFFFFF), (unsigned long) (stamp&0xFFFFFFFF));
 
   if(hdr->trigbits & 1<<17) {
     msgp = FADCMove((USHORT *) (e+0x10), msgp, (int) FlashADCLen);
@@ -396,11 +444,102 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   return nbytes;
 }
 
+struct rgevt { unsigned long word0, word1, word2, word3; };
 
-int fillMsgWithData(UBYTE *msgBuffer, int bufsiz) {
-  BOOLEAN done;
-  UBYTE *p = msgBuffer;
-  done = FALSE;
+int nextRGEventSize(unsigned mylbmp) {
+  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
+  return hdr->word1 & 0x7FF;
+}
+
+unsigned char * RGHitBegin(unsigned mylbmp) {
+  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
+  return (unsigned char *) &(hdr->word1);
+}
+
+int formatRGEvent(UBYTE * msgp, unsigned mylbmp) {
+  int nbytes = nextRGEventSize(mylbmp);
+  memcpy(msgp, RGHitBegin(mylbmp), nbytes);
+  return nbytes;
+}
+
+int isCompressBitSet(unsigned mylbmp) {
+  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
+  return (hdr->word0 >> 31) & 0x01;
+}
+
+unsigned short RGTimeMSB16(unsigned mylbmp) {
+  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
+  return hdr->word0 & 0xFFFF;
+}
+
+void mShowHdr(unsigned mylbmp) {
+  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
+  mprintf("lbmp=%u C=%d siz=%d TS16=0x%04x w0=0x%08lx w1=0x%08lx w2=0x%08lx w3=0x%08lx",
+	  mylbmp, isCompressBitSet(mylbmp), nextRGEventSize(mylbmp), RGTimeMSB16(mylbmp),
+	  hdr->word0, hdr->word1, hdr->word2, hdr->word3);
+}
+
+int fillMsgWithRGData(UBYTE *msgBuffer, int bufsiz) {
+  UBYTE *p  = msgBuffer;
+  UBYTE *p0 = msgBuffer;
+# define NCUR() ((int) (p - msgBuffer))
+
+  // Before forming block, guarantee a hit is there.
+  if(!isDataAvailable()) return 0; 
+
+  if(!isCompressBitSet(lbmp)) {
+    mprintf("WARNING: dataAccessRoutines: fillMsgWithRGData: have hit data "
+	    "but compress bit is not set!");
+    mShowHdr(lbmp);
+    return 0;
+  }
+
+  unsigned short tshi = RGTimeMSB16(lbmp); 
+  p += 2; // Skip length portion, fill later
+  formatShort(tshi, p);
+  p += 2;
+  
+  while(1) {
+    if(RGTimeMSB16(lbmp) != tshi) { 
+      mprintf("RGTimeMSB16(lbmp=%u)(%hu) != tshi(%hu)",
+	      lbmp, RGTimeMSB16(lbmp),tshi); 
+      break; 
+    }
+
+    if(!isDataAvailable()) break;
+
+    if(!isCompressBitSet(lbmp)) {
+      mprintf("WARNING: dataAccessRoutines: fillMsgWithRGData: have hit data "
+	      "but compress bit is not set!  Skipping hit...");
+      // Skip this event
+      lbmp = nextEvent(lbmp);
+    }
+
+    if(bufsiz - NCUR() < nextRGEventSize(lbmp)) break;
+    if(haveOverflow(lbmp)) {
+      lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
+      //mprintf("Reset LBM pointer, hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
+      //        hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
+      break;
+    }
+    
+    //mShowHdr(lbmp);
+    // if we get here, we have room for the formatted engineering event
+    // and one or more hits are available
+    p += formatRGEvent(p, lbmp);  // Fill data into user's message buffer,
+				  //   advance both message pointer...
+    lbmp = nextEvent(lbmp);       //          ... and LBM pointer
+    nTrigsReadOut++;
+  }
+
+  formatShort(NCUR(), p0); // Finally, fill length of block and return
+  //mprintf("fillMsgWithRGData: Total block length is %d", NCUR());
+  return NCUR();
+}
+
+
+int fillMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
+  UBYTE *p     = msgBuffer;
 # define NCUR() ((int) (p - msgBuffer))
   while(1) {
     if(!isDataAvailable()) return NCUR();
@@ -414,12 +553,22 @@ int fillMsgWithData(UBYTE *msgBuffer, int bufsiz) {
     
     // if we get here, we have room for the formatted engineering event
     // and one or more hits are available
-    p += formatDomappEngEvent(p, lbmp);  /* Advance both message pointer */
-    lbmp = nextEvent(lbmp);              /* ... and LBM pointer */
+    p += formatDomappEngEvent(p, lbmp);  // Fill data into user's message buffer,
+					 //   advance both message pointer...
+    lbmp = nextEvent(lbmp);              //          ... and LBM pointer
     nTrigsReadOut++;
   }
 }
-
+ 
+int fillMsgWithData(UBYTE *msgBuffer, int bufsiz, UBYTE format, UBYTE compression) {
+  if(format == FMT_ENG && compression == CMP_NONE) 
+    return fillMsgWithEngData(msgBuffer, bufsiz);
+  if(format == FMT_RG  && compression == CMP_RG)
+    return fillMsgWithRGData(msgBuffer, bufsiz);
+  mprintf("dataAccess: fillMsgWithData: WARNING: invalid format/compression combo!  "
+	  "format=%d compression=%d", (int) format, (int) compression);
+  return 0;
+}
 
 UBYTE *ATWDByteMoveFromBottom(USHORT *data, UBYTE *buffer, int count) {
   /** Old version of ATWDByteMove, which assumes waveform is sorted from early

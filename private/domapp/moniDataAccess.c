@@ -3,7 +3,7 @@
  * Routines to store and fetch monitoring data from a circular buffer
  * John Jacobsen, JJ IT Svcs, for LBNL/IceCube
  * May, 2003
- * $Id: moniDataAccess.c,v 1.6 2005-05-10 20:36:04 jacobsen Exp $
+ * $Id: moniDataAccess.c,v 1.8 2005-05-19 00:08:23 jacobsen Exp $
  * CURRENTLY NOT THREAD SAFE -- need to implement moni[Un]LockWriteIndex
  */
 
@@ -16,6 +16,7 @@
 #include "commonServices.h"
 #include "DSCmessageAPIstatus.h"
 #include "moniDataAccess.h"
+#include "dataAccessRoutines.h"
 #include "dataAccess.h"
 #include "domSControl.h"
 #include "expControl.h"
@@ -291,7 +292,7 @@ void moniInsertConfigStateMessage(unsigned long long time) {
     mc.hw_config_len        = moniBEShort(18);
 
     boardID = halGetBoardIDRaw();
-    HVID    = halHVSerialRaw();
+    HVID    = domappHVSerialRaw();
 
     swapOrder(mc.hw_base_id, (void *) &HVID, 8);
     swapOrder(mc.dom_mb_id, (void *) &boardID, 6);
@@ -361,7 +362,6 @@ void moniFillBogusHdwrStateMessage(struct moniHardware *mh) {
   mh->MPE_RATE                  = moniBELong(itest++);
 }
 
-
 /* Type MONI_TYPE_HDWR_STATE_MSG - log dom state message */
 void moniInsertHdwrStateMessage(unsigned long long time, USHORT temperature, 
 				long spe_sum, long mpe_sum) {
@@ -399,7 +399,7 @@ void moniInsertHdwrStateMessage(unsigned long long time, USHORT temperature,
     mh.DAC_FL_REF                = moniBEShort(halReadDAC(DOM_HAL_DAC_FL_REF));
     mh.DAC_MUX_BIAS              = moniBEShort(halReadDAC(DOM_HAL_DAC_MUX_BIAS));
     mh.PMT_BASE_HV_SET_VALUE     = moniBEShort(halReadBaseDAC());
-    mh.PMT_BASE_HV_MONITOR_VALUE = moniBEShort(halReadBaseADC());
+    mh.PMT_BASE_HV_MONITOR_VALUE = moniBEShort(domappReadBaseADC());
     mh.DOM_MB_TEMPERATURE        = moniBEShort(temperature);
     mh.SPE_RATE                  = moniBELong(spe_sum);
     mh.MPE_RATE                  = moniBELong(mpe_sum);

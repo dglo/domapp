@@ -29,13 +29,20 @@
 					 hardware and configuration snapshot
 					 records */
 #define DATA_ACC_SET_ENG_FMT       14
-#define DATA_ACC_TEST_SW_COMP      15 /* Inject software compression test pattern data */
-#define DATA_ACC_SET_BASELINE_THRESHOLD 16
-#define DATA_ACC_GET_BASELINE_THRESHOLD 17
-#define DATA_ACC_SET_SW_DATA_COMPRESSION 18
-#define DATA_ACC_GET_SW_DATA_COMPRESSION 19
-#define DATA_ACC_SET_SW_DATA_COMPRESSION_FORMAT 20
-#define DATA_ACC_GET_SW_DATA_COMPRESSION_FORMAT 21
+
+/* #define DATA_ACC_TEST_SW_COMP      15 /\* Inject software compression test pattern data *\/ */
+#define DATA_ACC_SET_BASELINE_THRESHOLD 16 
+#define DATA_ACC_GET_BASELINE_THRESHOLD 17 
+/* #define DATA_ACC_SET_SW_DATA_COMPRESSION 18 */
+/* #define DATA_ACC_GET_SW_DATA_COMPRESSION 19 */
+/* #define DATA_ACC_SET_SW_DATA_COMPRESSION_FORMAT 20 */
+/* #define DATA_ACC_GET_SW_DATA_COMPRESSION_FORMAT 21 */
+
+#define DATA_ACC_SET_DATA_FORMAT   24
+#define DATA_ACC_GET_DATA_FORMAT   25
+#define DATA_ACC_SET_COMP_MODE     26
+#define DATA_ACC_GET_COMP_MODE     27
+
 #define DATA_ACC_RESET_LBM 22
 #define DATA_ACC_GET_FB_SERIAL 23 /* out: UB*n serial ID */
 

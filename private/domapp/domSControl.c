@@ -20,7 +20,7 @@ Jan. 14 '04 Jacobsen -- add monitoring actions for state change operations
 
 #include "message.h"
 #include "moniDataAccess.h"
-
+#include "dataAccessRoutines.h"
 #include "domSControl.h"
 #include "slowControl.h"
 #include "messageAPIstatus.h"
@@ -43,13 +43,13 @@ extern UBYTE FPGA_trigger_mode;
 extern int FPGA_ATWD_select;
 
 /* local functions, data */
-USHORT PMT_HV_max=PMT_HV_DEFAULT_MAX;
-BOOLEAN pulser_running = FALSE;
-USHORT pulser_rate = 0;
+USHORT PMT_HV_max          = PMT_HV_DEFAULT_MAX;
+int   pulser_running       = 0;
+USHORT pulser_rate         = 1; /* By default, now take forced triggers at 1 Hz */
 UBYTE selected_mux_channel = 0;
-ULONG deadTime = 0;
+ULONG deadTime             = 0;
+UBYTE LCmode               = 0;
 ULONG up_pre_ns, up_post_ns, dn_pre_ns, dn_post_ns;
-UBYTE LCmode = 0;
 
 /* struct that contains common service info for
 	this service. */
@@ -344,7 +344,7 @@ void domSControl(MESSAGE_STRUCT *M) {
     //data[0]=halPMT_HVisEnabled();
     data[0]=0;
     data[1]=0;
-    formatShort(halReadBaseADC(),&data[2]);
+    formatShort(domappReadBaseADC(),&data[2]);
     formatShort(halReadBaseDAC(),&data[4]);
     Message_setDataLen(M,DSC_QUERY_PMT_HV_LEN);
     Message_setStatus(M,SUCCESS);
@@ -414,7 +414,7 @@ void domSControl(MESSAGE_STRUCT *M) {
   case DSC_SET_PULSER_RATE:
     pulser_rate = unformatShort(&data[0]);
     // hal set pulser rate (pulser_rate)
-    hal_FPGA_TEST_set_pulser_rate(pulser_rate);
+    hal_FPGA_DOMAPP_cal_pulser_rate((double) pulser_rate);
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
     break;
@@ -424,16 +424,41 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_SET_PULSER_ON:
+
+    if(FPGA_trigger_mode != TEST_DISC_TRIG_MODE) {
+      /* format up failure response */
+      Message_setDataLen(M,0);
+      domsc.msgProcessingErr++;
+      strcpy(domsc.lastErrorStr,DSC_VIOLATES_CONSTRAINTS);
+      domsc.lastErrorID=DSC_violates_constraints;
+      domsc.lastErrorSeverity=WARNING_ERROR;
+      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|WARNING_ERROR);
+      break;
+    }
+    mprintf("Turned on front-end pulser");
     pulser_running = TRUE;
-    // hal set pulser running
-    hal_FPGA_TEST_enable_pulser();
+    setSPEPulserTrigMode();
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
     break;
+
   case DSC_SET_PULSER_OFF:
     pulser_running = FALSE;
-    // hal set pulser  off
-    hal_FPGA_TEST_disable_pulser();
+
+    if(FPGA_trigger_mode != TEST_DISC_TRIG_MODE) {
+      /* format up failure response */
+      Message_setDataLen(M,0);
+      domsc.msgProcessingErr++;
+      strcpy(domsc.lastErrorStr,DSC_VIOLATES_CONSTRAINTS);
+      domsc.lastErrorID=DSC_violates_constraints;
+      domsc.lastErrorSeverity=WARNING_ERROR;
+      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|WARNING_ERROR);
+      break;
+    }
+
+    /* Go back to normal SPE mode */
+    setSPETrigMode();
+    mprintf("Turned off front-end pulser");
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
     break;

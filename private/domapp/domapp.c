@@ -2,8 +2,8 @@
   domapp - IceCube DOM Application program for use with 
            "Real"/"domapp" FPGA
            J. Jacobsen (jacobsen@npxdesigns.com), Chuck McParland
-  $Date: 2005-05-02 21:39:25 $
-  $Revision: 1.25 $
+  $Date: 2005-05-19 00:08:23 $
+  $Revision: 1.27 $
 */
 
 #include <unistd.h> /* Needed for read/write */
@@ -23,6 +23,8 @@
 
 #define STDIN  0
 #define STDOUT 1
+
+#define MIN_HW_IVAL (FPGA_HAL_TICKS_PER_SEC+100)
 
 /* routines to handle send and receive of messages through stdin/out */
 int getmsg(char *);
@@ -45,7 +47,6 @@ ULONG CRCproblem;
 
 /* Monitoring buffer, static allocation: */
 UBYTE monibuf[MONI_CIRCBUF_RECS * MONI_REC_SIZE];
-
 
 int main(void) {
   char message[MAX_TOTAL_MESSAGE];
@@ -86,14 +87,20 @@ int main(void) {
 
     tcur = hal_FPGA_DOMAPP_get_local_clock();      
 
+
+    /* Guarantee that the HW monitoring records occur no faster than at a
+       rate specified by MIN_HW_IVAL -- this guarantees a unique SPE/MPE measurement
+       each record: */
     moni_hardware_interval = moniGetHdwrIval();
-    moni_config_interval   = moniGetConfIval();
+    if(moni_hardware_interval < MIN_HW_IVAL) moni_hardware_interval = MIN_HW_IVAL;
+    moni_config_interval = moniGetConfIval();
 
     long long dthw = tcur-t_hw_last;    
     long long dtcf = tcur-t_cf_last;
 
     /* Hardware monitoring */
-    if(moni_hardware_interval > 0 && (dthw < 0 || dthw > moni_hardware_interval)) {
+    if(   moni_hardware_interval > 0 
+       && (dthw < 0 || dthw > moni_hardware_interval)) {
       /* Update temperature if it's done; start next one */
       if(halReadTempDone()) {
 	temperature = halFinishReadTemp();

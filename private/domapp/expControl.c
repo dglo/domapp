@@ -15,6 +15,9 @@ Last Modification:
 /* DOM-related includes */
 #include "hal/DOM_MB_types.h"
 #include "hal/DOM_MB_hal.h"
+#include "hal/DOM_MB_domapp.h"
+#include "hal/DOM_FPGA_domapp_regs.h"
+
 #include "DOMtypes.h"
 #include "DOMdata.h"
 #include "message.h"
@@ -25,14 +28,16 @@ Last Modification:
 #include "EXPmessageAPIstatus.h"
 #include "DOMstateInfo.h"
 #include "moniDataAccess.h"
+#include "dataAccessRoutines.h"
 
 /* extern functions */
 extern void formatLong(ULONG value, UBYTE *buf);
-extern BOOLEAN beginRun(void);
+extern BOOLEAN beginRun(UBYTE compressionMode);
 extern BOOLEAN endRun(void);
 extern BOOLEAN beginFBRun(USHORT bright, USHORT window, USHORT delay, USHORT mask, USHORT rate);
 extern BOOLEAN endFBRun(void);
 extern BOOLEAN forceRunReset(void);
+extern UBYTE   compMode;
 
 /* local functions, data */
 UBYTE DOM_state;
@@ -87,68 +92,144 @@ void zeroPedestals() {
 int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
   /* return 0 if pedestal run succeeds, else error */
 
-  while(1) {
-    /* Decide what to trigger.  Only ATWD0 or 1, not both.  FADC as well.
-       Don't trigger any more than what was asked for.  Stop run if we've finished.
-    */
-    UBYTE trigger_mask = 0;
-    
-    if(npeds0 < ped0goal) trigger_mask |= HAL_FPGA_TEST_TRIGGER_ATWD0;
-    if(npeds1 < ped1goal) trigger_mask |= HAL_FPGA_TEST_TRIGGER_ATWD1;
-    if(npedsadc < pedadcgoal) trigger_mask |= HAL_FPGA_TEST_TRIGGER_FADC;
-    
-    if(!trigger_mask || (npeds0 >= ped0goal && npeds1 >= ped1goal && npedsadc >= pedadcgoal)) {
-      pedestalsAvail = 1;
-      //mprintf("pedestalRunEntryPoint cur(%d,%d,%d) reached target (%d,%d,%d) trigmask=%d", 
-      //    npeds0, npeds1, npedsadc, ped0goal, ped1goal, pedadcgoal);
-      return 0;
-    }
+  mprintf("Starting pedestal run...");
+  hal_FPGA_DOMAPP_disable_daq();
+  hal_FPGA_DOMAPP_lbm_reset();
+  halUSleep(10000); /* make sure atwd is done... */
+  hal_FPGA_DOMAPP_lbm_reset();
+  unsigned lbmp = hal_FPGA_DOMAPP_lbm_pointer();
+  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FORCED);
+  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
+  hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_FORCED);
+  hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_ATWD_FADC);
+  hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_TESTING);
+  hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);
+  hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_WRAP);
+  hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_OFF);
+  hal_FPGA_DOMAPP_rate_monitor_enable(0);
+  int dochecks               = 1;
+  int didUncompressedWarning = 0;  
+  int didATWDSizeWarning     = 0;
+  int didMissedTrigWarning   = 0;
+  int didMissingFADCWarning  = 0;
+  int didMissingATWDWarning  = 0;
+  int iatwd; for(iatwd=0;iatwd<2;iatwd++) {
+    int numMissedTriggers = 0;
+    int numTrigs = (iatwd==0 ? ped0goal : ped1goal);      
+    hal_FPGA_DOMAPP_enable_atwds(iatwd==0?HAL_FPGA_DOMAPP_ATWD_A:HAL_FPGA_DOMAPP_ATWD_B);
+    hal_FPGA_DOMAPP_enable_daq(); 
+    int isamp;
+    int it; for(it=0; it<numTrigs; it++) {
+      hal_FPGA_DOMAPP_cal_launch();
+      halUSleep(500);
+      if(lbmp == hal_FPGA_DOMAPP_lbm_pointer()) {
+	numMissedTriggers++;
+	if(!didMissedTrigWarning) {
+	  didMissedTrigWarning++;
+	  mprintf("pedestalRun: WARNING: missed one or more calibration triggers for ATWD %d!", iatwd);
+	}
+	continue;
+      }
 
-    memset((void *) atwddata, 0, 2*4*ATWDCHSIZ*sizeof(USHORT));
-    memset((void *) fadcdata, 0, FADCSIZ * sizeof(USHORT));
+      lbmp = hal_FPGA_DOMAPP_lbm_pointer();
+      unsigned char * e = lbmEvent(lbmp);
+      struct tstevt * hdr = (struct tstevt *) e;
+      struct tstwords {
+	unsigned long w0, w1, w2, w3;
+      } * words = (struct tstwords *) e;
+      unsigned atwdsize = (hdr->trigbits>>19)&0x3;
+      unsigned long daq = FPGA(DAQ);
+      if(dochecks && words->w0>>31) {
+	if(!didUncompressedWarning) {
+	  didUncompressedWarning++;
+	  mprintf("pedestalRun: WARNING: trying to collect waveforms for pedestals but "
+		  "got COMPRESSED data!  w0=0x%08x w1=0x%08x w2=0x%08x w3=0x%08x DAQ=0x%08x",
+		  words->w0, words->w1, words->w2, words->w3, daq);
+	}
+	numMissedTriggers++;
+	continue;
+      } 
+      if(dochecks && atwdsize != 3) {
+	if(!didATWDSizeWarning) {
+	  didATWDSizeWarning++;
+	  mprintf("pedestalRun: WARNING: atwdsize=%d should be 3!  w0=0x%08x w1=0x%08x w2=0x%08x w3=0x%08x DAQ=0x%08x",
+		  atwdsize, words->w0, words->w1, words->w2, words->w3, daq);
+	}
+	numMissedTriggers++;
+	continue;
+      }
+      
+      /* Check valid FADC data present */
+      if(dochecks && ! (hdr->trigbits & 1<<17)) {
+	if(!didMissingFADCWarning) {
+	  didMissingFADCWarning++;
+	  mprintf("pedestalRun: WARNING: NO FADC data present in event!  trigbits=0x%08x", hdr->trigbits);
+	}
+	numMissedTriggers++;
+	continue;
+      }
 
-    hal_FPGA_TEST_trigger_forced(trigger_mask);
-    int i;
-    int done=0;
-    for(i=0; !done && i<ATWD_TIMEOUT_COUNT; i++) {
-      if(hal_FPGA_TEST_readout_done(trigger_mask)) done = 1;
-      halUSleep(ATWD_TIMEOUT_USEC);
-    }
-    if(!done) { mprintf("warning: forced CPU trigger FAILED!"); return -1; }
-  
-    //mprintf("forced CPU trigger succeeded after %d iterations.\n", i);
-    
-    hal_FPGA_TEST_readout(atwddata[0][0], atwddata[0][1], atwddata[0][2], atwddata[0][3],
-			  atwddata[1][0], atwddata[1][1], atwddata[1][2], atwddata[1][3],
-			  ATWDCHSIZ, fadcdata, FADCSIZ, trigger_mask);
+      /* Check valid ATWD data present */
+      if(dochecks && ! (hdr->trigbits & 1<<18)) {
+	if(!didMissingATWDWarning) {
+          didMissingATWDWarning++;
+          mprintf("pedestalRun: WARNING: NO ATWD data present in event!  trigbits=0x%08x", hdr->trigbits);
+        }
+	numMissedTriggers++;
+        continue;
+      }
 
-    int ichip, ich, isamp;
+      // pull out fadc data
+      unsigned short * fadc = (unsigned short *) (e+0x10);
+      unsigned short * atwd = (unsigned short *) (e+0x210);
 
-    for(ichip=0; ichip<2; ichip++) { /* Form up sums and averages for each ATWD */
-      int thismask = ichip==0 ? HAL_FPGA_TEST_TRIGGER_ATWD0 : HAL_FPGA_TEST_TRIGGER_ATWD1;
-      if(trigger_mask & thismask) {
-	if(ichip==0) npeds0++; else npeds1++;
-	int thispeds = ichip==0 ? npeds0 : npeds1;
-	int thisgoal = ichip==0 ? ped0goal : ped1goal;
-	for(ich=0; ich<4; ich++) {
-	  for(isamp=0; isamp<ATWDCHSIZ; isamp++) {
-	    atwdpedsum[ichip][ich][isamp] += atwddata[ichip][ich][isamp];
-	    if(thispeds >= thisgoal && thisgoal > 0)
-	      atwdpedavg[ichip][ich][isamp] = atwdpedsum[ichip][ich][isamp]/thisgoal;
-	  }
+      /* Count the waveforms into the running sums */
+      int ich; for(ich=0; ich<4; ich++)
+	for(isamp=0; isamp<ATWDCHSIZ; isamp++) 
+	  atwdpedsum[iatwd][ich][isamp] += atwd[ATWDCHSIZ*ich + isamp] & 0x3FF; //isamp*ich+iatwd;
+
+      for(isamp=0; isamp<FADCSIZ; isamp++) fadcpedsum[isamp] += fadc[isamp] & 0x3FF; //FADCSIZ-isamp;
+
+      if(iatwd==0) npeds0++; else npeds1++;
+      npedsadc++;
+
+    } /* loop over triggers */
+
+
+    int npeds = iatwd==0 ? npeds0 : npeds1;
+    int ich; for(ich=0; ich<4; ich++) {
+      for(isamp=0; isamp<ATWDCHSIZ; isamp++) {
+	if(npeds > 0) {
+	  atwdpedavg[iatwd][ich][isamp] = atwdpedsum[iatwd][ich][isamp]/npeds;
+	} else {
+	  atwdpedavg[iatwd][ich][isamp] = 0;
 	}
       }
+      /* Program ATWD pedestal pattern into FPGA */
+      hal_FPGA_DOMAPP_pedestal(iatwd, ich, atwdpedavg[iatwd][ich]);
     }
     
-    if(trigger_mask & HAL_FPGA_TEST_TRIGGER_FADC) { /* Sums and averages for FADC */
-      npedsadc++;
-      for(isamp=0; isamp<FADCSIZ; isamp++) {
-	fadcpedsum[isamp] += fadcdata[isamp];
-	if(npedsadc >= pedadcgoal && pedadcgoal > 0) 
-	  fadcpedavg[isamp] = fadcpedsum[isamp]/pedadcgoal;
+    
+    for(isamp=0; isamp<FADCSIZ; isamp++) {
+      if(npedsadc > 0) {
+	fadcpedavg[isamp] = fadcpedsum[isamp]/npedsadc;
+      } else {
+	fadcpedavg[isamp] = 0;
       }
+      /* Currently there is no setting of FADC pedestals in the FPGA! */
     }
-  }
+			   
+    mprintf("Number of pedestal triggers for ATWD %d is %d (%s, missed triggers=%d)", iatwd, npeds,
+	    dochecks ? "checks were enabled" : "WARNING: checks were DISABLED", numMissedTriggers);
+
+  } /* loop over atwds */
+
+  hal_FPGA_DOMAPP_disable_daq();
+  hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_OFF);
+
+  if(npeds0 > 0 && npeds1 > 0 && npedsadc > 0) pedestalsAvail = 1;
+
+  return 0;
 }
 
 /* Exp Control  Entry Point */
@@ -315,7 +396,7 @@ void expControl(MESSAGE_STRUCT *M) {
       
       /* begin run */ 
     case EXPCONTROL_BEGIN_RUN:
-      if (!beginRun()) {
+      if (!beginRun(compMode)) {
 	expctl.msgProcessingErr++;
 	strcpy(expctl.lastErrorStr,EXP_CANNOT_BEGIN_RUN);
 	expctl.lastErrorID=EXP_Cannot_Begin_Run;
@@ -410,33 +491,32 @@ void expControl(MESSAGE_STRUCT *M) {
 
     case EXPCONTROL_DO_PEDESTAL_COLLECTION:
       tmpPtr = data;
-#define MAXPEDGOAL 1000
+#define MAXPEDGOAL 1000 /* MAX # of ATWD triggers (FADCs are twice this) */
       ULONG ped0goal   = unformatLong(&data[0]);
       ULONG ped1goal   = unformatLong(&data[4]);
       ULONG pedadcgoal = unformatLong(&data[8]);
       zeroPedestals();
       Message_setDataLen(M,0);
+      Message_setStatus(M,SUCCESS);
       if(ped0goal   > MAXPEDGOAL ||
 	 ped1goal   > MAXPEDGOAL ||
-	 pedadcgoal > MAXPEDGOAL) {
+	 pedadcgoal > ped0goal + ped1goal) {
         expctl.msgProcessingErr++;
         strcpy(expctl.lastErrorStr,EXP_TOO_MANY_PEDS);
         expctl.lastErrorID=EXP_Too_Many_Peds;
         expctl.lastErrorSeverity=SEVERE_ERROR;
         Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
                           SEVERE_ERROR);
-
-	/* Else do the run; nonzero means failure: */
-      } else if(pedestalRun(ped0goal, ped1goal, pedadcgoal)) {
-
+	break;
+      }
+      if(pedestalRun(ped0goal, ped1goal, pedadcgoal)) {
         expctl.msgProcessingErr++;
         strcpy(expctl.lastErrorStr,EXP_PEDESTAL_RUN_FAILED);
         expctl.lastErrorID=EXP_Pedestal_Run_Failed;
         expctl.lastErrorSeverity=SEVERE_ERROR;
         Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
                           SEVERE_ERROR);
-      } else {
-      	Message_setStatus(M,SUCCESS);
+	break;
       }
       break;
 
