@@ -29,6 +29,7 @@ Last Modification:
 #include "DOMstateInfo.h"
 #include "moniDataAccess.h"
 #include "dataAccessRoutines.h"
+#include "domSControl.h"
 
 /* extern functions */
 extern void formatLong(ULONG value, UBYTE *buf);
@@ -38,7 +39,7 @@ extern BOOLEAN beginFBRun(USHORT bright, USHORT window, USHORT delay, USHORT mas
 extern BOOLEAN endFBRun(void);
 extern BOOLEAN forceRunReset(void);
 extern UBYTE   compMode;
-
+extern unsigned nextEvent(unsigned idx);
 /* local functions, data */
 UBYTE DOM_state;
 UBYTE DOM_config_access;
@@ -89,14 +90,58 @@ void zeroPedestals() {
   npeds0 = npeds1 = npedsadc = 0;
 }
 
+void dumpRegs(void) {
+#define dumpReg(a) (mprintf("%20s=0x%08x", #a, FPGA(a)))
+  dumpReg(TRIGGER_SOURCE);
+  dumpReg(TRIGGER_SETUP);
+  dumpReg(DAQ);
+  dumpReg(LBM_CONTROL);
+  dumpReg(LBM_POINTER);
+  dumpReg(DOM_STATUS);
+  dumpReg(SYSTIME_LSB);
+  dumpReg(SYSTIME_MSB);
+  dumpReg(LC_CONTROL);
+  dumpReg(CAL_CONTROL);
+  dumpReg(CAL_TIME);
+  dumpReg(CAL_LAUNCH);
+  dumpReg(CAL_LAST_FLASH_LSB);
+  dumpReg(CAL_LAST_FLASH_MSB);
+  dumpReg(RATE_CONTROL);
+  dumpReg(RATE_SPE);
+  dumpReg(RATE_MPE);
+  dumpReg(SN_CONTROL);
+  dumpReg(SN_DATA);
+  dumpReg(INT_EN);
+  dumpReg(INT_MASK);
+  dumpReg(INT_ACK);
+  dumpReg(FL_CONTROL);
+  dumpReg(FL_STATUS);
+  dumpReg(COMP_CONTROL);
+  dumpReg(ATWD_A_01_THRESHOLD);
+  dumpReg(ATWD_A_23_THRESHOLD);
+  dumpReg(ATWD_B_01_THRESHOLD);
+  dumpReg(ATWD_B_23_THRESHOLD);
+  dumpReg(PONG);
+  dumpReg(FW_DEBUGGING);
+  dumpReg(R2R_LADDER);
+  dumpReg(ATWD_PEDESTAL);
+}
+
+void zeroLBM(void) {
+  memset(hal_FPGA_DOMAPP_lbm_address(), 0, WHOLE_LBM_MASK+1);
+}
+
 int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
   /* return 0 if pedestal run succeeds, else error */
 
   mprintf("Starting pedestal run...");
+
+  dsc_hal_disable_LC_completely();
   hal_FPGA_DOMAPP_disable_daq();
   hal_FPGA_DOMAPP_lbm_reset();
-  halUSleep(10000); /* make sure atwd is done... */
+  halUSleep(1000); /* make sure atwd is done... */
   hal_FPGA_DOMAPP_lbm_reset();
+  zeroLBM();
   unsigned lbmp = hal_FPGA_DOMAPP_lbm_pointer();
   hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FORCED);
   hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
@@ -113,6 +158,7 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
   int didMissedTrigWarning   = 0;
   int didMissingFADCWarning  = 0;
   int didMissingATWDWarning  = 0;
+  dumpRegs();
   int iatwd; for(iatwd=0;iatwd<2;iatwd++) {
     int numMissedTriggers = 0;
     int numTrigs = (iatwd==0 ? ped0goal : ped1goal);      
@@ -121,17 +167,17 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
     int isamp;
     int it; for(it=0; it<numTrigs; it++) {
       hal_FPGA_DOMAPP_cal_launch();
-      halUSleep(500);
+      halUSleep(200);
       if(lbmp == hal_FPGA_DOMAPP_lbm_pointer()) {
 	numMissedTriggers++;
 	if(!didMissedTrigWarning) {
 	  didMissedTrigWarning++;
 	  mprintf("pedestalRun: WARNING: missed one or more calibration triggers for ATWD %d!", iatwd);
+	  dumpRegs();
 	}
 	continue;
       }
 
-      lbmp = hal_FPGA_DOMAPP_lbm_pointer();
       unsigned char * e = lbmEvent(lbmp);
       struct tstevt * hdr = (struct tstevt *) e;
       struct tstwords {
@@ -145,7 +191,9 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
 	  mprintf("pedestalRun: WARNING: trying to collect waveforms for pedestals but "
 		  "got COMPRESSED data!  w0=0x%08x w1=0x%08x w2=0x%08x w3=0x%08x DAQ=0x%08x",
 		  words->w0, words->w1, words->w2, words->w3, daq);
+	  dumpRegs();
 	}
+	lbmp = nextEvent(lbmp);
 	numMissedTriggers++;
 	continue;
       } 
@@ -154,7 +202,9 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
 	  didATWDSizeWarning++;
 	  mprintf("pedestalRun: WARNING: atwdsize=%d should be 3!  w0=0x%08x w1=0x%08x w2=0x%08x w3=0x%08x DAQ=0x%08x",
 		  atwdsize, words->w0, words->w1, words->w2, words->w3, daq);
+	  dumpRegs();
 	}
+	lbmp = nextEvent(lbmp);
 	numMissedTriggers++;
 	continue;
       }
@@ -164,7 +214,9 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
 	if(!didMissingFADCWarning) {
 	  didMissingFADCWarning++;
 	  mprintf("pedestalRun: WARNING: NO FADC data present in event!  trigbits=0x%08x", hdr->trigbits);
+	  dumpRegs();
 	}
+	lbmp = nextEvent(lbmp);
 	numMissedTriggers++;
 	continue;
       }
@@ -174,25 +226,27 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
 	if(!didMissingATWDWarning) {
           didMissingATWDWarning++;
           mprintf("pedestalRun: WARNING: NO ATWD data present in event!  trigbits=0x%08x", hdr->trigbits);
+	  dumpRegs();
         }
+	lbmp = nextEvent(lbmp);
 	numMissedTriggers++;
         continue;
       }
 
-      // pull out fadc data
+      /* Pull out FADC data */
       unsigned short * fadc = (unsigned short *) (e+0x10);
       unsigned short * atwd = (unsigned short *) (e+0x210);
 
       /* Count the waveforms into the running sums */
       int ich; for(ich=0; ich<4; ich++)
 	for(isamp=0; isamp<ATWDCHSIZ; isamp++) 
-	  atwdpedsum[iatwd][ich][isamp] += atwd[ATWDCHSIZ*ich + isamp] & 0x3FF; //isamp*ich+iatwd;
+	  atwdpedsum[iatwd][ich][isamp] += atwd[ATWDCHSIZ*ich + isamp] & 0x3FF;
 
-      for(isamp=0; isamp<FADCSIZ; isamp++) fadcpedsum[isamp] += fadc[isamp] & 0x3FF; //FADCSIZ-isamp;
+      for(isamp=0; isamp<FADCSIZ; isamp++) fadcpedsum[isamp] += fadc[isamp] & 0x3FF; 
 
       if(iatwd==0) npeds0++; else npeds1++;
       npedsadc++;
-
+      lbmp = nextEvent(lbmp);
     } /* loop over triggers */
 
 

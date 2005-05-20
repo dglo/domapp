@@ -295,12 +295,14 @@ void dataAccess(MESSAGE_STRUCT *M) {
     
     case DATA_ACC_SET_BASELINE_THRESHOLD:
       fadcRGthresh = unformatShort(data);
+      hal_FPGA_DOMAPP_RG_fadc_threshold(fadcRGthresh);
       for(ichip=0;ichip<2;ichip++) {
 	for(ich=0; ich<4; ich++) {
 	  atwdRGthresh[ichip][ich] = unformatShort(data + 2 + ichip*8 + ich*2);
+	  hal_FPGA_DOMAPP_RG_atwd_threshold((short) ichip, (short) ich, 
+					    (short) atwdRGthresh[ichip][ich]);
 	}
       }
-      mprintf("Warning: DATA_ACC_SET_BASELINE_THRESHOLD: NOT setting values in hardware (no HAL interface)");
       Message_setDataLen(M, 0);
       Message_setStatus(M, SUCCESS);
       break;

@@ -71,4 +71,14 @@
 void domSControlInit(void);
 void domSControl(MESSAGE_STRUCT *M);
 
+/* New LC config functions */
+void updateLCtx(void);
+void updateLCsrc(void);
+void updateLCspan(void);
+void updateLClengths(void);
+int  updateLCwindows(void);
+
+void dsc_hal_disable_LC_completely(void);
+void dsc_hal_do_LC_settings(void);
+
 #endif

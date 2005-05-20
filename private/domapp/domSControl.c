@@ -47,9 +47,38 @@ USHORT PMT_HV_max          = PMT_HV_DEFAULT_MAX;
 int   pulser_running       = 0;
 USHORT pulser_rate         = 1; /* By default, now take forced triggers at 1 Hz */
 UBYTE selected_mux_channel = 0;
-ULONG deadTime             = 0;
+ULONG deadTime             = 100;
 UBYTE LCmode               = 0;
-ULONG up_pre_ns, up_post_ns, dn_pre_ns, dn_post_ns;
+typedef enum {
+  LC_MODE_NONE=0, 
+  LC_MODE_BOTH=1,
+  LC_MODE_UP  =2,
+  LC_MODE_DN  =3 } LC_MODE_T;
+typedef enum {
+  LC_TYPE_NONE=0,
+  LC_TYPE_SOFT=1, 
+  LC_TYPE_HARD=2,
+  LC_TYPE_FLABBY=3 } LC_TYPE_T;
+typedef enum {
+  LC_TX_NONE=0,
+  LC_TX_UP  =1,
+  LC_TX_DN  =2,
+  LC_TX_BOTH=3 } LC_TX_T;
+typedef enum {
+  LC_SRC_SPE = 0,
+  LC_SRC_MPE = 1 } LC_SRC_T;
+#define MAXDISTNS 3175
+UBYTE LCtype               = LC_TYPE_HARD;
+UBYTE LCtx                 = LC_TX_BOTH;
+UBYTE LCsrc                = 0;
+UBYTE LCspan               = 1;
+USHORT LCupLengths[4];
+USHORT LCdnLengths[4];
+UBYTE LClengthsSet         = 0;
+//ULONG up_pre_ns, up_post_ns, dn_pre_ns, dn_post_ns;
+#define LC_WIN_DEFAULT 200
+ULONG pre_ns               = LC_WIN_DEFAULT;
+ULONG post_ns              = LC_WIN_DEFAULT;
 
 /* struct that contains common service info for
 	this service. */
@@ -65,6 +94,118 @@ void domSControlInit(void) {
     domsc.msgReceived=0;
     domsc.msgRefused=0;
     domsc.msgProcessingErr=0;
+}
+
+void set_HAL_lc_mode() {
+  //mprintf("set_HAL_lc_mode(LCmode=%d, LCtype=%d)", LCmode, LCtype);
+  if(LCmode == LC_MODE_NONE) {
+    hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);
+  } else {
+    switch(LCtype) {
+    case LC_TYPE_NONE:   hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);    break;
+    case LC_TYPE_FLABBY: hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_FLABBY); break;
+    case LC_TYPE_SOFT:   hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_SOFT);   break;
+    case LC_TYPE_HARD:
+    default:             hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_HARD);   break;
+    }
+  }
+}
+
+void setLCmodeAndTx() {
+  /* Enables both triggering by and TX of LC signals */
+
+  //mprintf("setLCmodeAndTx(LCmode=%d, LCtx=%d)", LCmode, LCtx);
+
+  set_HAL_lc_mode(); /* DISABLES LC if LCmode == 0 */
+
+  unsigned txbits;
+  unsigned rxbits;
+  switch(LCmode) { 
+  case LC_MODE_NONE:
+    rxbits = 0;
+    break;
+  case LC_MODE_UP:
+    rxbits = HAL_FPGA_DOMAPP_LC_ENABLE_RCV_UP;
+    break;
+  case LC_MODE_DN:
+    rxbits = HAL_FPGA_DOMAPP_LC_ENABLE_RCV_DOWN;
+    break;
+  default:
+  case LC_MODE_BOTH:
+    rxbits = HAL_FPGA_DOMAPP_LC_ENABLE_RCV_UP | HAL_FPGA_DOMAPP_LC_ENABLE_RCV_DOWN;
+    break;
+  }
+
+  switch(LCtx) {
+  case LC_TX_UP:
+    txbits = HAL_FPGA_DOMAPP_LC_ENABLE_SEND_UP;
+    break;
+  case LC_TX_DN:
+    txbits = HAL_FPGA_DOMAPP_LC_ENABLE_SEND_DOWN;
+    break;
+  case LC_TX_NONE:
+    txbits = 0;
+    break;
+  case LC_TX_BOTH:
+  default:
+    txbits = HAL_FPGA_DOMAPP_LC_ENABLE_SEND_UP | HAL_FPGA_DOMAPP_LC_ENABLE_SEND_DOWN;
+    break;
+  }
+
+  hal_FPGA_DOMAPP_lc_enable( txbits | rxbits );
+}
+
+void updateLCsrc(void) {
+  //mprintf("updateLCsrc(%d)", LCsrc);
+  if(LCsrc == LC_SRC_MPE) 
+    hal_FPGA_DOMAPP_lc_disc_mpe();
+  else
+    hal_FPGA_DOMAPP_lc_disc_spe();
+}
+
+void updateLCspan(void) { 
+  //mprintf("updateLCspan(%d)", LCspan);
+  hal_FPGA_DOMAPP_lc_span(LCspan); 
+}
+
+int updateLCwindows(void) {
+  //mprintf("updateLCwindows(pre=%d, post=%d)", pre_ns, post_ns);
+  if(hal_FPGA_DOMAPP_lc_windows(pre_ns, post_ns)) { 
+    mprintf("WARNING: hal_FPGA_DOMAPP_lc_windows failed (pre=%d, post=%d), probably bad args", 
+	    pre_ns, post_ns);
+    pre_ns = post_ns = LC_WIN_DEFAULT;
+    return 1;
+  }
+  return 0;
+}
+
+void updateLClengths(void) {
+  if(LClengthsSet) {
+    //mprintf("updateLClengths UP %d %d %d %d DN %d %d %d %d", 
+    //    LCupLengths[0], LCupLengths[1], LCupLengths[2], LCupLengths[3],
+    //    LCdnLengths[0], LCdnLengths[1], LCdnLengths[2], LCdnLengths[3]);
+    int ispan; for(ispan=0; ispan < 4; ispan++) {
+      hal_FPGA_DOMAPP_lc_length_up(ispan, LCupLengths[ispan]);
+      hal_FPGA_DOMAPP_lc_length_down(ispan, LCdnLengths[ispan]);
+    }
+  } else {
+    //mprintf("updateLClengths: lengths not set, skipping");
+  }
+}
+
+void dsc_hal_disable_LC_completely(void) {
+  //mprintf("dsc_hal_disable_LC_completely ... disabling LC");
+  hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);
+  hal_FPGA_DOMAPP_lc_enable(0);
+}
+
+void dsc_hal_do_LC_settings(void) {
+  //mprintf("dsc_hal_do_LC_settings ... setting up LC");
+  setLCmodeAndTx();
+  updateLCsrc();
+  updateLCspan();
+  updateLClengths();
+  updateLCwindows();
 }
 
 void domSControl(MESSAGE_STRUCT *M) {
@@ -468,22 +609,30 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_GET_RATE_METERS:
-    formatLong((ULONG)hal_FPGA_TEST_get_spe_rate(),
+    formatLong((ULONG)hal_FPGA_DOMAPP_spe_rate(),
 	       &data[0]);
-    formatLong((ULONG)hal_FPGA_TEST_get_mpe_rate(),
+    formatLong((ULONG)hal_FPGA_DOMAPP_mpe_rate(),
 	       &data[4]);
     Message_setDataLen(M,DSC_GET_RATE_METERS_LEN);
     Message_setStatus(M,SUCCESS);
     break;  
   case DSC_SET_SCALER_DEADTIME:
-    deadTime = unformatLong(data);
-    /* HAL expects an int here, but deadTime is passed as
-       ULONG (unsigned) for convenience; should probably check
-       for negative number, but just give to HAL as is for now; for 
-       negatives HAL will just set to 50*2^15 nsec. */
-    hal_FPGA_TEST_set_deadtime((int)deadTime);
-    Message_setDataLen(M,0);
-    Message_setStatus(M,SUCCESS);
+    { 
+      int dt = unformatLong(data);
+      if(dt < 100 || dt > 102400) {
+	domsc.msgProcessingErr++;
+	strcpy(domsc.lastErrorStr,"Bad value for scaler deadtime");
+	domsc.lastErrorID=DSC_bad_deadtime;
+	domsc.lastErrorSeverity=FATAL_ERROR;
+	Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+	Message_setDataLen(M,0);
+      } else {
+	deadTime = dt;
+	hal_FPGA_DOMAPP_rate_monitor_deadtime((int)deadTime);
+	Message_setDataLen(M,0);
+	Message_setStatus(M,SUCCESS);
+      }
+    }
     break;
   case DSC_GET_SCALER_DEADTIME:
     formatLong(deadTime,&data[0]);
@@ -494,25 +643,25 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setDataLen(M,0);
     if(data[0] == 0) {
       LCmode = data[0];
-      hal_FPGA_TEST_disable_spe_lc();
+      setLCmodeAndTx();
       moniInsertLCModeChangeMessage(hal_FPGA_DOMAPP_get_local_clock(), 
 				    LCmode);
       Message_setStatus(M,SUCCESS);
     } else if(data[0] == 1) {
       LCmode = data[0];
-      hal_FPGA_TEST_enable_spe_lc(1,1);
+      setLCmodeAndTx();
       moniInsertLCModeChangeMessage(hal_FPGA_DOMAPP_get_local_clock(),
 				    LCmode);
       Message_setStatus(M,SUCCESS);
     } else if(data[0] == 2) { /* Upper ONLY */
       LCmode = data[0];
-      hal_FPGA_TEST_enable_spe_lc(0, 1);
+      setLCmodeAndTx();
       moniInsertLCModeChangeMessage(hal_FPGA_DOMAPP_get_local_clock(),
 				    LCmode);
       Message_setStatus(M,SUCCESS);
     } else if(data[0] == 3) { /* Lower ONLY */
       LCmode = data[0];
-      hal_FPGA_TEST_enable_spe_lc(1, 0);
+      setLCmodeAndTx();
       moniInsertLCModeChangeMessage(hal_FPGA_DOMAPP_get_local_clock(),
 				    LCmode);
       Message_setStatus(M,SUCCESS);
@@ -530,14 +679,12 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_SET_LOCAL_COIN_WINDOW:
-    up_pre_ns  = unformatLong(&data[0]);
-    up_post_ns = unformatLong(&data[4]);
-    dn_pre_ns  = unformatLong(&data[8]);
-    dn_post_ns = unformatLong(&data[12]);
+    pre_ns   = unformatLong(&data[0]);
+    post_ns  = unformatLong(&data[4]);
     Message_setDataLen(M,0);
-
-    if(hal_FPGA_TEST_set_lc_launch_window(up_pre_ns, up_post_ns,
-					  dn_pre_ns, dn_post_ns)) {
+    
+    if(updateLCwindows()) {
+      pre_ns = post_ns = LC_WIN_DEFAULT;
       domsc.msgProcessingErr++;
       strcpy(domsc.lastErrorStr,DSC_LC_WINDOW_FAIL);
       domsc.lastErrorID=DSC_LC_Window_Fail;
@@ -546,21 +693,158 @@ void domSControl(MESSAGE_STRUCT *M) {
     } else {
       Message_setStatus(M,SUCCESS);
       moniInsertLCWindowChangeMessage(hal_FPGA_DOMAPP_get_local_clock(),
-				      up_pre_ns, up_post_ns,
-				      dn_pre_ns, dn_post_ns);
+				      pre_ns, post_ns);
     }		 
     break;
+
   case DSC_GET_LOCAL_COIN_WINDOW:
-    formatLong(up_pre_ns,  &data[0]);
-    formatLong(up_post_ns, &data[4]);
-    formatLong(dn_pre_ns,  &data[8]);
-    formatLong(dn_post_ns, &data[12]);
+    formatLong(pre_ns,  &data[0]);
+    formatLong(post_ns, &data[4]);
+    Message_setDataLen(M,8);
+    Message_setStatus(M,SUCCESS);
+    break;
+
+  case DSC_SET_LC_TYPE:
+    Message_setDataLen(M,0);
+    { 
+      UBYTE lct = data[0];
+      if(lct != LC_TYPE_SOFT && lct != LC_TYPE_HARD && lct != LC_TYPE_FLABBY) {
+	domsc.msgProcessingErr++;
+	strcpy(domsc.lastErrorStr,"Invalid local coincidence type");
+	domsc.lastErrorID=DSC_LC_Bad_Type;
+	domsc.lastErrorSeverity=FATAL_ERROR;
+	Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+      } else {
+	LCtype = lct;
+	set_HAL_lc_mode();
+	Message_setStatus(M,SUCCESS);
+      }
+    }
+    break;
+
+  case DSC_GET_LC_TYPE:
+    data[0] = LCtype;
+    Message_setDataLen(M,1);
+    Message_setStatus(M,SUCCESS);
+    break;
+
+  case DSC_SET_LC_TX:
+    Message_setDataLen(M,0);
+    {
+      UBYTE lctx = data[0];
+      if(lctx != LC_TX_NONE && lctx != LC_TX_UP && lctx != LC_TX_DN && lctx != LC_TX_BOTH) {
+        domsc.msgProcessingErr++;
+        strcpy(domsc.lastErrorStr,"Invalid local coincidence transmit (TX) setting");
+        domsc.lastErrorID=DSC_LC_Bad_Tx;
+        domsc.lastErrorSeverity=FATAL_ERROR;
+        Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+      } else {
+        LCtx = lctx;
+	setLCmodeAndTx();
+        Message_setStatus(M,SUCCESS);
+      }
+    }
+    break;
+
+  case DSC_GET_LC_TX:
+    data[0] = LCtx;
+    Message_setDataLen(M,1);
+    Message_setStatus(M,SUCCESS);
+    break;
+
+  case DSC_SET_LC_SRC:
+    Message_setDataLen(M,0);
+    {
+      UBYTE lcs = data[0];
+      if(lcs != LC_SRC_SPE && lcs != LC_SRC_MPE) {
+        domsc.msgProcessingErr++;
+        strcpy(domsc.lastErrorStr,"Invalid local coincidence source (SPE/MPE)");
+        domsc.lastErrorID=DSC_LC_Bad_Src;
+        domsc.lastErrorSeverity=FATAL_ERROR;
+        Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+      } else {
+        LCsrc = lcs;
+	updateLCsrc();
+        Message_setStatus(M,SUCCESS);
+      }
+    }
+    break;
+
+  case DSC_GET_LC_SRC:
+    data[0] = LCsrc;
+    Message_setDataLen(M,1);
+    Message_setStatus(M,SUCCESS);
+    break;
+
+  case DSC_SET_LC_SPAN:
+    Message_setDataLen(M,0);
+    {
+      UBYTE lcsp = data[0];
+      if(lcsp < 1 || lcsp > 4) {
+        domsc.msgProcessingErr++;
+        strcpy(domsc.lastErrorStr,"Invalid local coincidence span number (1..4)");
+        domsc.lastErrorID=DSC_LC_Bad_Span;
+        domsc.lastErrorSeverity=FATAL_ERROR;
+        Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+      } else {
+        LCspan = lcsp;
+	updateLCspan();
+        Message_setStatus(M,SUCCESS);
+      }
+    }
+    break;
+
+  case DSC_GET_LC_SPAN:
+    data[0] = LCspan;
+    Message_setDataLen(M,1);
+    Message_setStatus(M,SUCCESS);
+    break;
+
+  case DSC_SET_LC_CABLE_LEN:
+    Message_setDataLen(M,0);
+    Message_setStatus(M,SUCCESS);
+    LClengthsSet = 1;
+    { 
+      int ispan; for(ispan = 0; ispan < 4; ispan++) {
+	USHORT iup = unformatShort(data+ispan*2);
+	USHORT idn = unformatShort(data+8+ispan*2);
+	if(iup > MAXDISTNS || idn > MAXDISTNS) {
+	  domsc.msgProcessingErr++;
+	  strcpy(domsc.lastErrorStr,"Invalid local coincidence cable length, must be < 25*127");
+	  domsc.lastErrorID=DSC_LC_Bad_Len;
+	  domsc.lastErrorSeverity=FATAL_ERROR;
+	  Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+	  LClengthsSet = 0; /* Changed our minds! */
+	  break;
+	}
+	LCupLengths[ispan] = iup;
+	LCdnLengths[ispan] = idn;
+	updateLClengths();
+      }
+    }
+    break;
+  case DSC_GET_LC_CABLE_LEN:
+    if(!LClengthsSet) { /* Don't allow this if lengths aren't set! */
+      domsc.msgProcessingErr++;
+      strcpy(domsc.lastErrorStr,
+	     "Local coincidence lengths NOT previously set by software -- "
+	     "do DSC_SET_LC_CABLE_LEN first");
+      domsc.lastErrorID=DSC_LC_Len_Not_Set;
+      domsc.lastErrorSeverity=FATAL_ERROR;
+      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+      Message_setDataLen(M,0);
+      break;
+    }
+    {
+      int ispan; for(ispan = 0; ispan < 4; ispan++) {
+	formatShort(LCupLengths[ispan], data+ispan*2);
+	formatShort(LCdnLengths[ispan], data+8+ispan*2);
+      }
+    }
     Message_setDataLen(M,16);
     Message_setStatus(M,SUCCESS);
     break;
-    /*-----------------------------------
-      unknown service request (i.e. message
-      subtype), respond accordingly */
+
   default:
     domsc.msgRefused++;
     strcpy(domsc.lastErrorStr,DSC_ERS_BAD_MSG_SUBTYPE);

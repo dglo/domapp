@@ -3,7 +3,7 @@
  * Part of dataAccess thread
  * John Jacobsen, JJ IT Svcs, for LBNL
  * May, 2003
- * $Id: moniDataAccess.h,v 1.1 2005-04-26 21:07:09 jacobsen Exp $
+ * $Id: moniDataAccess.h,v 1.3 2005-05-20 21:09:17 jacobsen Exp $
  */
 
 #ifndef _MONI_DATA_ACCESS_
@@ -177,8 +177,7 @@ void moniInsertEnablePMT_HV_Message(unsigned long long time);
 void moniInsertDisablePMT_HV_Message(unsigned long long time);
 void moniInsertLCModeChangeMessage(unsigned long long time, UBYTE mode);
 void moniInsertLCWindowChangeMessage(unsigned long long time,
-                                     ULONG up_pre_ns, ULONG up_post_ns,
-                                     ULONG dn_pre_ns, ULONG dn_post_ns);
+                                     ULONG pre_ns, ULONG post_ns);
 
 void moniTestAllMonitorRecords(void);         
 /* Generate one of each record */

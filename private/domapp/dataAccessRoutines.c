@@ -28,7 +28,7 @@
 #include "message.h"
 #include "dataAccessRoutines.h"
 #include "DSCmessageAPIstatus.h"
-
+#include "domSControl.h"
 /* Externally available pedestal waveforms */
 extern unsigned short atwdpedavg[2][4][128];
 extern unsigned short fadcpedavg[256];
@@ -264,7 +264,6 @@ BOOLEAN beginRun(UBYTE compressionMode) {
     hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_ATWD_FADC);
     hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_TESTING);
     hal_FPGA_DOMAPP_enable_atwds(HAL_FPGA_DOMAPP_ATWD_A|HAL_FPGA_DOMAPP_ATWD_B);
-    hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);
     hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_WRAP);
     //hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_STOP);
     if(compressionMode == CMP_NONE) {
@@ -275,6 +274,9 @@ BOOLEAN beginRun(UBYTE compressionMode) {
       mprintf("beginRun: ERROR: invalid compression mode given (%d)", (int) compressionMode);
       return FALSE;
     }
+
+    dsc_hal_do_LC_settings(); /* See domSControl.c */
+
     hal_FPGA_DOMAPP_rate_monitor_enable(HAL_FPGA_DOMAPP_RATE_MONITOR_SPE|
 					HAL_FPGA_DOMAPP_RATE_MONITOR_MPE);
 
@@ -316,10 +318,6 @@ inline BOOLEAN runIsInProgress(void) { return DOM_state==DOM_RUN_IN_PROGRESS; }
 
 void initFillMsgWithData(void) { }
 
-#define FPGA_DOMAPP_LBM_BLOCKSIZE 2048 /* BYTES not words */
-#define FPGA_DOMAPP_LBM_BLOCKMASK (FPGA_DOMAPP_LBM_BLOCKSIZE-1)
-#define WHOLE_LBM_MASK ((1<<24)-1)
-
 int isDataAvailable() {
   return ( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) & ~FPGA_DOMAPP_LBM_BLOCKMASK );
 }
@@ -331,7 +329,7 @@ unsigned char *lbmEvent(unsigned idx) {
 }
 
 /* Stolen from Arthur: but changed EVENT_LEN to EVENT_SIZE */
-static inline unsigned nextEvent(unsigned idx) {
+unsigned nextEvent(unsigned idx) {
    return (idx + HAL_FPGA_DOMAPP_LBM_EVENT_SIZE) & HAL_FPGA_DOMAPP_LBM_MASK;
 }
 

@@ -14,6 +14,11 @@
 #define FMT_ENG 0
 #define FMT_RG  1
 
+/* LBM stuff */
+#define FPGA_DOMAPP_LBM_BLOCKSIZE 2048 /* BYTES not words */
+#define FPGA_DOMAPP_LBM_BLOCKMASK (FPGA_DOMAPP_LBM_BLOCKSIZE-1)
+#define WHOLE_LBM_MASK ((1<<24)-1)
+
 struct tstevt {
   unsigned short tlo;
   unsigned short one;

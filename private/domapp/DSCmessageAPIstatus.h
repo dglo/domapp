@@ -50,6 +50,16 @@
 #define DSC_GET_LOCAL_COIN_MODE 46
 #define DSC_SET_LOCAL_COIN_WINDOW 47
 #define DSC_GET_LOCAL_COIN_WINDOW 48
+#define DSC_SET_LC_TYPE 49
+#define DSC_GET_LC_TYPE 50
+#define DSC_SET_LC_TX 51
+#define DSC_GET_LC_TX 52
+#define DSC_SET_LC_SRC 53
+#define DSC_GET_LC_SRC 54
+#define DSC_SET_LC_SPAN 55
+#define DSC_GET_LC_SPAN 56
+#define DSC_SET_LC_CABLE_LEN 57
+#define DSC_GET_LC_CABLE_LEN 58
 
 
 /* Slow Control specific Last error ID values */
@@ -72,7 +82,13 @@
 #define DSC_bad_flasher_param 20
 #define DSC_Illegal_LC_Mode 21
 #define DSC_LC_Window_Fail 22
-
+#define DSC_LC_Bad_Type 33
+#define DSC_LC_Bad_Tx 34
+#define DSC_LC_Bad_Src 35
+#define DSC_LC_Bad_Span 36
+#define DSC_LC_Bad_Len 37
+#define DSC_LC_Len_Not_Set 38
+#define DSC_bad_deadtime 39
 /* These are DOM Slow Control specific return message
    formats and values.  In most cases, they are formatted
    as byte values to eliminate any questions of

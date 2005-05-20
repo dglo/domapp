@@ -3,6 +3,22 @@ Release notes for production domapp -- jacobsen@npxdesigns.com
 
 =========================================================
 
+domapp V00-00-03  5/20/2005  NOT A PRODUCTION RELEASE
+       Requires domapp.sbi: (not yet tagged in CVS)
+       Test with domhub-tools: V00-00-02
+
+Known issues:
+- Flasher stuff still not implemented/tested
+- Supernova stuff not implemented/tested
+- LC not tested
+
+Upgrades/bug fixes:
+- LC added per documentation; not tested extensively yet
+- Fixed bug with pedestal collection
+- Most real FPGA stuff supported now
+
+=========================================================
+
 domapp V00-00-02  5/19/2005  NOT A PRODUCTION RELEASE
        Requires domapp.sbi: (not yet tagged in CVS)
        Test with domhub-tools: V00-00-01

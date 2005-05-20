@@ -3,7 +3,7 @@
  * Routines to store and fetch monitoring data from a circular buffer
  * John Jacobsen, JJ IT Svcs, for LBNL/IceCube
  * May, 2003
- * $Id: moniDataAccess.c,v 1.8 2005-05-19 00:08:23 jacobsen Exp $
+ * $Id: moniDataAccess.c,v 1.10 2005-05-20 21:09:17 jacobsen Exp $
  * CURRENTLY NOT THREAD SAFE -- need to implement moni[Un]LockWriteIndex
  */
 
@@ -486,8 +486,7 @@ void moniInsertLCModeChangeMessage(unsigned long long time, UBYTE mode) {
 
 
 void moniInsertLCWindowChangeMessage(unsigned long long time,
-                                     ULONG up_pre_ns, ULONG up_post_ns,
-                                     ULONG dn_pre_ns, ULONG dn_post_ns) {
+                                     ULONG up_pre_ns, ULONG up_post_ns) {
   struct moniRec mr;
   mr.dataLen = 2+4*sizeof(ULONG);
   mr.fiducial.fstruct.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
@@ -496,8 +495,6 @@ void moniInsertLCWindowChangeMessage(unsigned long long time,
   mr.data[1] = DSC_SET_LOCAL_COIN_WINDOW;
   formatLong(up_pre_ns,  &(mr.data[2]));
   formatLong(up_post_ns, &(mr.data[6]));
-  formatLong(dn_pre_ns,  &(mr.data[10]));
-  formatLong(dn_post_ns,  &(mr.data[14]));
   moniInsertRec(&mr);
 }
 
