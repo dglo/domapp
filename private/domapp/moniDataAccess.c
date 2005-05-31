@@ -3,7 +3,7 @@
  * Routines to store and fetch monitoring data from a circular buffer
  * John Jacobsen, JJ IT Svcs, for LBNL/IceCube
  * May, 2003
- * $Id: moniDataAccess.c,v 1.10 2005-05-20 21:09:17 jacobsen Exp $
+ * $Id: moniDataAccess.c,v 1.11 2005-05-27 20:22:14 jacobsen Exp $
  * CURRENTLY NOT THREAD SAFE -- need to implement moni[Un]LockWriteIndex
  */
 
@@ -372,7 +372,7 @@ void moniInsertHdwrStateMessage(unsigned long long time, USHORT temperature,
   if(test) {
     moniFillBogusHdwrStateMessage(&mh);
   } else {    
-    mh.STATE_EVENT_VERSION       = 0;
+    mh.STATE_EVENT_VERSION       = HARDWARE_STATE_EVENT_VERSION;
     mh.spare                     = 0;
     mh.ADC_VOLTAGE_SUM           = moniBEShort(halReadADC(DOM_HAL_ADC_VOLTAGE_SUM));
     mh.ADC_5V_POWER_SUPPLY       = moniBEShort(halReadADC(DOM_HAL_ADC_5V_POWER_SUPPLY));
@@ -486,15 +486,18 @@ void moniInsertLCModeChangeMessage(unsigned long long time, UBYTE mode) {
 
 
 void moniInsertLCWindowChangeMessage(unsigned long long time,
-                                     ULONG up_pre_ns, ULONG up_post_ns) {
+                                     ULONG pre_ns, ULONG post_ns) {
   struct moniRec mr;
   mr.dataLen = 2+4*sizeof(ULONG);
   mr.fiducial.fstruct.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
   mr.time = time;
   mr.data[0] = DOM_SLOW_CONTROL;
   mr.data[1] = DSC_SET_LOCAL_COIN_WINDOW;
-  formatLong(up_pre_ns,  &(mr.data[2]));
-  formatLong(up_post_ns, &(mr.data[6]));
+  formatLong(pre_ns,  &(mr.data[2]));  /* This is a bit ugly, but       */
+  formatLong(post_ns, &(mr.data[6]));  /* keeps the old format intact   */
+  formatLong(pre_ns,  &(mr.data[10])); /* which does not easily support */
+  formatLong(post_ns, &(mr.data[14])); /* new versions                  */
+
   moniInsertRec(&mr);
 }
 

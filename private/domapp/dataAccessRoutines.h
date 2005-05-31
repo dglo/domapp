@@ -27,20 +27,21 @@ struct tstevt {
   unsigned short tdead;
 };
 
-BOOLEAN beginRun(UBYTE compression); 
-BOOLEAN endRun(void);
-BOOLEAN forceRunReset(void);
 void initFillMsgWithData(void);
 int isDataAvailable(void);
 int fillMsgWithData(UBYTE *msgBuffer, int bsize, UBYTE format, UBYTE compression);
+int fillMsgWithSNData(UBYTE *msgBuffer, int bsize);
 void initFormatEngineeringEvent(UBYTE, UBYTE, UBYTE);
-void startLBMTriggers(void);
-void bufferLBMTriggers(void);
-void insertTestEvents(void);
 void setSPETrigMode(void);
 void setSPEPulserTrigMode(void);
 void setFBTrigMode(void);
 void setPeriodicForcedTrigMode(void);
+int  beginRun(UBYTE compressionMode, UBYTE newRunState);
+int  beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window, 
+		short delay, USHORT mask, USHORT rate);
+int  endRun(void);
+int  endFBRun(void);
+
 USHORT domappReadBaseADC(void);
 unsigned long long domappHVSerialRaw(void);
 unsigned char *lbmEvent(unsigned idx);

@@ -3,7 +3,7 @@
  * Part of dataAccess thread
  * John Jacobsen, JJ IT Svcs, for LBNL
  * May, 2003
- * $Id: moniDataAccess.h,v 1.3 2005-05-20 21:09:17 jacobsen Exp $
+ * $Id: moniDataAccess.h,v 1.4 2005-05-27 20:22:14 jacobsen Exp $
  */
 
 #ifndef _MONI_DATA_ACCESS_
@@ -12,6 +12,8 @@
 #define MONI_TIME_LEN 6
 #define MAXMONI_RECSIZE 512
 #define MAXMONI_DATA MAXMONI_RECSIZE-4-MONI_TIME_LEN 
+
+#define HARDWARE_STATE_EVENT_VERSION 0x01
 
 /* WARNING: These must match values in DataAccGetMonitorMsg.java! */
 #define MONI_TYPE_HDWR_STATE_MSG     0xC8

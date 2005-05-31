@@ -11,12 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// DOM-related includes
-#include "hal/DOM_MB_fpga.h"
 #include "hal/DOM_MB_domapp.h"
-#include "hal/DOM_MB_pld.h"
-#include "hal/DOM_FPGA_regs.h"
-#include "hal/DOM_MB_types.h"
 #include "hal/DOM_MB_hal.h"
 
 #include "moniDataAccess.h"
@@ -24,11 +19,12 @@
 #include "DOMtypes.h"
 #include "DOMdata.h"
 #include "DOMstateInfo.h"
-#include "lbm.h"
 #include "message.h"
 #include "dataAccessRoutines.h"
 #include "DSCmessageAPIstatus.h"
 #include "domSControl.h"
+#include "expControl.h"
+
 /* Externally available pedestal waveforms */
 extern unsigned short atwdpedavg[2][4][128];
 extern unsigned short fadcpedavg[256];
@@ -65,7 +61,7 @@ extern USHORT fadcpedavg[FADCSIZ];
 extern int SW_compression;
 extern int SW_compression_fmt;
 
-int   nTrigsReadOut   = 0;
+int nTrigsReadOut = 0;
 
 // routines used for generating engineering events
 UBYTE *ATWDShortMove(USHORT *data, UBYTE *buffer, int count);
@@ -102,40 +98,32 @@ static bench_rec_t bformat, breadout, bbuffer, bcompress;
 # define TSHOW(a,b)
 #endif
 
-
-BOOLEAN beginFBRun(USHORT bright, USHORT window, USHORT delay, USHORT mask, USHORT rate) {
-#warning all this flasher stuff is old and needs to be redone
+int hvOffCheckFails(void) {
 #define MAXHVOFFADC 5
   USHORT hvadc = domappReadBaseADC();
   if(hvadc > MAXHVOFFADC) {
     mprintf("Can't start flasher board run: DOM HV ADC=%hu.", hvadc);
-    return FALSE;
+    return 1;
   }
+  return 0;
+}
 
-  if(DOM_state!=DOM_IDLE) {
-    mprintf("Can't start flasher board run: DOM_state=%d.", DOM_state);
-    return FALSE;
-  }
-
-  halPowerDownBase(); /* Just to be sure, turn off HV */
-
-  DOM_state = DOM_FB_RUN_IN_PROGRESS;
+int fbSetup(USHORT bright, USHORT window, short delay, USHORT mask, USHORT rate) {
   int err, config_t, valid_t, reset_t;
   err = hal_FB_enable(&config_t, &valid_t, &reset_t, DOM_FPGA_DOMAPP);
   if (err != 0) {
     switch(err) {
     case FB_HAL_ERR_CONFIG_TIME:
       mprintf("Error: flasherboard configuration time too long");
-      return FALSE;
+      return 1;
     case FB_HAL_ERR_VALID_TIME:
       mprintf("Error: flasherboard clock validation time too long");
-      return FALSE;
+      return 1;
     default:
       mprintf("Error: unknown flasherboard enable failure");
-      return FALSE;
+      return 1;
     }
   }
-
   halSelectAnalogMuxInput(DOM_HAL_MUX_FLASHER_LED_CURRENT);  
   hal_FB_set_brightness((UBYTE) bright);
   hal_FB_set_pulse_width((UBYTE) window);
@@ -151,34 +139,42 @@ BOOLEAN beginFBRun(USHORT bright, USHORT window, USHORT delay, USHORT mask, USHO
       break;
     }
   }
-
   hal_FB_select_mux_input(DOM_FB_MUX_LED_1 + firstled);  
-  hal_FPGA_TEST_FB_set_rate(rate);
-
-  /* Convert launch delay from ns to FPGA units */
-  int delay_i = (delay / 25) - 2;
-  delay_i = (delay_i > 0) ? delay_i : 0;
-  hal_FPGA_TEST_set_atwd_LED_delay(delay_i); 
-
-  hal_FPGA_TEST_start_FB_flashing();
-
-  mprintf("Started flasher board run!!! bright=%hu window=%hu delay=%hu mask=%hu rate=%hu",
-	  bright, window, delay, mask, rate);
-  nTrigsReadOut = 0;
-  return TRUE;
+  return 0;
 }
 
-BOOLEAN endFBRun() {
-  if(DOM_state!=DOM_FB_RUN_IN_PROGRESS) {
-    mprintf("Can't stop flasher board run: DOM_state=%d.", DOM_state);
-    return FALSE;
+int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window, 
+	       short delay, USHORT mask, USHORT rate) {
+
+  if(hvOffCheckFails()) {
+    mprintf("beginFBRun: ERROR: hvOffCheckFails!\n");
+    return 0;
   }
-  hal_FPGA_TEST_stop_FB_flashing();
-  hal_FB_set_brightness(0);
-  hal_FB_disable();
-  DOM_state = DOM_IDLE;
-  mprintf("Stopped flasher board run.");
-  return TRUE;
+
+  if(DOM_state!=DOM_IDLE) {
+    mprintf("Can't start flasher board run: DOM_state=%d.", DOM_state);
+    return 0;
+  }
+  DOM_state = DOM_FB_RUN_IN_PROGRESS;
+
+  halPowerDownBase(); /* Just to be sure, turn off HV */
+
+  if(fbSetup(bright, window, delay, mask, rate)) {
+    mprintf("beginFBRun: ERROR: fbSetup failed!");
+    return 0;
+  }
+  hal_FPGA_DOMAPP_cal_atwd_offset(delay);
+  double realRate = hal_FPGA_DOMAPP_FB_set_rate((double) rate);
+
+  if(! beginRun(compressionMode, DOM_FB_RUN_IN_PROGRESS)) {
+    mprintf("beginFBRun: ERROR: beginRun failed!");
+    return 0;
+  }
+  mprintf("Started flasher board run!!! bright=%hu window=%hu delay=%h "
+	  "mask=%hu rateRequest=%hu",
+	  bright, window, delay, mask, rate, realRate);
+  nTrigsReadOut = 0;
+  return 1;
 }
 
 inline BOOLEAN FBRunIsInProgress(void) { return DOM_state==DOM_FB_RUN_IN_PROGRESS; }
@@ -225,93 +221,95 @@ unsigned long long domappHVSerialRaw(void) {
   return s;
 }
 
-BOOLEAN beginRun(UBYTE compressionMode) {
+int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   nTrigsReadOut = 0;
 
   if(DOM_state!=DOM_IDLE) {
+    mprintf("beginRun: ERROR: DOM not in idle state, DOM_state=%d", DOM_IDLE);
     return FALSE;
-  } else {
-    DOM_state=DOM_RUN_IN_PROGRESS;
-    mprintf("Started run!");
-    hal_FPGA_DOMAPP_disable_daq();
-    hal_FPGA_DOMAPP_lbm_reset();
-    halUSleep(10000); /* make sure atwd is done... */
-    hal_FPGA_DOMAPP_lbm_reset();
-    lbmp = hal_FPGA_DOMAPP_lbm_pointer();
+  }
+  if(newRunState != DOM_RUN_IN_PROGRESS && newRunState != DOM_FB_RUN_IN_PROGRESS) {
+    mprintf("beginRun: ERROR: newRunState=%d, must be %d or %d", newRunState, 
+	    DOM_RUN_IN_PROGRESS, DOM_FB_RUN_IN_PROGRESS);
+    return 0;
+  }
 
-    if(pulser_running) {
-      pulser_running = 0;
-      if(FPGA_trigger_mode == TEST_DISC_TRIG_MODE) {
-	setSPEPulserTrigMode();
-      } else {
-	mprintf("WARNING: pulser running but trigger mode (%d) is disallowed. "
-		"Won't allow triggers!", FPGA_trigger_mode);
-      }
+  DOM_state=newRunState;
+  mprintf("Starting run (type=%d)", newRunState);
+  hal_FPGA_DOMAPP_disable_daq();
+  hal_FPGA_DOMAPP_lbm_reset();
+  halUSleep(10000); /* make sure atwd is done... */
+  hal_FPGA_DOMAPP_lbm_reset();
+  lbmp = hal_FPGA_DOMAPP_lbm_pointer();
+
+  if(pulser_running) {
+    pulser_running = 0;
+    if(FPGA_trigger_mode == TEST_DISC_TRIG_MODE) {
+      setSPEPulserTrigMode();
     } else {
-      /* Default mode */
-      switch(FPGA_trigger_mode) { // This gets set by a DATA_ACCESS message
-      case FB_TRIG_MODE:        setFBTrigMode();   break;
-      case TEST_DISC_TRIG_MODE: setSPETrigMode();  break; // can change when pulser starts
-      case CPU_TRIG_MODE: 
-      default:                  setPeriodicForcedTrigMode(); break;
-      }
+      mprintf("WARNING: pulser running but trigger mode (%d) is disallowed. "
+	      "Won't allow triggers!", FPGA_trigger_mode);
     }
-
+    mprintf("Setting pulser rate to %d.", pulser_rate);
     hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
 
-    //hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_FORCED);
-    hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_REPEAT);    
-    hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_ATWD_FADC);
-    hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_TESTING);
-    hal_FPGA_DOMAPP_enable_atwds(HAL_FPGA_DOMAPP_ATWD_A|HAL_FPGA_DOMAPP_ATWD_B);
-    hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_WRAP);
-    //hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_STOP);
-    if(compressionMode == CMP_NONE) {
-      hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_OFF);
-    } else if(compressionMode == CMP_RG) {
-      hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_ON);
-    } else {
-      mprintf("beginRun: ERROR: invalid compression mode given (%d)", (int) compressionMode);
-      return FALSE;
+  } else if(newRunState == DOM_FB_RUN_IN_PROGRESS) {
+    /* For now, only allow triggers on flasher board firing, not on SPE disc. */
+    setFBTrigMode();
+    /* Rate is set by beginFBRun */
+  } else {
+    /* Default mode */
+    switch(FPGA_trigger_mode) { // This gets set by a DATA_ACCESS message
+    case TEST_DISC_TRIG_MODE: setSPETrigMode();  break; // can change when pulser starts
+    case CPU_TRIG_MODE: 
+    default:                  setPeriodicForcedTrigMode(); break;
     }
-
-    dsc_hal_do_LC_settings(); /* See domSControl.c */
-
-    hal_FPGA_DOMAPP_rate_monitor_enable(HAL_FPGA_DOMAPP_RATE_MONITOR_SPE|
-					HAL_FPGA_DOMAPP_RATE_MONITOR_MPE);
-
-    hal_FPGA_DOMAPP_enable_daq(); /* <-- Can get triggers NOW */
-
-    /******************************************/
-    /* int i;				      */
-    /* for(i=0;i<400;i++) {		      */
-    /*   halUSleep(2000);		      */
-    /*   hal_FPGA_DOMAPP_cal_launch();	      */
-    /* }    				      */
-    /******************************************/
-
-    return TRUE;
+    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
   }
+  
+  //hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_FORCED);
+
+  hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_REPEAT);    
+  hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_ATWD_FADC);
+  hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_TESTING);
+  hal_FPGA_DOMAPP_enable_atwds(HAL_FPGA_DOMAPP_ATWD_A|HAL_FPGA_DOMAPP_ATWD_B);
+  hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_WRAP);
+  //hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_STOP);
+  if(compressionMode == CMP_NONE) {
+    hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_OFF);
+  } else if(compressionMode == CMP_RG) {
+    hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_ON);
+  } else {
+    mprintf("beginRun: ERROR: invalid compression mode given (%d)", (int) compressionMode);
+    return FALSE;
+  }
+
+  dsc_hal_do_LC_settings(); /* See domSControl.c */
+
+  hal_FPGA_DOMAPP_rate_monitor_enable(HAL_FPGA_DOMAPP_RATE_MONITOR_SPE|
+				      HAL_FPGA_DOMAPP_RATE_MONITOR_MPE);
+
+  hal_FPGA_DOMAPP_enable_daq(); /* <-- Can get triggers NOW */
+  return TRUE;
 }
 
-BOOLEAN endRun() {
-    if(DOM_state!=DOM_RUN_IN_PROGRESS) {
-	return FALSE;
-    }
-    else {
-	DOM_state=DOM_IDLE;
-	mprintf("Disabling FPGA internal data acquisition... LBM=%u",
-		hal_FPGA_DOMAPP_lbm_pointer());
-	hal_FPGA_DOMAPP_disable_daq();
-	hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_OFF);
-	mprintf("Ended run");
-	return TRUE;
-    }
-}
+int endFBRun(void) { return endRun(); }
 
-BOOLEAN forceRunReset() {
-    DOM_state=DOM_IDLE;
-    return TRUE;
+int endRun(void) { /* End either a "regular" or flasher run */
+  if(DOM_state != DOM_RUN_IN_PROGRESS && DOM_state != DOM_FB_RUN_IN_PROGRESS) {
+    mprintf("Can't stop run, DOM state=%d!", DOM_state);
+    return FALSE;
+  }
+  
+  mprintf("Disabling FPGA internal data acquisition... LBM=%u",
+	  hal_FPGA_DOMAPP_lbm_pointer());
+  hal_FPGA_DOMAPP_disable_daq();
+  hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_OFF);
+  hal_FB_set_brightness(0);
+  hal_FB_disable();
+  mprintf("Ended run (run type=%s)", DOM_state==DOM_FB_RUN_IN_PROGRESS?"flasher":"normal");
+  DOM_state=DOM_IDLE;
+  return TRUE;
 }
 
 inline BOOLEAN runIsInProgress(void) { return DOM_state==DOM_RUN_IN_PROGRESS; }
@@ -330,7 +328,7 @@ unsigned char *lbmEvent(unsigned idx) {
 
 /* Stolen from Arthur: but changed EVENT_LEN to EVENT_SIZE */
 unsigned nextEvent(unsigned idx) {
-   return (idx + HAL_FPGA_DOMAPP_LBM_EVENT_SIZE) & HAL_FPGA_DOMAPP_LBM_MASK;
+   return idx + HAL_FPGA_DOMAPP_LBM_EVENT_SIZE;
 }
 
 static unsigned nextValidBlock(unsigned ptr) {
@@ -338,7 +336,7 @@ static unsigned nextValidBlock(unsigned ptr) {
 }
 
 static int haveOverflow(unsigned lbmp) {
-  if( ((hal_FPGA_DOMAPP_lbm_pointer()-lbmp)&HAL_FPGA_DOMAPP_LBM_MASK) > WHOLE_LBM_MASK ) {
+  if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > WHOLE_LBM_MASK ) {
     mprintf("LBM OVERFLOW!!! hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
 	    hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
     return 1;
@@ -477,6 +475,73 @@ void mShowHdr(unsigned mylbmp) {
 	  hdr->word0, hdr->word1, hdr->word2, hdr->word3);
 }
 
+#ifdef SNSIM
+#  warning supernova implemented via SIMULATION (hal not ready)
+#  define sn_ready sim_hal_FPGA_DOMAPP_sn_ready
+#  define sn_event sim_hal_FPGA_DOMAPP_sn_event
+
+int sim_hal_FPGA_DOMAPP_sn_ready(void) { return 1; }
+int sim_hal_FPGA_DOMAPP_sn_event(SNEvent *evt) {
+  static unsigned char icount = 0;
+  evt->ticks  = hal_FPGA_DOMAPP_get_local_clock();
+  evt->counts = icount++;
+  return 0;
+}
+
+#else
+#  define sn_ready hal_FPGA_DOMAPP_sn_ready
+#  define sn_event hal_FPGA_DOMAPP_sn_event
+#endif
+
+int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
+  UBYTE *p  = msgBuffer;
+  UBYTE *p0 = msgBuffer;
+  static SNEvent sn;
+  static SNEvent * psn = &sn;
+  static int saved_bin = 0;
+
+  p += 2; // Skip length portion, fill later
+
+# define NCUR() ((int) (p - msgBuffer))
+# define STD_DT 65536
+# define bytelimit(counts) ((unsigned char) ((counts) > 255 ? 255 : (counts)))
+
+  if(saved_bin) {
+    saved_bin = 0;
+  } else {
+    if(!sn_ready()) return 0;
+    if(sn_event(psn)) {
+      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed!");
+      return 0;
+    }
+  }
+
+  /* By now, psn is either our saved_bin or a new event */
+  unsigned long long t0 = psn->ticks;
+  p    = TimeMove(p, t0);
+  *p++ = bytelimit(psn->counts);
+
+  while(1) {
+    if(!sn_ready()) break;
+    if(NCUR()+1 > bufsiz) break;
+
+    /* Get next event; may have to save it for later if delta-t != STD_DT */
+    if(sn_event(psn)) {
+      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed!");
+      break;
+    }
+    if((psn->ticks - t0) != STD_DT) {
+      saved_bin = 1;
+      break;
+    }
+    t0 = psn->ticks;
+    *p++ = bytelimit(psn->counts);
+  }
+
+  formatShort(NCUR(), p0);
+  return NCUR();
+}
+
 int fillMsgWithRGData(UBYTE *msgBuffer, int bufsiz) {
   UBYTE *p  = msgBuffer;
   UBYTE *p0 = msgBuffer;
@@ -608,22 +673,6 @@ UBYTE *ATWDByteMove(USHORT *data, UBYTE *buffer, int count) {
 }
 
 
-UBYTE *ATWDShortMove_PedSubtract_RoadGrade(USHORT *data, int iatwd, int ich,
-					   UBYTE *buffer, int count) {
-  /** Assumes earliest samples are last in the array */
-  int i;
-  for(i = ATWDCHSIZ - count; i < ATWDCHSIZ; i++) {
-    int pedsubtracted = data[i] - atwdpedavg[iatwd][ich][i];
-    USHORT chopped = (pedsubtracted > atwdThreshold[iatwd][ich]) ? pedsubtracted : 0;
-    //mprintf("ATWDShortMove... i=%d data=%d pedsubtracted=%d chopped=%d",
-    //        i, data[i], pedsubtracted, chopped);
-    *buffer++ = (chopped >> 8)&0xFF;
-    *buffer++ = chopped & 0xFF;
-  }
-  return buffer;
-}
-
-
 UBYTE *ATWDShortMove(USHORT *data, UBYTE *buffer, int count) {
   /** Assumes earliest samples are last in the array */
     int i;
@@ -639,19 +688,6 @@ UBYTE *ATWDShortMove(USHORT *data, UBYTE *buffer, int count) {
 	ptr += 2;
     }
     return buffer;
-}
-
-
-UBYTE *FADCMove_PedSubtract_RoadGrade(USHORT *data, UBYTE *buffer, int count) {
-  int i;
-  for(i = 0; i < count; i++) {
-    int subtracted = data[i]-fadcpedavg[i];
-    USHORT graded = (subtracted > fadcThreshold) ? subtracted : 0;
-    //mprintf("FADCMove_... subtracted=%d graded=%d",subtracted, graded);
-    *buffer++ = (graded >> 8) & 0xFF;
-    *buffer++ = graded & 0xFF;
-  } 
-  return buffer;
 }
 
 

@@ -30,12 +30,12 @@ Modification: 5/10/04 Jacobsen :-- put more than one monitoring rec. per request
 #include "commonMessageAPIstatus.h"
 #include "DACmessageAPIstatus.h"
 #include "dataAccessRoutines.h"
-#include "DOMdataCompression.h"
+//#include "DOMdataCompression.h"
 #include "moniDataAccess.h"
-#include "compressEvent.h"
+//#include "compressEvent.h"
+#include "domSControl.h"
 #include "DOMstateInfo.h"
 #include "DSCmessageAPIstatus.h"
-#include "lbm.h"
 
 extern void formatLong(ULONG value, UBYTE *buf);
 extern UBYTE DOM_state;
@@ -73,11 +73,21 @@ void dataAccessInit(void) {
     /* now initialize the data filling routines */
     initFillMsgWithData();
     initFormatEngineeringEvent(DEF_FADC_SAMP_CNT, DEF_ATWD01_MASK, DEF_ATWD23_MASK);
-    initDOMdataCompression(MAXDATA_VALUE);
+    //initDOMdataCompression(MAXDATA_VALUE);
 
     /* Even though pulser isn't running, set rate appropriately for heartbeat events */
     hal_FPGA_DOMAPP_cal_pulser_rate((double) pulser_rate);
 }
+
+#define DOERROR(errstr, errnum, errtype)                       \
+   do {                                                        \
+      datacs.msgProcessingErr++;                               \
+      strcpy(datacs.lastErrorStr,(errstr));                    \
+      datacs.lastErrorID=(errnum);                             \
+      datacs.lastErrorSeverity=errtype;                        \
+      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|errtype);     \
+      Message_setDataLen(M,0);                                 \
+   } while(0)
 
 /* data access  Entry Point */
 void dataAccess(MESSAGE_STRUCT *M) {
@@ -147,18 +157,6 @@ void dataAccess(MESSAGE_STRUCT *M) {
       strcpy(datacs.lastErrorStr, DAC_ERS_NO_ERRORS);
       Message_setDataLen(M, 0);
       Message_setStatus(M, SUCCESS);
-      break;
-      
-    case REMOTE_OBJECT_REF:
-      /* remote object reference */
-      /*	TO BE IMPLEMENTED..... */
-      datacs.msgProcessingErr++;
-      strcpy(datacs.lastErrorStr, DAC_ERS_BAD_MSG_SUBTYPE);
-      datacs.lastErrorID = COMMON_Bad_Msg_Subtype;
-      datacs.lastErrorSeverity = WARNING_ERROR;
-      Message_setDataLen(M, 0);
-      Message_setStatus(M,
-			UNKNOWN_SUBTYPE|WARNING_ERROR);
       break;
       
     case GET_SERVICE_SUMMARY:
@@ -235,20 +233,10 @@ void dataAccess(MESSAGE_STRUCT *M) {
 	ms = moniFetchRec(&aMoniRec);
 
 	if(ms == MONI_NOTINITIALIZED) {
-	  datacs.msgRefused++;
-	  strcpy(datacs.lastErrorStr, DAC_MONI_NOT_INIT);
-	  datacs.lastErrorID = DAC_Moni_Not_Init;
-	  datacs.lastErrorSeverity = SEVERE_ERROR;
-	  Message_setDataLen(M, 0);
-	  Message_setStatus(M, SEVERE_ERROR);
+	  DOERROR(DAC_MONI_NOT_INIT, DAC_Moni_Not_Init, SEVERE_ERROR);
 	  break;
 	} else if(ms == MONI_WRAPPED || ms == MONI_OVERFLOW) {
-	  Message_setDataLen(M, 0);
-	  strcpy(datacs.lastErrorStr, DAC_MONI_OVERFLOW);
-	  datacs.lastErrorID = DAC_Moni_Overrun;
-	  datacs.lastErrorSeverity = WARNING_ERROR;
-	  Message_setDataLen(M, 0);
-	  Message_setStatus(M, WARNING_ERROR);
+	  DOERROR(DAC_MONI_OVERFLOW, DAC_Moni_Overrun, WARNING_ERROR);
 	  break;
 	} else if(ms == MONI_NODATA 
 		  || moniBytes + aMoniRec.dataLen + 10 > MAXDATA_VALUE) {
@@ -276,12 +264,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
 	  moniBytes += total_moni_len;
 	  data += total_moni_len;
 	} else {
-	  Message_setDataLen(M, 0);
-	  strcpy(datacs.lastErrorStr, DAC_MONI_BADSTAT);
-	  datacs.lastErrorID = DAC_Moni_Badstat;
-	  datacs.lastErrorSeverity = SEVERE_ERROR;
-	  Message_setDataLen(M, 0);
-	  Message_setStatus(M, SEVERE_ERROR);
+	  DOERROR(DAC_MONI_BADSTAT, DAC_Moni_Badstat, SEVERE_ERROR);
 	  break;
 	}
       } /* while(1) */
@@ -325,11 +308,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
 
     case DATA_ACC_SET_DATA_FORMAT:
       if(data[0] != FMT_ENG && data[0] != FMT_RG) {
-	strcpy(datacs.lastErrorStr, DAC_ERS_BAD_ARGUMENT);
-	datacs.lastErrorID = DAC_Bad_Argument;
-	datacs.lastErrorSeverity = SEVERE_ERROR;
-	Message_setDataLen(M, 0);
-	Message_setStatus(M, SEVERE_ERROR);
+	DOERROR(DAC_ERS_BAD_ARGUMENT, DAC_Bad_Argument, SEVERE_ERROR);
 	break;
       }
       dataFormat = data[0];
@@ -347,11 +326,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
 
     case DATA_ACC_SET_COMP_MODE:
       if(data[0] != CMP_NONE && data[0] != CMP_RG) {
-        strcpy(datacs.lastErrorStr, DAC_ERS_BAD_ARGUMENT);
-        datacs.lastErrorID = DAC_Bad_Argument;
-        datacs.lastErrorSeverity = SEVERE_ERROR;
-        Message_setDataLen(M, 0);
-        Message_setStatus(M, SEVERE_ERROR);
+	DOERROR(DAC_ERS_BAD_ARGUMENT, DAC_Bad_Argument, SEVERE_ERROR);
         break;
       }
       compMode = data[0];
@@ -372,19 +347,13 @@ void dataAccess(MESSAGE_STRUCT *M) {
       Message_setDataLen(M, 0);
       if(!wasEnabled) {
 	if(hal_FB_enable(&config, &valid, &reset, DOM_FPGA_DOMAPP)) {
-	  datacs.lastErrorID = DAC_Cant_Enable_FB;
-	  strcpy(datacs.lastErrorStr, DAC_CANT_ENABLE_FB);
-	  datacs.lastErrorSeverity = WARNING_ERROR;
-	  Message_setStatus(M, WARNING_ERROR);
+	  DOERROR(DAC_CANT_ENABLE_FB, DAC_Cant_Enable_FB, WARNING_ERROR);
 	  hal_FB_disable();
 	  break;
 	}
       }
       if(hal_FB_get_serial(&idptr)) {
-	datacs.lastErrorID = DAC_Cant_Get_FB_Serial;
-	strcpy(datacs.lastErrorStr, DAC_CANT_GET_FB_SERIAL);
-	datacs.lastErrorSeverity = WARNING_ERROR;
-	Message_setStatus(M, WARNING_ERROR);
+	DOERROR(DAC_CANT_GET_FB_SERIAL, DAC_Cant_Get_FB_Serial, WARNING_ERROR);
 	if(!wasEnabled) hal_FB_disable();
 	break;
       } else {
@@ -395,14 +364,18 @@ void dataAccess(MESSAGE_STRUCT *M) {
       Message_setStatus(M, SUCCESS);
       break;
 
+    case DATA_ACC_GET_SN_DATA: 
+      { 
+	int nb = fillMsgWithSNData(data, MAXDATA_VALUE);
+	Message_setDataLen(M, nb);
+	Message_setStatus(M, SUCCESS);
+	break;
+      }
+      break;
+
     default:
       datacs.msgRefused++;
-      strcpy(datacs.lastErrorStr, DAC_ERS_BAD_MSG_SUBTYPE);
-      datacs.lastErrorID = COMMON_Bad_Msg_Subtype;
-      datacs.lastErrorSeverity = WARNING_ERROR;
-      Message_setDataLen(M, 0);
-      Message_setStatus(M,
-			UNKNOWN_SUBTYPE|WARNING_ERROR);
+      DOERROR(DAC_ERS_BAD_MSG_SUBTYPE, COMMON_Bad_Msg_Subtype, WARNING_ERROR);
       break;
       
     } /* Switch message subtype */

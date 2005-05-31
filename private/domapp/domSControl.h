@@ -81,4 +81,6 @@ int  updateLCwindows(void);
 void dsc_hal_disable_LC_completely(void);
 void dsc_hal_do_LC_settings(void);
 
+int dsc_isSNrunning(void);
+
 #endif

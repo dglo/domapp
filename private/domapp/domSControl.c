@@ -208,6 +208,34 @@ void dsc_hal_do_LC_settings(void) {
   updateLCwindows();
 }
 
+int snRunning = 0;
+int dsc_isSNrunning(void) { return snRunning; }
+
+int doStartSN(UBYTE mode, unsigned deadtime) {
+  if(hal_FPGA_DOMAPP_sn_dead_time(deadtime)) {
+    mprintf("ERROR: hal_FPGA_DOMAPP_sn_dead_time FAILED!\n");
+    return -1;
+  }
+  hal_FPGA_DOMAPP_sn_mode(mode ? HAL_FPGA_DOMAPP_SN_MODE_MPE : HAL_FPGA_DOMAPP_SN_MODE_SPE);
+  snRunning = 1;
+  return 0;
+}
+
+void doStopSN(void) {
+  hal_FPGA_DOMAPP_sn_mode(HAL_FPGA_DOMAPP_SN_MODE_OFF);
+  snRunning = 0;
+}
+
+#define DOERROR(errstr, errnum, errtype)                       \
+   do {                                                        \
+      domsc.msgProcessingErr++;                                \
+      strcpy(domsc.lastErrorStr,(errstr));                     \
+      domsc.lastErrorID=(errnum);                              \
+      domsc.lastErrorSeverity=errtype;                         \
+      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|errtype);     \
+      Message_setDataLen(M,0);                                 \
+   } while(0)
+
 void domSControl(MESSAGE_STRUCT *M) {
 #define BSIZ 1024
   //  char buf[BSIZ]; int n;
@@ -219,7 +247,6 @@ void domSControl(MESSAGE_STRUCT *M) {
   USHORT tmpShort;
   USHORT PMT_HVreq;
   int i;
-
 
   /* get address of data portion. */
   /* Receiver ALWAYS links a message 
@@ -273,17 +300,6 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
     break;
-  case REMOTE_OBJECT_REF:
-    /* remote object reference
-       TO BE IMPLEMENTED..... */
-    domsc.msgProcessingErr++;
-    strcpy(domsc.lastErrorStr,DSC_ERS_BAD_MSG_SUBTYPE);
-    domsc.lastErrorID=COMMON_Bad_Msg_Subtype;
-    domsc.lastErrorSeverity=WARNING_ERROR;
-    Message_setDataLen(M,0);
-    Message_setStatus(M,
-		      UNKNOWN_SUBTYPE|WARNING_ERROR);
-    break;
   case GET_SERVICE_SUMMARY:
     /* init a temporary buffer pointer */
     tmpPtr=data;
@@ -328,15 +344,8 @@ void domSControl(MESSAGE_STRUCT *M) {
   case DSC_READ_ONE_ADC:
     tmpByte=data[0];
     if(tmpByte>=MAX_NUM_ADCS) {
-      /* format up failure response */
-      domsc.msgProcessingErr++;
-      Message_setDataLen(M,0);
-      strcpy(domsc.lastErrorStr,DSC_ILLEGAL_ADC_CHANNEL);
-      domsc.lastErrorID=DSC_Illegal_ADC_Channel;
-      domsc.lastErrorSeverity=FATAL_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
-    }
-    else {
+      DOERROR(DSC_ILLEGAL_ADC_CHANNEL, DSC_Illegal_ADC_Channel, FATAL_ERROR);
+    } else {
       /* format up success response */
       /* lock, access and unlock */
       formatShort(halReadADC(tmpByte),data);
@@ -358,17 +367,8 @@ void domSControl(MESSAGE_STRUCT *M) {
   case DSC_READ_ONE_DAC:
     tmpByte=data[0];
     if(tmpByte>=MAX_NUM_DACS) {
-      /* format up failure response */
-      domsc.msgProcessingErr++;
-      Message_setDataLen(M,0);
-      strcpy(domsc.lastErrorStr,DSC_ILLEGAL_DAC_CHANNEL);
-      domsc.lastErrorID=DSC_Illegal_DAC_Channel;
-      domsc.lastErrorSeverity=FATAL_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
-    }
-    else {
-      /* format up success response */
-      /* lock, access and unlock */
+      DOERROR(DSC_ILLEGAL_DAC_CHANNEL, DSC_Illegal_DAC_Channel, FATAL_ERROR);
+    } else {
       formatShort(halReadDAC(tmpByte),data);
       Message_setDataLen(M,DSC_READ_ONE_DAC_LEN);
       Message_setStatus(M,SUCCESS);
@@ -377,63 +377,30 @@ void domSControl(MESSAGE_STRUCT *M) {
   case DSC_WRITE_ONE_DAC:
     tmpByte=data[0];
     if(Message_dataLen(M)!=DSC_WRITE_ONE_DAC_REQ_LEN){
-      /* format up failure response */
-      domsc.msgProcessingErr++;
-      strcpy(domsc.lastErrorStr,DSC_ERS_BAD_MSG_FORMAT);
-      domsc.lastErrorID=COMMON_Bad_Msg_Format;
-      domsc.lastErrorSeverity=WARNING_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|WARNING_ERROR);
-    }
-    else if(!testDOMconstraints(DOM_CONSTRAINT_NO_DAC_CHANGE)){
-      /* format up failure response */
-      domsc.msgProcessingErr++;
-      strcpy(domsc.lastErrorStr,DSC_VIOLATES_CONSTRAINTS);
-      domsc.lastErrorID=DSC_violates_constraints;
-      domsc.lastErrorSeverity=WARNING_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|WARNING_ERROR);
-    }
-    else if(tmpByte>=MAX_NUM_DACS) {
-      /* format up failure response */
-      domsc.msgProcessingErr++;
-      strcpy(domsc.lastErrorStr,DSC_ILLEGAL_DAC_CHANNEL);
-      domsc.lastErrorID=DSC_Illegal_DAC_Channel;
-      domsc.lastErrorSeverity=FATAL_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
-    }
-    else {
-      /* format up success response */
-      /* lock, access and unlock */
+      DOERROR(DSC_ERS_BAD_MSG_FORMAT, COMMON_Bad_Msg_Format, FATAL_ERROR);
+    } else if(!testDOMconstraints(DOM_CONSTRAINT_NO_DAC_CHANGE)){
+      DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
+    } else if(tmpByte>=MAX_NUM_DACS) {
+      DOERROR(DSC_ILLEGAL_DAC_CHANNEL, DSC_Illegal_DAC_Channel, FATAL_ERROR);
+    } else {
       halWriteDAC(tmpByte,unformatShort(&data[2]));
       moniInsertSetDACMessage(hal_FPGA_DOMAPP_get_local_clock(),
 			      tmpByte, 
 			      unformatShort(&data[2]));
       Message_setStatus(M,SUCCESS);
+      Message_setDataLen(M,0);
     }
-    Message_setDataLen(M,0);
     break;
   case DSC_SET_PMT_HV:
     /* save anode and dynode values for next msg */
     PMT_HVreq=unformatShort(data);
     /* check that requests are not over current limits */
     if(PMT_HVreq > PMT_HV_max) {
-      domsc.msgProcessingErr++;
-      domsc.lastErrorID=DSC_PMT_HV_request_too_high;
-      strcpy(domsc.lastErrorStr,
-	     DSC_PMT_HV_REQUEST_TOO_HIGH);
-      domsc.lastErrorSeverity=FATAL_ERROR;
-      Message_setDataLen(M,0);
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+      DOERROR(DSC_PMT_HV_REQUEST_TOO_HIGH, DSC_PMT_HV_request_too_high, FATAL_ERROR);
       break;
-    }
-    else if((!testDOMconstraints(DOM_CONSTRAINT_NO_HV_CHANGE))
+    } else if((!testDOMconstraints(DOM_CONSTRAINT_NO_HV_CHANGE))
 	    || DOM_state==DOM_FB_RUN_IN_PROGRESS){
-      /* format up failure response */
-      Message_setDataLen(M,0);
-      domsc.msgProcessingErr++;
-      strcpy(domsc.lastErrorStr,DSC_VIOLATES_CONSTRAINTS);
-      domsc.lastErrorID=DSC_violates_constraints;
-      domsc.lastErrorSeverity=WARNING_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|WARNING_ERROR);
+      DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
       break;
     }
     halWriteBaseDAC(PMT_HVreq);
@@ -444,13 +411,7 @@ void domSControl(MESSAGE_STRUCT *M) {
 
   case DSC_ENABLE_PMT_HV:
     if(!testDOMconstraints(DOM_CONSTRAINT_NO_HV_CHANGE)){
-      /* format up failure response */
-      Message_setDataLen(M,0);
-      domsc.msgProcessingErr++;
-      strcpy(domsc.lastErrorStr,DSC_VIOLATES_CONSTRAINTS);
-      domsc.lastErrorID=DSC_violates_constraints;
-      domsc.lastErrorSeverity=WARNING_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|WARNING_ERROR);
+      DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
       break;
     }
     /* lock, access and unlock */
@@ -493,13 +454,7 @@ void domSControl(MESSAGE_STRUCT *M) {
   case DSC_READ_ONE_ADC_REPT:
     tmpByte=data[0];
     if(tmpByte>=MAX_NUM_ADCS) {
-      /* format up failure response */
-      domsc.msgProcessingErr++;
-      Message_setDataLen(M,0);
-      strcpy(domsc.lastErrorStr,DSC_ILLEGAL_ADC_CHANNEL);
-      domsc.lastErrorID=DSC_Illegal_ADC_Channel;
-      domsc.lastErrorSeverity=FATAL_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+      DOERROR(DSC_ILLEGAL_ADC_CHANNEL, DSC_Illegal_ADC_Channel, FATAL_ERROR);
     }
     else {
       tmpShort=readADCrept(tmpByte,data[1],&data[2]);
@@ -542,7 +497,11 @@ void domSControl(MESSAGE_STRUCT *M) {
   case DSC_MUX_SELECT:
     /* select mux channel for ATWD channel 3 */
     selected_mux_channel = data[0];
-    halSelectAnalogMuxInput(selected_mux_channel);
+    if(selected_mux_channel == 0xFF) {
+      halDisableAnalogMux(); /* Per John Kelley request */
+    } else {
+      halSelectAnalogMuxInput(selected_mux_channel);
+    }
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
     break;
@@ -567,13 +526,7 @@ void domSControl(MESSAGE_STRUCT *M) {
   case DSC_SET_PULSER_ON:
 
     if(FPGA_trigger_mode != TEST_DISC_TRIG_MODE) {
-      /* format up failure response */
-      Message_setDataLen(M,0);
-      domsc.msgProcessingErr++;
-      strcpy(domsc.lastErrorStr,DSC_VIOLATES_CONSTRAINTS);
-      domsc.lastErrorID=DSC_violates_constraints;
-      domsc.lastErrorSeverity=WARNING_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|WARNING_ERROR);
+      DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
       break;
     }
     mprintf("Turned on front-end pulser");
@@ -587,16 +540,9 @@ void domSControl(MESSAGE_STRUCT *M) {
     pulser_running = FALSE;
 
     if(FPGA_trigger_mode != TEST_DISC_TRIG_MODE) {
-      /* format up failure response */
-      Message_setDataLen(M,0);
-      domsc.msgProcessingErr++;
-      strcpy(domsc.lastErrorStr,DSC_VIOLATES_CONSTRAINTS);
-      domsc.lastErrorID=DSC_violates_constraints;
-      domsc.lastErrorSeverity=WARNING_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|WARNING_ERROR);
+      DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
       break;
     }
-
     /* Go back to normal SPE mode */
     setSPETrigMode();
     mprintf("Turned off front-end pulser");
@@ -609,9 +555,9 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_GET_RATE_METERS:
-    formatLong((ULONG)hal_FPGA_DOMAPP_spe_rate(),
+    formatLong((ULONG)hal_FPGA_DOMAPP_spe_rate_immediate(),
 	       &data[0]);
-    formatLong((ULONG)hal_FPGA_DOMAPP_mpe_rate(),
+    formatLong((ULONG)hal_FPGA_DOMAPP_mpe_rate_immediate(),
 	       &data[4]);
     Message_setDataLen(M,DSC_GET_RATE_METERS_LEN);
     Message_setStatus(M,SUCCESS);
@@ -620,12 +566,7 @@ void domSControl(MESSAGE_STRUCT *M) {
     { 
       int dt = unformatLong(data);
       if(dt < 100 || dt > 102400) {
-	domsc.msgProcessingErr++;
-	strcpy(domsc.lastErrorStr,"Bad value for scaler deadtime");
-	domsc.lastErrorID=DSC_bad_deadtime;
-	domsc.lastErrorSeverity=FATAL_ERROR;
-	Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
-	Message_setDataLen(M,0);
+	DOERROR("Bad value for scaler deadtime", DSC_bad_deadtime, FATAL_ERROR);
       } else {
 	deadTime = dt;
 	hal_FPGA_DOMAPP_rate_monitor_deadtime((int)deadTime);
@@ -640,38 +581,16 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_SET_LOCAL_COIN_MODE:
+    if(data[0] > 3) {
+      DOERROR(DSC_ILLEGAL_LC_MODE, DSC_Illegal_LC_Mode, FATAL_ERROR);
+      break;
+    } 
+    LCmode = data[0];
+    setLCmodeAndTx();
+    moniInsertLCModeChangeMessage(hal_FPGA_DOMAPP_get_local_clock(), 
+				  LCmode);
     Message_setDataLen(M,0);
-    if(data[0] == 0) {
-      LCmode = data[0];
-      setLCmodeAndTx();
-      moniInsertLCModeChangeMessage(hal_FPGA_DOMAPP_get_local_clock(), 
-				    LCmode);
-      Message_setStatus(M,SUCCESS);
-    } else if(data[0] == 1) {
-      LCmode = data[0];
-      setLCmodeAndTx();
-      moniInsertLCModeChangeMessage(hal_FPGA_DOMAPP_get_local_clock(),
-				    LCmode);
-      Message_setStatus(M,SUCCESS);
-    } else if(data[0] == 2) { /* Upper ONLY */
-      LCmode = data[0];
-      setLCmodeAndTx();
-      moniInsertLCModeChangeMessage(hal_FPGA_DOMAPP_get_local_clock(),
-				    LCmode);
-      Message_setStatus(M,SUCCESS);
-    } else if(data[0] == 3) { /* Lower ONLY */
-      LCmode = data[0];
-      setLCmodeAndTx();
-      moniInsertLCModeChangeMessage(hal_FPGA_DOMAPP_get_local_clock(),
-				    LCmode);
-      Message_setStatus(M,SUCCESS);
-    } else {
-      domsc.msgProcessingErr++;
-      strcpy(domsc.lastErrorStr,DSC_ILLEGAL_LC_MODE);
-      domsc.lastErrorID=DSC_Illegal_LC_Mode;
-      domsc.lastErrorSeverity=FATAL_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
-    }
+    Message_setStatus(M,SUCCESS);
     break;
   case DSC_GET_LOCAL_COIN_MODE:
     data[0] = LCmode;
@@ -685,11 +604,7 @@ void domSControl(MESSAGE_STRUCT *M) {
     
     if(updateLCwindows()) {
       pre_ns = post_ns = LC_WIN_DEFAULT;
-      domsc.msgProcessingErr++;
-      strcpy(domsc.lastErrorStr,DSC_LC_WINDOW_FAIL);
-      domsc.lastErrorID=DSC_LC_Window_Fail;
-      domsc.lastErrorSeverity=FATAL_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+      DOERROR(DSC_LC_WINDOW_FAIL, DSC_LC_Window_Fail, FATAL_ERROR);
     } else {
       Message_setStatus(M,SUCCESS);
       moniInsertLCWindowChangeMessage(hal_FPGA_DOMAPP_get_local_clock(),
@@ -709,11 +624,7 @@ void domSControl(MESSAGE_STRUCT *M) {
     { 
       UBYTE lct = data[0];
       if(lct != LC_TYPE_SOFT && lct != LC_TYPE_HARD && lct != LC_TYPE_FLABBY) {
-	domsc.msgProcessingErr++;
-	strcpy(domsc.lastErrorStr,"Invalid local coincidence type");
-	domsc.lastErrorID=DSC_LC_Bad_Type;
-	domsc.lastErrorSeverity=FATAL_ERROR;
-	Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+	DOERROR("Invalid local coincidence type", DSC_LC_Bad_Type, FATAL_ERROR);
       } else {
 	LCtype = lct;
 	set_HAL_lc_mode();
@@ -729,19 +640,15 @@ void domSControl(MESSAGE_STRUCT *M) {
     break;
 
   case DSC_SET_LC_TX:
-    Message_setDataLen(M,0);
     {
       UBYTE lctx = data[0];
       if(lctx != LC_TX_NONE && lctx != LC_TX_UP && lctx != LC_TX_DN && lctx != LC_TX_BOTH) {
-        domsc.msgProcessingErr++;
-        strcpy(domsc.lastErrorStr,"Invalid local coincidence transmit (TX) setting");
-        domsc.lastErrorID=DSC_LC_Bad_Tx;
-        domsc.lastErrorSeverity=FATAL_ERROR;
-        Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+	DOERROR("Invalid local coincidence transmit (TX) setting", DSC_LC_Bad_Tx, FATAL_ERROR);
       } else {
         LCtx = lctx;
 	setLCmodeAndTx();
         Message_setStatus(M,SUCCESS);
+	Message_setDataLen(M,0);
       }
     }
     break;
@@ -753,19 +660,15 @@ void domSControl(MESSAGE_STRUCT *M) {
     break;
 
   case DSC_SET_LC_SRC:
-    Message_setDataLen(M,0);
     {
       UBYTE lcs = data[0];
       if(lcs != LC_SRC_SPE && lcs != LC_SRC_MPE) {
-        domsc.msgProcessingErr++;
-        strcpy(domsc.lastErrorStr,"Invalid local coincidence source (SPE/MPE)");
-        domsc.lastErrorID=DSC_LC_Bad_Src;
-        domsc.lastErrorSeverity=FATAL_ERROR;
-        Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+	DOERROR("Invalid local coincidence source (SPE/MPE)", DSC_LC_Bad_Src, FATAL_ERROR);
       } else {
         LCsrc = lcs;
 	updateLCsrc();
         Message_setStatus(M,SUCCESS);
+	Message_setDataLen(M,0);
       }
     }
     break;
@@ -777,18 +680,14 @@ void domSControl(MESSAGE_STRUCT *M) {
     break;
 
   case DSC_SET_LC_SPAN:
-    Message_setDataLen(M,0);
     {
       UBYTE lcsp = data[0];
       if(lcsp < 1 || lcsp > 4) {
-        domsc.msgProcessingErr++;
-        strcpy(domsc.lastErrorStr,"Invalid local coincidence span number (1..4)");
-        domsc.lastErrorID=DSC_LC_Bad_Span;
-        domsc.lastErrorSeverity=FATAL_ERROR;
-        Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+	DOERROR("Invalid local coincidence span number (1..4)", DSC_LC_Bad_Span, FATAL_ERROR);
       } else {
         LCspan = lcsp;
 	updateLCspan();
+	Message_setDataLen(M,0);
         Message_setStatus(M,SUCCESS);
       }
     }
@@ -809,11 +708,8 @@ void domSControl(MESSAGE_STRUCT *M) {
 	USHORT iup = unformatShort(data+ispan*2);
 	USHORT idn = unformatShort(data+8+ispan*2);
 	if(iup > MAXDISTNS || idn > MAXDISTNS) {
-	  domsc.msgProcessingErr++;
-	  strcpy(domsc.lastErrorStr,"Invalid local coincidence cable length, must be < 25*127");
-	  domsc.lastErrorID=DSC_LC_Bad_Len;
-	  domsc.lastErrorSeverity=FATAL_ERROR;
-	  Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
+	  DOERROR("Invalid local coincidence cable length, must be < 25*127", DSC_LC_Bad_Len,
+		  FATAL_ERROR);
 	  LClengthsSet = 0; /* Changed our minds! */
 	  break;
 	}
@@ -825,14 +721,8 @@ void domSControl(MESSAGE_STRUCT *M) {
     break;
   case DSC_GET_LC_CABLE_LEN:
     if(!LClengthsSet) { /* Don't allow this if lengths aren't set! */
-      domsc.msgProcessingErr++;
-      strcpy(domsc.lastErrorStr,
-	     "Local coincidence lengths NOT previously set by software -- "
-	     "do DSC_SET_LC_CABLE_LEN first");
-      domsc.lastErrorID=DSC_LC_Len_Not_Set;
-      domsc.lastErrorSeverity=FATAL_ERROR;
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|FATAL_ERROR);
-      Message_setDataLen(M,0);
+      DOERROR("Local coincidence lengths NOT previously set by software -- "
+	      "do DSC_SET_LC_CABLE_LEN first", DSC_LC_Len_Not_Set, FATAL_ERROR);
       break;
     }
     {
@@ -845,14 +735,49 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
 
-  default:
-    domsc.msgRefused++;
-    strcpy(domsc.lastErrorStr,DSC_ERS_BAD_MSG_SUBTYPE);
-    domsc.lastErrorID=COMMON_Bad_Msg_Subtype;
-    domsc.lastErrorSeverity=WARNING_ERROR;
+  case DSC_ENABLE_SN: 
+    { 
+      if(dsc_isSNrunning()) {
+	DOERROR("supernova system already running!", DSC_SN_Already_Running, FATAL_ERROR);
+	break;
+      }
+      unsigned deadtime = unformatLong(data);
+      UBYTE mode        = data[4];
+      if(mode != 0 && mode != 1) {
+	DOERROR("DSC_ENABLE_SN: Mode must be 0 (SPE) or 1 (MPE)",
+		DSC_Bad_SN_Mode, FATAL_ERROR);
+	break;
+      }
+      if(deadtime < 6400 || deadtime > 512000) {
+	DOERROR("DSC_ENABLE_SN: Deadtime must be < 6400 or > 512000",
+		DSC_Bad_SN_Deadtime, FATAL_ERROR);
+	break;
+      }
+      if(doStartSN(mode, deadtime)) {
+	DOERROR("DSC_ENABLE_SN: doStartSN FAILED.  Check monitoring stream",
+		DSC_SN_Start_Failed, FATAL_ERROR);
+	break;
+      }
+      mprintf("Started supernova data collection (deadtime=%d, mode=%s)",
+	      deadtime, mode?"MPE":"SPE");
+      Message_setStatus(M,SUCCESS);
+      Message_setDataLen(M,0);
+    }
+    break;
+
+  case DSC_DISABLE_SN:
+    if(!dsc_isSNrunning()) {
+      DOERROR("DSC_DISABLE_SN: Supernova system NOT running!",
+	      DSC_SN_Not_Running, WARNING_ERROR);
+    }
+    doStopSN();
+    mprintf("Stopped supernova data collection");
+    Message_setStatus(M,SUCCESS);
     Message_setDataLen(M,0);
-    Message_setStatus(M,
-		      UNKNOWN_SUBTYPE|WARNING_ERROR);
+    break;
+
+  default:
+    DOERROR(DSC_ERS_BAD_MSG_SUBTYPE, COMMON_Bad_Msg_Subtype, WARNING_ERROR);
     break;
   }
 }

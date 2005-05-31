@@ -1,0 +1,23 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>Testing DOMApp</title>
+</head>
+<body>
+<h2>Testing DOMApp</h2>
+<br>
+<big>The DOMApp test script is called <tt>domapp_multitest.pl</tt>.&nbsp;
+It
+uses
+a C
+language messaging program called <tt>domapptest</tt>.&nbsp; These
+programs live
+in the <tt>domhub-tools</tt> project.&nbsp; <br>
+<br>
+Example:</big><br>
+<pre>[jacobsen@drivertest domapp]$  $tools/domapp/domapp_multitest.pl -h<br>Usage: domapp_multitest.pl [options] <dom0> <dom1> ...<br><br>    DOMs can be "all" or, e.g., "01a, 10b, 31a"<br>    Must power on and be in iceboot first.<br><br>Options:<br>    -u &lt;img&gt;:    Upload &lt;img? rather testing flash image<br>    -s:          Show commands issued to domapptest<br>    -d:          Detailed report about what worked, instead<br>                 of just what didn't work.<br>    -F:          Run flasher tests (SEALED, DARK DOMs ONLY)<br>    -V:          Run tests requiring HV (SEALED, DARK DOMs ONLY)<br>    -l <name>:   Load FPGA image <name> from flash before test<br><br>If -V or -F options are not given, only tests appropriate for a<br>bare DOM mainboard are given.<br><br>[jacobsen@drivertest domapp]$ $tools/domapp/domapp_multitest.pl -u $domws/epxa10/bin/domapp.bin.gz -l domapp.sbi all<br>Available DOMs: 00a<br>domapp_multitest.pl: Starting tests at 'Tue May 10 13:49:06 2005'<br>                               Softbooting 00a... OK.<br> Loading FPGA domapp.sbi from flash on DOM 00a... OK.<br>                Uploading domapp.bin.gz to 00a... OK.<br>              Checking version with domapptest... OK ('realdomappV00-00-00').<br>                       Testing fetch of DOM ID... OK ('09b94ae9f743').<br>     Performing short domapp echo message test... OK.<br>                      Testing ASCII monitoring... OK.<br>   Collecting cpuTrigger (trigger type 1) data... OK (76 hits).<br>     Testing software configuration monitoring... OK.<br>     Testing hardware configuration monitoring... OK.<br>Testing monitoring reporting of LC state changes...<br>                                          Mode 1: OK.<br>                                          Mode 2: OK.<br>                                          Mode 3: OK.<br>domapp_multitest.pl: SUCCESS at Tue May 10 13:49:44 2005<br>[jacobsen@drivertest domapp]$<br></name></name></dom1></dom0></pre>
+<br>
+</body>
+</html>

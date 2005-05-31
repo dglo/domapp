@@ -33,11 +33,6 @@ Last Modification:
 
 /* extern functions */
 extern void formatLong(ULONG value, UBYTE *buf);
-extern BOOLEAN beginRun(UBYTE compressionMode);
-extern BOOLEAN endRun(void);
-extern BOOLEAN beginFBRun(USHORT bright, USHORT window, USHORT delay, USHORT mask, USHORT rate);
-extern BOOLEAN endFBRun(void);
-extern BOOLEAN forceRunReset(void);
 extern UBYTE   compMode;
 extern unsigned nextEvent(unsigned idx);
 /* local functions, data */
@@ -66,20 +61,6 @@ USHORT fadcdata[FADCSIZ];
 
 #define ATWD_TIMEOUT_COUNT 4000
 #define ATWD_TIMEOUT_USEC 5
-
-BOOLEAN beginPedestalRun(void) {
-  if(DOM_state!=DOM_IDLE) {
-    return FALSE;
-  } else {
-    DOM_state=DOM_PEDESTAL_COLLECTION_IN_PROGRESS;
-    return TRUE;
-  }
-}
-
-void forceEndPedestalRun(void) {
-  DOM_state=DOM_IDLE;
-}
-
 
 void zeroPedestals() {
   memset((void *) fadcpedsum, 0, FADCSIZ * sizeof(ULONG));
@@ -131,6 +112,14 @@ void zeroLBM(void) {
   memset(hal_FPGA_DOMAPP_lbm_address(), 0, WHOLE_LBM_MASK+1);
 }
 
+#define DO_TST_DEBUGGING
+#ifdef  DO_TST_DEBUGGING
+#warning DO_TST_DEBUGGING debug hack in place
+#define DOPONG() FPGA(PONG)=0x666
+#else
+#define DOPONG()
+#endif
+
 int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
   /* return 0 if pedestal run succeeds, else error */
 
@@ -151,6 +140,7 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
   hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);
   hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_WRAP);
   hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_OFF);
+
   hal_FPGA_DOMAPP_rate_monitor_enable(0);
   int dochecks               = 1;
   int didUncompressedWarning = 0;  
@@ -158,21 +148,33 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
   int didMissedTrigWarning   = 0;
   int didMissingFADCWarning  = 0;
   int didMissingATWDWarning  = 0;
-  dumpRegs();
+  npeds0 = npeds1 = npedsadc = 0;
+  pedestalsAvail             = 0;
+
   int iatwd; for(iatwd=0;iatwd<2;iatwd++) {
     int numMissedTriggers = 0;
     int numTrigs = (iatwd==0 ? ped0goal : ped1goal);      
     hal_FPGA_DOMAPP_enable_atwds(iatwd==0?HAL_FPGA_DOMAPP_ATWD_A:HAL_FPGA_DOMAPP_ATWD_B);
     hal_FPGA_DOMAPP_enable_daq(); 
+    dumpRegs();
+
     int isamp;
     int it; for(it=0; it<numTrigs; it++) {
       hal_FPGA_DOMAPP_cal_launch();
       halUSleep(200);
       if(lbmp == hal_FPGA_DOMAPP_lbm_pointer()) {
+	DOPONG();
 	numMissedTriggers++;
 	if(!didMissedTrigWarning) {
 	  didMissedTrigWarning++;
-	  mprintf("pedestalRun: WARNING: missed one or more calibration triggers for ATWD %d!", iatwd);
+	  mprintf("pedestalRun: WARNING: missed one or more calibration triggers for ATWD %d! "
+		  "lbmp=0x%08x fpga_ptr=0x%08x", iatwd, lbmp, hal_FPGA_DOMAPP_lbm_pointer());
+	  unsigned char * e = lbmEvent(lbmp);
+	  int ic; for(ic=0; ic<2048; ic++) {
+	    if(e[ic] != 0) {
+	      mprintf("pedestalRun: LBM[%d]=0x%02x", ic,e[ic]);
+	    }
+	  }	
 	  dumpRegs();
 	}
 	continue;
@@ -186,6 +188,7 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
       unsigned atwdsize = (hdr->trigbits>>19)&0x3;
       unsigned long daq = FPGA(DAQ);
       if(dochecks && words->w0>>31) {
+	DOPONG();
 	if(!didUncompressedWarning) {
 	  didUncompressedWarning++;
 	  mprintf("pedestalRun: WARNING: trying to collect waveforms for pedestals but "
@@ -198,10 +201,12 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
 	continue;
       } 
       if(dochecks && atwdsize != 3) {
+	DOPONG();
 	if(!didATWDSizeWarning) {
 	  didATWDSizeWarning++;
-	  mprintf("pedestalRun: WARNING: atwdsize=%d should be 3!  w0=0x%08x w1=0x%08x w2=0x%08x w3=0x%08x DAQ=0x%08x",
-		  atwdsize, words->w0, words->w1, words->w2, words->w3, daq);
+	  mprintf("pedestalRun: WARNING: atwdsize=%d should be 3!  "
+		  "w0=0x%08x w1=0x%08x w2=0x%08x w3=0x%08x DAQ=0x%08x, lbmp=0x%08x",
+		  atwdsize, words->w0, words->w1, words->w2, words->w3, daq, lbmp);
 	  dumpRegs();
 	}
 	lbmp = nextEvent(lbmp);
@@ -211,9 +216,11 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
       
       /* Check valid FADC data present */
       if(dochecks && ! (hdr->trigbits & 1<<17)) {
+	DOPONG();
 	if(!didMissingFADCWarning) {
 	  didMissingFADCWarning++;
-	  mprintf("pedestalRun: WARNING: NO FADC data present in event!  trigbits=0x%08x", hdr->trigbits);
+	  mprintf("pedestalRun: WARNING: NO FADC data present in event!  trigbits=0x%08x", 
+		  hdr->trigbits);
 	  dumpRegs();
 	}
 	lbmp = nextEvent(lbmp);
@@ -223,9 +230,11 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
 
       /* Check valid ATWD data present */
       if(dochecks && ! (hdr->trigbits & 1<<18)) {
+	DOPONG();
 	if(!didMissingATWDWarning) {
           didMissingATWDWarning++;
-          mprintf("pedestalRun: WARNING: NO ATWD data present in event!  trigbits=0x%08x", hdr->trigbits);
+          mprintf("pedestalRun: WARNING: NO ATWD data present in event!  trigbits=0x%08x", 
+		  hdr->trigbits);
 	  dumpRegs();
         }
 	lbmp = nextEvent(lbmp);
@@ -309,8 +318,17 @@ void expControlInit(void) {
     zeroPedestals();
 }      
 
+#define DOERROR(errstr, errnum, errtype)                       \
+   do {                                                        \
+      expctl.msgProcessingErr++;                               \
+      strcpy(expctl.lastErrorStr,(errstr));                    \
+      expctl.lastErrorID=(errnum);                             \
+      expctl.lastErrorSeverity=errtype;                        \
+      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|errtype);     \
+      Message_setDataLen(M,0);                                 \
+   } while(0)
+
 void expControl(MESSAGE_STRUCT *M) {
-    USHORT bright=0, window=0, delay=0, mask=0, rate=0;
     UBYTE *data;
     UBYTE *tmpPtr;
     
@@ -372,18 +390,6 @@ void expControl(MESSAGE_STRUCT *M) {
       Message_setStatus(M,SUCCESS);
       break;
       
-    case REMOTE_OBJECT_REF:
-      /* remote object reference */
-      /*	TO BE IMPLEMENTED..... */
-      expctl.msgProcessingErr++;
-      strcpy(expctl.lastErrorStr,EXP_ERS_BAD_MSG_SUBTYPE);
-      expctl.lastErrorID=COMMON_Bad_Msg_Subtype;
-      expctl.lastErrorSeverity=WARNING_ERROR;
-      Message_setDataLen(M,0);
-      Message_setStatus(M,
-			UNKNOWN_SUBTYPE|WARNING_ERROR);
-      break;
-      
     case GET_SERVICE_SUMMARY:
       /* init a temporary buffer pointer */
       tmpPtr=data;
@@ -411,107 +417,55 @@ void expControl(MESSAGE_STRUCT *M) {
       Message_setStatus(M,SUCCESS);
       break;
       
-      /*-------------------------------*/
-      /* Experiment Control specific SubTypes */
-      
-      /* enable FPGA triggers */ 
-    case EXPCONTROL_ENA_TRIG:
-      if (1==0) {
-	/* disabled for test versions */
-	expctl.msgProcessingErr++;
-	strcpy(expctl.lastErrorStr,EXP_CANNOT_START_TRIG);
-	expctl.lastErrorID=EXP_Cannot_Start_Trig;
-	expctl.lastErrorSeverity=WARNING_ERROR;
-	Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
-			  WARNING_ERROR);
-      }
-      else {
-	Message_setStatus(M,SUCCESS);
-      }
-      Message_setDataLen(M,0);
-      break;
-      
-      /* disable FPGA triggers */
-    case EXPCONTROL_DIS_TRIG:
-      if (1==0) {
-	/* disabled for test versions */
-	expctl.msgProcessingErr++;
-	strcpy(expctl.lastErrorStr,EXP_CANNOT_STOP_TRIG);
-	expctl.lastErrorID=EXP_Cannot_Stop_Trig;
-	expctl.lastErrorSeverity=WARNING_ERROR;
-	Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
-			  WARNING_ERROR);
-      }
-      else {
-	Message_setStatus(M,SUCCESS);
-      }
-      Message_setDataLen(M,0);
-      break;
-      
       /* begin run */ 
     case EXPCONTROL_BEGIN_RUN:
-      if (!beginRun(compMode)) {
-	expctl.msgProcessingErr++;
-	strcpy(expctl.lastErrorStr,EXP_CANNOT_BEGIN_RUN);
-	expctl.lastErrorID=EXP_Cannot_Begin_Run;
-	expctl.lastErrorSeverity=SEVERE_ERROR;
-	Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
-			  SEVERE_ERROR);
-      } else {
-	Message_setStatus(M,SUCCESS);
+      if (!beginRun(compMode, DOM_RUN_IN_PROGRESS)) {
+	DOERROR(EXP_CANNOT_BEGIN_RUN, EXP_Cannot_Begin_Run, SEVERE_ERROR);
+	break;
       }
+      Message_setStatus(M,SUCCESS);
       Message_setDataLen(M,0);
       break;
       
     case EXPCONTROL_BEGIN_FB_RUN:
-      tmpPtr = data;
-      bright = unformatShort(&data[0]);
-      window = unformatShort(&data[2]);
-      delay  = unformatShort(&data[4]);
-      mask   = unformatShort(&data[6]);
-      rate   = unformatShort(&data[8]);
-      if (!beginFBRun(bright, window, delay, mask, rate)) {
-        expctl.msgProcessingErr++;
-        strcpy(expctl.lastErrorStr,EXP_CANNOT_BEGIN_FB_RUN);
-        expctl.lastErrorID=EXP_Cannot_Begin_FB_Run;
-        expctl.lastErrorSeverity=SEVERE_ERROR;
-        Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
-                          SEVERE_ERROR);
+      {
+	USHORT bright=0, window=0, mask=0, rate=0;
+	short delay=0;
+	tmpPtr = data;
+	bright = unformatShort(&data[0]);
+	window = unformatShort(&data[2]);
+	delay  = unformatShort(&data[4]);
+	if(delay < -200 || delay > 175) {
+	  DOERROR("EXPCONTROL_BEGIN_FB_RUN: Flasher delay must be -200 to 175!",
+		  EXP_Bad_FB_Delay, SEVERE_ERROR);
+	  break;
+	}
+	mask   = unformatShort(&data[6]);
+	rate   = unformatShort(&data[8]);
+	if (!beginFBRun(compMode, bright, window, delay, mask, rate)) {
+	  DOERROR(EXP_CANNOT_BEGIN_FB_RUN, EXP_Cannot_Begin_FB_Run, SEVERE_ERROR);
+	  break;
+	}
+	Message_setStatus(M,SUCCESS);
+	Message_setDataLen(M,0);
+	break;
       }
-      else {
-        Message_setStatus(M,SUCCESS);
-      }
-      Message_setDataLen(M,0);
-      break;
-
       /* end run */ 
     case EXPCONTROL_END_RUN:
       if (!endRun()) {
-	expctl.msgProcessingErr++;
-	strcpy(expctl.lastErrorStr,EXP_CANNOT_END_RUN);
-	expctl.lastErrorID=EXP_Cannot_End_Run;
-	expctl.lastErrorSeverity=SEVERE_ERROR;
-	Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
-			  SEVERE_ERROR);
+	DOERROR(EXP_CANNOT_END_RUN, EXP_Cannot_End_Run, SEVERE_ERROR);
+	break;
       }
-      else {
-	Message_setStatus(M,SUCCESS);
-      }
+      Message_setStatus(M,SUCCESS);
       Message_setDataLen(M,0);
       break;
 
     case EXPCONTROL_END_FB_RUN:
       if (!endFBRun()) {
-        expctl.msgProcessingErr++;
-        strcpy(expctl.lastErrorStr,EXP_CANNOT_END_FB_RUN);
-        expctl.lastErrorID=EXP_Cannot_End_FB_Run;
-        expctl.lastErrorSeverity=SEVERE_ERROR;
-        Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
-                          SEVERE_ERROR);
+	DOERROR(EXP_CANNOT_END_FB_RUN, EXP_Cannot_End_FB_Run, SEVERE_ERROR);
+	break;
       }
-      else {
-        Message_setStatus(M,SUCCESS);
-      }
+      Message_setStatus(M,SUCCESS);
       Message_setDataLen(M,0);
       break;
       
@@ -527,22 +481,6 @@ void expControl(MESSAGE_STRUCT *M) {
       Message_setDataLen(M,strlen(DOM_errorString)+8);
       break;
       
-      /* force run reset */ 
-    case EXPCONTROL_FORCE_RUN_RESET:
-      if (!forceRunReset()) {
-	expctl.msgProcessingErr++;
-	strcpy(expctl.lastErrorStr,EXP_CANNOT_RESET_RUN_STATE);
-	expctl.lastErrorID=EXP_Cannot_Reset_Run_State;
-	expctl.lastErrorSeverity=FATAL_ERROR;
-	Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
-			  FATAL_ERROR);
-      }
-      else {
-	Message_setStatus(M,SUCCESS);
-      }
-      Message_setDataLen(M,0);
-      break;
-
     case EXPCONTROL_DO_PEDESTAL_COLLECTION:
       tmpPtr = data;
 #define MAXPEDGOAL 1000 /* MAX # of ATWD triggers (FADCs are twice this) */
@@ -550,28 +488,26 @@ void expControl(MESSAGE_STRUCT *M) {
       ULONG ped1goal   = unformatLong(&data[4]);
       ULONG pedadcgoal = unformatLong(&data[8]);
       zeroPedestals();
-      Message_setDataLen(M,0);
-      Message_setStatus(M,SUCCESS);
       if(ped0goal   > MAXPEDGOAL ||
 	 ped1goal   > MAXPEDGOAL ||
 	 pedadcgoal > ped0goal + ped1goal) {
-        expctl.msgProcessingErr++;
-        strcpy(expctl.lastErrorStr,EXP_TOO_MANY_PEDS);
-        expctl.lastErrorID=EXP_Too_Many_Peds;
-        expctl.lastErrorSeverity=SEVERE_ERROR;
-        Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
-                          SEVERE_ERROR);
+	DOERROR(EXP_TOO_MANY_PEDS, EXP_Too_Many_Peds, SEVERE_ERROR);
 	break;
       }
       if(pedestalRun(ped0goal, ped1goal, pedadcgoal)) {
-        expctl.msgProcessingErr++;
-        strcpy(expctl.lastErrorStr,EXP_PEDESTAL_RUN_FAILED);
-        expctl.lastErrorID=EXP_Pedestal_Run_Failed;
-        expctl.lastErrorSeverity=SEVERE_ERROR;
-        Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
-                          SEVERE_ERROR);
+	DOERROR(EXP_PEDESTAL_RUN_FAILED, EXP_Pedestal_Run_Failed, SEVERE_ERROR);
 	break;
       }
+#ifdef  DEBUGLBM
+#warning DEBUGLBM set!
+      if(pedestalRun(ped0goal, ped1goal, pedadcgoal)) {
+        DOERROR(EXP_PEDESTAL_RUN_FAILED, EXP_Pedestal_Run_Failed, SEVERE_ERROR);
+        break;
+      }
+#endif
+      
+      Message_setDataLen(M,0);
+      Message_setStatus(M,SUCCESS);
       break;
 
     case EXPCONTROL_GET_NUM_PEDESTALS:
@@ -584,13 +520,7 @@ void expControl(MESSAGE_STRUCT *M) {
 
     case EXPCONTROL_GET_PEDESTAL_AVERAGES:
       if(!pedestalsAvail) {
-        expctl.msgProcessingErr++;
-        strcpy(expctl.lastErrorStr,EXP_PEDESTALS_NOT_AVAIL);
-        expctl.lastErrorID=EXP_Pedestals_Not_Avail;
-        expctl.lastErrorSeverity=SEVERE_ERROR;
-        Message_setStatus(M,SERVICE_SPECIFIC_ERROR|
-                          SEVERE_ERROR);
-	Message_setDataLen(M,0);
+	DOERROR(EXP_PEDESTALS_NOT_AVAIL, EXP_Pedestals_Not_Avail, SEVERE_ERROR);
 	break;
       }
       /* else we're good to go */
@@ -610,19 +540,9 @@ void expControl(MESSAGE_STRUCT *M) {
       Message_setStatus(M,SUCCESS);
       break;
 
-      /*----------------------------------- */
-      /* unknown service request (i.e. message */
-      /*	subtype), respond accordingly */
     default:
-      expctl.msgRefused++;
-      strcpy(expctl.lastErrorStr,EXP_ERS_BAD_MSG_SUBTYPE);
-      expctl.lastErrorID=COMMON_Bad_Msg_Subtype;
-      expctl.lastErrorSeverity=WARNING_ERROR;
-      Message_setDataLen(M,0);
-      Message_setStatus(M,
-			UNKNOWN_SUBTYPE|WARNING_ERROR);
-      break;
-      
+      DOERROR(EXP_ERS_BAD_MSG_SUBTYPE, COMMON_Bad_Msg_Subtype, WARNING_ERROR);
+      break;      
     }
 }
 

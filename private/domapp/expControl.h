@@ -46,5 +46,6 @@
 void expControlInit(void);
 void expControl(MESSAGE_STRUCT *M);
 void pedestalRunEntryPoint(void);
+void dumpRegs(void);
 
 #endif

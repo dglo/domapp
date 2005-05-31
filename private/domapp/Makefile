@@ -3,12 +3,7 @@
 HEADERS = *.h
 
 .c.o: $(HEADERS)
-	echo $(HEADERS)
 	$(CC) -c -I. $(CFLAGS) $<
-
-# Pick up new version tags
-msgHandler.o: $(HEADERS) msgHandler.c
-	$(CC) -c -I. $(CFLAGS) msgHandler.c
 
 .S.o:
 	$(CPP) $(CPPFLAGS) -o $*.i $<
@@ -28,13 +23,11 @@ clean:
 
 OBJS = \
         commonServices.o     domSControlRoutines.o \
-        compressEvent.o      expControl.o          \
-        dataAccess.o         \
+        dataAccess.o         expControl.o          \
         dataAccessRoutines.o genericMsgSendRecv.o  \
-        DOMdataCompression.o moniDataAccess.o      \
+        moniDataAccess.o                           \
         domSControl.o        msgHandler.o          \
-        engFormat.o          lbm.o                 \
-        message.o
+        engFormat.o          message.o
 
 
 ../bin/domapp: $(OBJS)

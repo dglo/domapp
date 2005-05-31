@@ -1,0 +1,40 @@
+
+DOMAPP RELEASE CHECKLIST
+
+1) Commit, update, tag domhub-tools/domapp
+2) Domapp, etc. committed to cvs, checked out and updated:
+cvs -q diff --brief configboot dom-cal dom-fpga dom-loader iceboot testdomapp domapp dom-cpld dom-ws hal stf | grep -v \?
+(nfis.c and build-num diffs are ok)
+cvs update configboot dom-cal dom-fpga dom-loader iceboot testdomapp domapp dom-cpld dom-ws hal stf
+
+3) Build everything from scratch:
+cd dom-ws
+make 'PLATFORM=Linux-i386' clean
+make clean
+make 'PLATFORM=Linux-i386' iceboot
+make 
+sh dorel.sh
+
+4) Load release.hex on test DOM:
+ldall release.hex
+
+5) Check fpga version
+on all && se.pl all r r && domterm <CWD>
+s" domapp.sbi" find if fpga endif
+fpga-versions
+
+6) test w/ domapp_multitest.pl:
+domapp_multitest.pl all
+
+7) update release notes
+8) tagdomapp
+9) tag other DOM-MB packages (e.g. "domapp-V00-00-06"), e.g.:
+cvs tag domapp-V00-00-04 configboot dom-cal dom-fpga dom-loader iceboot testdomapp dom-cpld dom-ws hal stf
+
+10) rebuild everything from scratch
+11) sh dorel.sh
+12) ldall again
+13) multitest again
+14) release.hex on glacier
+15) update docs
+16) announcement

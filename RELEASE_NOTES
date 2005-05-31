@@ -1,5 +1,30 @@
 
 Release notes for production domapp -- jacobsen@npxdesigns.com
+=========================================================
+
+domapp V00-00-04  5/31/2005  First beta release
+       Requires domapp.sbi: 226, DOM-MB packages domapp-V00-00-04
+       Test with domhub-tools: V00-00-03
+
+Upgrades/bug fixes
+* Flasher, supernova, LC implemented
+* All planned major features now implemented (see 
+  resources/doc/index.html)
+
+Major known issues (from resources/doc/index.html):
+    * Many things are not thoroughly tested yet, notably LC 
+      functionality, flashers, and programmable dead time.  
+      Compressed data has not been thoroughly examined.
+    * DOM becomes unresponsive after many short tests 
+      where supernova data are read out.  Currently 
+      under investigation.
+
+Minor Outstanding Issues:
+    * A possible firmware issue exists where pedestal collection 
+      ("forced triggers") fail to arrive in time (200 usec).  
+      Currently under investigation.
+    * Should implement raw data format so that compressed data 
+      can be compared with uncompressed in a one-to-one format.
 
 =========================================================
 

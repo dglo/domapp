@@ -2,8 +2,8 @@
   domapp - IceCube DOM Application program for use with 
            "Real"/"domapp" FPGA
            J. Jacobsen (jacobsen@npxdesigns.com), Chuck McParland
-  $Date: 2005-05-19 00:08:23 $
-  $Revision: 1.27 $
+  $Date: 2005-05-26 03:45:19 $
+  $Revision: 1.29 $
 */
 
 #include <unistd.h> /* Needed for read/write */
@@ -11,7 +11,7 @@
 // DOM-related includes
 #include "hal/DOM_MB_hal.h"
 #include "hal/DOM_MB_domapp.h"
-#include "lbm.h"
+//#include "lbm.h"
 #include "message.h"
 #include "moniDataAccess.h"
 #include "expControl.h"
@@ -53,9 +53,8 @@ int main(void) {
 
   unsigned long long t_hw_last, t_cf_last, tcur;
   unsigned long long moni_hardware_interval, moni_config_interval;
-  unsigned long long t_scalar_last;
 
-  t_scalar_last = t_hw_last = t_cf_last = hal_FPGA_DOMAPP_get_local_clock();
+  t_hw_last = t_cf_last = hal_FPGA_DOMAPP_get_local_clock();
 
   /* Start up monitoring system -- do this before other *Init()'s because
      they may want to insert monitoring information */
@@ -67,14 +66,8 @@ int main(void) {
   domSControlInit();
   expControlInit();
   dataAccessInit();
-  
-  /* Get buffer, temporary replacement for lookback mem. */
-#ifdef SKIPTHIS
-  if(lbm_init()) {
-    mprintf("Malloc of LBM buffer failed");
-  }
-#endif
-  int numTriggerChecks = 0;
+
+  halDisableAnalogMux(); /* John Kelley suggests explicitly disabling this by default */
   
   halEnableBarometer(); /* Increases power consumption slightly but 
 			   enables power to be read out */
@@ -86,7 +79,6 @@ int main(void) {
     /* Insert periodic monitoring records */
 
     tcur = hal_FPGA_DOMAPP_get_local_clock();      
-
 
     /* Guarantee that the HW monitoring records occur no faster than at a
        rate specified by MIN_HW_IVAL -- this guarantees a unique SPE/MPE measurement
@@ -107,7 +99,8 @@ int main(void) {
 	halStartReadTemp();
       }
       moniInsertHdwrStateMessage(tcur, temperature, 
-				 hal_FPGA_DOMAPP_spe_rate(),hal_FPGA_DOMAPP_mpe_rate());
+				 hal_FPGA_DOMAPP_spe_rate_immediate(),
+				 hal_FPGA_DOMAPP_mpe_rate_immediate());
       t_hw_last = tcur;
     }
     
@@ -118,15 +111,11 @@ int main(void) {
     }
 
     /* Check for new message */
-    if(halIsInputData()) {
-      if(getmsg(message)) msgHandler((MESSAGE_STRUCT *) message); 
+    if(halIsInputData() && getmsg(message)) {
+      msgHandler((MESSAGE_STRUCT *) message);
       putmsg(message);
-    } else if(lbm_ok()) {
-      numTriggerChecks++;
-#ifdef SKIPTHIS
-      bufferLBMTriggers();
-#endif
-    } 
+    }
+
   } /* for(;;) */
 }
 
@@ -136,7 +125,6 @@ void putmsg(char *buf) {
   int nw = len + MSG_HDR_LEN;
   write(STDOUT, buf, nw);
 }
-
 
 int getmsg(char *buf) {
   int nh = read(STDIN, buf, MSG_HDR_LEN);

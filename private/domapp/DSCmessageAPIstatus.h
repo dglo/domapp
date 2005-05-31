@@ -60,6 +60,8 @@
 #define DSC_GET_LC_SPAN 56
 #define DSC_SET_LC_CABLE_LEN 57
 #define DSC_GET_LC_CABLE_LEN 58
+#define DSC_ENABLE_SN 59
+#define DSC_DISABLE_SN 60
 
 
 /* Slow Control specific Last error ID values */
@@ -89,6 +91,12 @@
 #define DSC_LC_Bad_Len 37
 #define DSC_LC_Len_Not_Set 38
 #define DSC_bad_deadtime 39
+#define DSC_SN_Already_Running 40
+#define DSC_Bad_SN_Mode 41
+#define DSC_Bad_SN_Deadtime 42
+#define DSC_SN_Not_Running 43
+#define DSC_SN_Start_Failed 44
+
 /* These are DOM Slow Control specific return message
    formats and values.  In most cases, they are formatted
    as byte values to eliminate any questions of
