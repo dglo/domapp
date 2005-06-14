@@ -1,9 +1,9 @@
 /* moniDataAccess.h
  * Header file for store/fetch operations on monitoring data
  * Part of dataAccess thread
- * John Jacobsen, JJ IT Svcs, for LBNL
+ * John Jacobsen, jacobsen@npxdesigns.com, for LBNL
  * May, 2003
- * $Id: moniDataAccess.h,v 1.4 2005-05-27 20:22:14 jacobsen Exp $
+ * $Id: moniDataAccess.h,v 1.6 2005-06-07 18:30:25 jacobsen Exp $
  */
 
 #ifndef _MONI_DATA_ACCESS_
@@ -27,8 +27,6 @@
 #ifndef FPGA_HAL_TICKS_PER_SEC 
 #define FPGA_HAL_TICKS_PER_SEC 40000000
 #endif
-
-#define TEMP_REFRESH_IVAL (10 * FPGA_HAL_TICKS_PER_SEC)
 
 struct moniRec {
   USHORT dataLen;    /* Number of bytes in data portion */
@@ -135,10 +133,12 @@ void moniRunTests(void);
 unsigned long long moniGetHdwrIval(void);
 unsigned long long moniGetConfIval(void);
 
-void moniInit(
-	      UBYTE *bufBaseAddr, 
+void moniInit(UBYTE *bufBaseAddr, 
 	      int mask);                      /* Initializes circular buffer 
 						 pointers */
+
+void moniZeroIndices(void);                   /* Resets buffer, assuming moniInit
+						 was called at some point first */
 
 void moniInsertRec(struct moniRec *m);        /* Producer function */
 

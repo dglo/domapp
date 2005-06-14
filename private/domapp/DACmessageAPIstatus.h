@@ -47,6 +47,7 @@
 #define DATA_ACC_SET_COMP_MODE     26
 #define DATA_ACC_GET_COMP_MODE     27
 #define DATA_ACC_GET_SN_DATA       28
+#define DATA_ACC_RESET_MONI_BUF    29
 
 // define service specific error values
 #define DAC_Data_Overrun        4
@@ -59,69 +60,7 @@
 #define DAC_Cant_Enable_FB     11
 #define DAC_SN_Not_Running     12
 
-/* These are Data Access specific return message
-   formats and values.  In most cases, they are formatted
-   as byte values to eliminate any questions of
-   "endian-ness".  Note that remote object accesses
-   (subtype=REMOTE_OBJECT_REF) will have a format
-   determined by that additional protocol.  These
-   formats describe "all the rest".
-*/
-
-/* Response to: 
-	subType: DATA_ACC_DATA_AVAIL
-Passed values:
-	none
-Returned values in data portion of message:
-	BOOLEAN dataAvailable
-Size of returned values in data portion:
-	UBYTE DATA_AVAILABLE */
 #define	DAC_ACC_DATA_AVAIL_LEN 1
-
-/* Response to: 
-	subType: DATA_GET_DATA
-Passed values:
-	none
-Returned values in data portion of message:
-	data buffer, if available
-Size of returned values in data portion:
-	data length encoded in message header */
-
-/*
- 
-Response to:
-        subType: DATA_ACC_GET_NEXT_MONI_REC
-Passed values:
-        none
-Returned values in data portion of message:
-        BOOLEAN dataAvailable.  If 0, nothing else will be in message.  
-	If 1, the rest of the message contains the monitoring record.
-*/
-
-
-/*
-
-Response to:
-        subType: DATA_ACC_SET_MONI_IVAL
-Passed values:
-        ULONG hware_interval
-        ULONG config_interval
-Returned values in data portion of message:
-        none 
-
-*/
-
-/* 
-Response to
-        subtype: DATA_ACC_SET_ENG_FMT
-Passed values:
-        UBYTE FADC_SAMP_CNT
-        UBYTE ATWD01_MASK
-        UBYTE ATWD23_MASK
-Returned values in data portion of message: 
-        none
-*/
-
 
 #endif
 

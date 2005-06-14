@@ -4,21 +4,92 @@
   <meta content="text/html; charset=ISO-8859-1"
  http-equiv="content-type">
   <title>DOMApp Status Page</title>
+  <style type="">
+<!--
+body {
+background-color: #F5F5CF;
+font-family: serif;
+font-size: 12pt;
+}
+
+h1 {
+text-align: center;
+font-size: 20pt;
+font-weight: normal;
+background-color: #FFFFFF;
+border-style: ridge none none none;
+border-width: thin 0 0 0;
+padding: .2em 0 0 0;
+}
+
+h2 {
+font-size: 12pt;
+background-color: #FFFFFF;
+border-style: ridge none none none;
+border-width: thin 0 0 0;
+padding: .2em;
+}
+
+h3 {
+font-size: 12pt;
+}
+
+.terminal {
+font: 10pt monospace;
+background-color: #FFFFFF;
+border-style: dashed;
+border-width: thin;
+padding: .2em .2em .2em 1em;
+margin: 0 5% 0 2%;
+}
+
+.terminalOld {
+font: 10pt monospace;
+background-color: #FFFFFF;
+border-style: dashed;
+border-width: thin;
+padding: .2em .2em .2em 1em;
+white-space: pre;
+margin: 0 5% 0 2%;
+}
+
+font.todo {
+color: red;
+}
+
+.footer {
+font: 10pt monospace;
+text-align: right;
+}
+
+-->
+  </style>
 </head>
 <body>
-<big><big>DOMAPP - production version</big></big> -
-jacobsen@npxdesigns.com<br>
-<small><small><small><a href="http://www.npxdesigns.com/domapp">http://www.npxdesigns.com/domapp</a><br>
-</small></small></small>
-<hr style="width: 100%; height: 2px;">Last updated 5/31/05<br>
-<br>
-<big><span style="font-weight: bold;">Progress Summary:</span></big>
+<table style="text-align: left;" border="0" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;">&nbsp; <big><big><span
+ style="font-style: italic;">DOMAPP Status Page&nbsp;&nbsp; </span></big></big><br>
+      </td>
+      <td style="vertical-align: top;">John Jacobsen <br>
+      <span style="font-family: monospace;">jacobsen@npxdesigns.com</span><br>
+Last revision 6/14/2005<br>
+      <span style="font-family: monospace;">$Id: index.html,v 1.5
+2005/06/10 15:59:06 jacobsen Exp $</span><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+Status | <a href="api.html">API</a> | <a href="domapp_testing.html">Testing</a><br>
+<h2>PROGRESS SUMMARY</h2>
 Key features are implemented, and many if not most have been tested in
 an automated fashion.<br>
 <br>
-<div style="text-align: center;"><big style="color: rgb(153, 0, 0);"><big><span
- style="font-style: italic; font-weight: bold;">The first beta release
-is V00-00-04.</span></big></big><br
+<div style="text-align: left;"><big style="color: rgb(153, 0, 0);"><big><span
+ style="font-style: italic; font-weight: bold;">The latest release
+is V00-00-05.</span></big></big><br
  style="font-style: italic; font-weight: bold;">
 </div>
 <br>
@@ -38,7 +109,7 @@ testdomapp)</span></td>
       <td
  style="vertical-align: top; color: rgb(51, 102, 102); text-align: right;"><big><span
  style="font-weight: bold;">Most recent release tag:</span></big></td>
-      <td style="vertical-align: top;"><span style="font-weight: bold;"></span>V00-00-04
+      <td style="vertical-align: top;"><span style="font-weight: bold;"></span>V00-00-05
 (beta)<span style="color: rgb(204, 0, 0);"></span></td>
     </tr>
     <tr>
@@ -46,7 +117,7 @@ testdomapp)</span></td>
  style="vertical-align: top; color: rgb(51, 102, 102); text-align: right;"><big><span
  style="font-weight: bold;">Corresponding domapp fpga build:<br>
       </span></big></td>
-      <td style="vertical-align: top;">domapp.sbi Build # 226<br>
+      <td style="vertical-align: top;">domapp.sbi Build # 235<br>
       </td>
     </tr>
     <tr>
@@ -56,7 +127,7 @@ testdomapp)</span></td>
       </big></td>
       <td style="vertical-align: top;">Not yet packaged into "official
 DOM-MB release."&nbsp; release.hex built with DOM-MB projects tagged
-as&nbsp; <span style="color: rgb(0, 0, 0);">domapp-V00-00-04 tag</span><br>
+as&nbsp; <span style="color: rgb(0, 0, 0);">domapp-V00-00-05 tag</span><br>
       </td>
     </tr>
     <tr>
@@ -64,7 +135,7 @@ as&nbsp; <span style="color: rgb(0, 0, 0);">domapp-V00-00-04 tag</span><br>
  style="color: rgb(51, 102, 102); font-weight: bold;">Test with:</span></big><br>
       </td>
       <td style="vertical-align: top;"><a href="domapp_testing.html">domhub-tools/domapp</a>,
-V00-00-03<span style="color: rgb(255, 0, 0);"></span><br>
+V00-00-04<span style="color: rgb(255, 0, 0);"></span><br>
       </td>
     </tr>
     <tr>
@@ -72,16 +143,15 @@ V00-00-03<span style="color: rgb(255, 0, 0);"></span><br>
  style="color: rgb(51, 102, 102); font-weight: bold;">Beta release.hex:</span></big><br>
       </td>
       <td style="vertical-align: top;"><a style="color: rgb(102, 0, 0);"
- href="http://glacier.lbl.gov/releases/DOM-MB/domapp/release-domapp-V00-00-04.hex">http://glacier.lbl.gov/releases/DOM-MB/domapp/release-domapp-V00-00-04.hex</a><br>
+ href="http://glacier.lbl.gov/releases/DOM-MB/domapp/release-domapp-V00-00-05.hex">http://glacier.lbl.gov/releases/DOM-MB/domapp/release-domapp-V00-00-05.hex</a><br>
       </td>
     </tr>
   </tbody>
 </table>
 <span style="font-weight: bold;"></span><span
  style="color: rgb(153, 153, 153);"></span><big><span
- style="font-weight: bold;"><br>
-</span></big><br>
-<big><span style="font-weight: bold;">Major new features:</span></big><br>
+ style="font-weight: bold;"></span></big><br>
+<h2 style="font-weight: normal;"><big>MAJOR NEW FEATURES</big></h2>
 <ol>
   <li>Hit buffering and Road Grader data compression are now carried
 out in the DOM FPGA, resulting in substantially less dead time;
@@ -111,54 +181,42 @@ has been cleaned up;<br>
     <br>
   </li>
   <li>Nearly nonexistent testdomapp documentation has been filled out
-into a full API document for domapp.<br>
-  </li>
+into a full API document for domapp.</li>
+  <br>
+  <br>
 </ol>
-<big><span style="font-weight: bold;">Documentation:</span></big><br>
-<br>
-<div style="margin-left: 40px;"><a href="api.html">DOMApp messaging API</a>
+<h2 style="font-weight: normal;"><big>DOCUMENTATION</big></h2>
+<a href="api.html">DOMApp messaging API</a>
 is available <a href="api.html">here</a>.&nbsp; This describes the
 messaging interface to domapp, as well as salient differences between
 domapp and testdomapp.<br>
 <br>
 The
-<a href="domapp_testing.html">DOMApp Test Script</a> is now
-(sparsely) documented as well.<br>
-</div>
-<big><span style="font-weight: bold;"><br>
-Major Outstanding Issues:<br>
-</span></big>
+<a href="domapp_testing.html">DOMApp Test Script</a> is now documented
+as well (work in progress).<big><br>
+<br>
+</big>
+<h2 style="font-weight: normal;"><big>OUTSTANDING ISSUES</big></h2>
+<big><span style="font-weight: bold;"></span></big>
 <ul>
   <li>Many things are not thoroughly tested yet, notably LC
-functionality, flashers, and programmable dead time.&nbsp; Compressed
+functionality, flashers, and programmable dead time.&nbsp; <br>
+  </li>
+  <li>Compressed
 data has not been thoroughly examined.</li>
   <li>DOM becomes unresponsive after many short tests where supernova
 data are read out.&nbsp; Currently under investigation.</li>
+  <li>A few key messages still missing from the documentation.</li>
+  <li>Request has been made for a rework of the monitoring to
+reduce
+overall bandwidth and increase relevance of monitoring information.</li>
+  <li>Should implement raw data format so that compressed data
+can be
+compared with uncompressed in a one-to-one format.</li>
   <br>
 </ul>
-<big><span style="font-weight: bold;">Minor Outstanding Issues:</span></big><br>
-<ul>
-  <li><small>A few key messages still missing from the documentation.</small></li>
-  <li><small>More cleanup/removal of extraneous files shoud be done.</small></li>
-  <li><small>Request has been made for a rework of the monitoring to
-reduce
-overall bandwidth and increase relevance of monitoring information.</small></li>
-  <li><small>A possible firmware issue exists where pedestal collection
-("forced triggers") fail to arrive in time (200 usec).&nbsp; Currently
-under investigation.</small></li>
-  <li><small>Test scripts need to be more fully documented.&nbsp;
-Overall of
-the test scheduling algorithm may need improvement.</small></li>
-  <li><small>Should implement raw data format so that compressed data
-can be
-compared with uncompressed in a one-to-one format.</small><br>
-  </li>
-</ul>
-<div style="margin-left: 40px;"><br>
-</div>
-<big><span style="font-weight: bold;">Feature / Testing Matrix</span>:<br>
-</big>
-<hr style="width: 100%; height: 2px;">
+<h2>IMPLEMENTATION AND TESTING MATRIX</h2>
+<big><span style="font-weight: bold;"></span></big>
 <table style="text-align: left; width: 663px; height: 536px;" border="0"
  cellpadding="2" cellspacing="2">
   <tbody>
@@ -346,11 +404,11 @@ Scaler Readout<br>
  style="vertical-align: top; text-align: center; font-weight: bold; color: rgb(153, 153, 153); width: 50px; background-color: rgb(153, 255, 153);"><small>Y</small></td>
       <td
  style="vertical-align: top; text-align: center; color: rgb(153, 153, 153); width: 50px; background-color: rgb(153, 255, 153);"><small><a
- href="#spetest"><span style="font-weight: bold;">Y</span>(***)</a><br>
+ href="#spetest"><span style="font-weight: bold;">Y</span>(**)</a><br>
       </small></td>
       <td
  style="vertical-align: top; text-align: center; color: rgb(153, 153, 153); width: 50px; background-color: rgb(153, 255, 153);"><small><a
- href="index.html#spetest"><span style="font-weight: bold;">Y</span>(***)</a></small></td>
+ href="index.html#spetest"><span style="font-weight: bold;">Y</span>(**)</a></small></td>
       <td
  style="vertical-align: top; text-align: center; color: rgb(153, 153, 153); width: 50px; background-color: rgb(153, 255, 153);"><small><span
  style="font-weight: bold;">Y</span><br>
@@ -576,8 +634,7 @@ Roadgrader threshold into FPGA for data compression</span><br>
  style="font-weight: bold;">Y</span><br>
       </small></td>
       <td
- style="vertical-align: top; text-align: center; width: 50px; color: rgb(192, 192, 192); background-color: rgb(153, 255, 153);"><a
- href="#starstarstarstar"><small>Y(**)</small></a></td>
+ style="vertical-align: top; text-align: center; width: 50px; background-color: rgb(153, 255, 153); font-weight: bold; color: rgb(153, 153, 153);"><small>Y</small></td>
       <td
  style="vertical-align: top; text-align: center; width: 50px; background-color: rgb(153, 255, 153); color: rgb(153, 153, 153);"><small><span
  style="font-weight: bold;">Y</span></small></td>
@@ -708,12 +765,8 @@ flasher LED current<br>
 </table>
 <big><small><small><br>
 <a name="kael"></a>(*) Implemented but currently disabled per Kael
-Hanson</small></small></big><br>
-<big><small><small><a name="starstarstarstar"></a>(**) Some reliability
-issues, possibly in the FPGA,
-are being investigated-- these involve problems with the collection of
-forced triggers collected to form pedestal averages</small></small></big><big><small><small><br>
-<a name="spetest"></a>(***) SPE only tested, not MPE<br>
+Hanson</small></small></big><big><small><small></small></small></big><big><small><small><br>
+<a name="spetest"></a>(**) SPE only tested, not MPE<br>
 </small></small></big>
 <br>
 </body>

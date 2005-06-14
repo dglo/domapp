@@ -1,13 +1,10 @@
-/* expControl.c */
-
 /*
-Author: Chuck McParland
-Start Date: May 4, 1999
-Description:
-	DOM Experiment Control service thread to handle
-	special run-related functions.  Performs all 
-	"standard" DOM service functions.
-Last Modification:
+  Original Author: Chuck McParland
+  Extensions by John Jacobsen (jacobsen@npxdesigns.com)
+  Start Date: May 4, 1999
+  DOM Experiment Control service to handle
+  special run-related functions.  Performs all 
+  "standard" DOM service functions.
 */
 
 #include <string.h>
@@ -112,7 +109,6 @@ void zeroLBM(void) {
   memset(hal_FPGA_DOMAPP_lbm_address(), 0, WHOLE_LBM_MASK+1);
 }
 
-#define DO_TST_DEBUGGING
 #ifdef  DO_TST_DEBUGGING
 #warning DO_TST_DEBUGGING debug hack in place
 #define DOPONG() FPGA(PONG)=0x666

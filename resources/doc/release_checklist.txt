@@ -1,6 +1,7 @@
 
 DOMAPP RELEASE CHECKLIST
 
+0) If need be, update, commit and tag test software (domhub-tools/domapp)
 1) Commit, update, tag domhub-tools/domapp
 2) Domapp, etc. committed to cvs, checked out and updated:
 cvs -q diff --brief configboot dom-cal dom-fpga dom-loader iceboot testdomapp domapp dom-cpld dom-ws hal stf | grep -v \?
@@ -24,17 +25,18 @@ s" domapp.sbi" find if fpga endif
 fpga-versions
 
 6) test w/ domapp_multitest.pl:
-domapp_multitest.pl all
+dmt
 
-7) update release notes
-8) tagdomapp
-9) tag other DOM-MB packages (e.g. "domapp-V00-00-06"), e.g.:
+7) Update RELEASE_NOTES
+8) Update HTML documents
+9) Commit changes to docs
+10) tagdomapp
+11) tag other DOM-MB packages (e.g. "domapp-V00-00-06"), e.g.:
 cvs tag domapp-V00-00-04 configboot dom-cal dom-fpga dom-loader iceboot testdomapp dom-cpld dom-ws hal stf
 
-10) rebuild everything from scratch
-11) sh dorel.sh
-12) ldall again
-13) multitest again
-14) release.hex on glacier
-15) update docs
-16) announcement
+12) rebuild everything from scratch
+13) sh dorel.sh
+14) ldall again
+15) multitest again
+16) release.hex on glacier
+17) announcement

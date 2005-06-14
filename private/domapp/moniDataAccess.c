@@ -3,7 +3,7 @@
  * Routines to store and fetch monitoring data from a circular buffer
  * John Jacobsen, JJ IT Svcs, for LBNL/IceCube
  * May, 2003
- * $Id: moniDataAccess.c,v 1.11 2005-05-27 20:22:14 jacobsen Exp $
+ * $Id: moniDataAccess.c,v 1.12 2005-06-02 01:03:11 jacobsen Exp $
  * CURRENTLY NOT THREAD SAFE -- need to implement moni[Un]LockWriteIndex
  */
 
@@ -118,8 +118,6 @@ void moniInit(
   moniSetIvals(0,0); /* The idea here is that no monitoring occurs 
 			if these values aren't set to something != 0 */
 
-  //printf("Initialized monitoring buffer with address %p and mask 0x%x.\n",
-  //moniBaseAddr, mask);
   moniInitialized = 1;
 }
 

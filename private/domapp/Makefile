@@ -21,14 +21,11 @@ all: ../domapp.bin.gz
 clean:
 	rm -f *.o *.i *.bin *.elf
 
-OBJS = \
-        commonServices.o     domSControlRoutines.o \
+OBJS =  commonServices.o     domSControlRoutines.o \
         dataAccess.o         expControl.o          \
-        dataAccessRoutines.o genericMsgSendRecv.o  \
-        moniDataAccess.o                           \
+        moniDataAccess.o     message.o             \
         domSControl.o        msgHandler.o          \
-        engFormat.o          message.o
-
+        dataAccessRoutines.o 
 
 ../bin/domapp: $(OBJS)
 	gcc -o domapp  $(LIBHAL) $(OBJS) -lm

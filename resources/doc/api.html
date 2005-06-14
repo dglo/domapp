@@ -11,55 +11,97 @@
   <meta name="CHANGED" content="20050309;22300700">
   <meta name="SDFOOTNOTE" content=";;;;P">
   <meta name="SDENDNOTE" content="ARABIC">
-  <style>
-	<!--
-		@page { size: 8.5in 11in; margin-left: 1.25in; margin-right: 1.25in; margin-top: 1in; margin-bottom: 1in }
-		P { margin-bottom: 0.08in }
-		TD P { margin-bottom: 0.08in }
-		TH P { margin-bottom: 0.08in; font-style: italic }
-	-->
-	</style>
+  <style type="">
+<!--
+body {
+background-color: #F5F5CF;
+font-family: serif;
+font-size: 12pt;
+}
+
+h1 {
+text-align: center;
+font-size: 20pt;
+font-weight: normal;
+background-color: #FFFFFF;
+border-style: ridge none none none;
+border-width: thin 0 0 0;
+padding: .2em 0 0 0;
+}
+
+h2 {
+font-size: 12pt;
+background-color: #FFFFFF;
+border-style: ridge none none none;
+border-width: thin 0 0 0;
+padding: .2em;
+}
+
+h3 {
+font-size: 12pt;
+}
+
+.terminal {
+font: 10pt monospace;
+background-color: #FFFFFF;
+border-style: dashed;
+border-width: thin;
+padding: .2em .2em .2em 1em;
+margin: 0 5% 0 2%;
+}
+
+.terminalOld {
+font: 10pt monospace;
+background-color: #FFFFFF;
+border-style: dashed;
+border-width: thin;
+padding: .2em .2em .2em 1em;
+white-space: pre;
+margin: 0 5% 0 2%;
+}
+
+font.todo {
+color: red;
+}
+
+.footer {
+font: 10pt monospace;
+text-align: right;
+}
+
+-->
+  </style>
 </head>
-<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 238);"
- alink="#889999" dir="ltr" lang="en-US" link="#889999" vlink="#889999">
-<div style="text-align: left;"><big><font size="4"><big><b>Domapp API</b></big></font><font
- size="2"><big>&nbsp;&nbsp; John
-Jacobsen
-– jacobsen@npxdesigns.com</big></font><br>
-</big></div>
-<small><big>
-Version 1.2</big><sdfield type="DATETIME" sdval="38377.1590637732"
- sdnum="1033;1033;MM/DD/YY"><big>, 5/25/2005<br>
-</big>
-</sdfield>
-<hr style="width: 100%; height: 2px;"></small><big><br>
-<small><span style="font-weight: bold;">INTRODUCTION</span><br>
-This document describes the messaging
-interface to the production version of the IceCube DOM Application
-(domapp), which uses the DOMApp FPGA design.</small></big><small><br>
-</small><span style="font-weight: bold;"><br>
-COMPLETION STATUS</span><br>
-Most key messages are added now, some fine tuning is in progress.<br>
-<span style="font-weight: bold;"><br>
-LINKS</span><br>
-<div style="margin-left: 40px;"><a href="index.html">Domapp
-Implementation Status</a><br>
-<a href="domapp_testing.html">Domapp Test Scripts</a><br>
+<body dir="ltr" lang="en-US">
+<div style="text-align: left;">
+<table style="text-align: left;" border="0" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"> <big><big><big>Domapp API </big>&nbsp;&nbsp;
+      </big></big><br>
+      </td>
+      <td style="vertical-align: top;">John Jacobsen <br>
+      <span style="font-family: monospace;">jacobsen@npxdesigns.com</span><br>
+Last revision 6/10/2005<br>
+      <span style="font-family: monospace;">$Id: api.html,v 1.3
+2005/06/10 16:32:32 jacobsen Exp $</span><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<a href="index.html">Status</a> | API | <a href="domapp_testing.html">Testing</a>
 </div>
-<br>
-<span style="font-weight: bold;">API OVERVIEW</span><br
- style="font-weight: bold;">
-The API to Domapp takes the form of
-fixed-format binary messages (described below).&nbsp; Messages consist
-of an 8 byte header with an additional payload of 0-4084
-bytes.&nbsp;&nbsp; Messages sent by the surface generate reply messages
-from the DOMs.&nbsp; When Domapp is running, the DOM never sends a
-message unless a request
-message has been sent by the surface.<br>
-<p style="margin-bottom: 0in; font-weight: bold;"><big>CONTENTS:</big></p>
-<span style="font-weight: bold;"><br>
+<h2><big>CONTENTS</big></h2>
+<span style="font-weight: bold;">
 </span>
-<div style="margin-left: 40px;"><b><a href="#procedure">Outline of
+<div style="margin-left: 40px;"><a href="#intro">Introduction</a><br>
+<div style="margin-left: 40px;"><a href="#completion">Completion
+Status</a><br>
+<a href="#links">Links</a><br>
+<a href="#overview">API Overview</a><br>
+</div>
+<a href="#procedure">Outline of
 Procedure for Taking Data</a><br>
 <a href="#monitoring">Monitoring</a><br>
 <a href="#triggering">SPE and Calibration Triggers</a><br>
@@ -69,16 +111,44 @@ Procedure for Taking Data</a><br>
 <a href="#flasher">Run Modes and Flasher Functionality</a><br>
 <a href="#messagesdescribedindetail">Messages Described in Detail</a><br>
 <span style="font-style: italic; color: rgb(255, 0, 0);">!!! </span><a
- href="#differences">Differences Between Testdomapp and Domapp</a></b><b><span
- style="font-style: italic; color: rgb(255, 0, 0);"> !!!</span></b><br>
-<b><a href="#changelog">Changelog</a></b><br>
+ href="#differences">Differences Between Testdomapp and Domapp</a><span
+ style="font-style: italic; color: rgb(255, 0, 0);"> !!!</span><br>
+<a href="#changelog">Changelog</a><br>
 </div>
 <b><br>
 </b>
-<hr style="width: 100%; height: 2px;"><b><br>
-<a name="procedure"></a>OUTLINE OF PROCEDURE FOR TAKING DATA</b>
+<h2><big><small><span style="font-weight: bold;"><a name="intro"></a>INTRODUCTION</span></small></big></h2>
+<big><small>
+This document describes the messaging
+interface to the production version of the IceCube DOM Application
+(domapp), which uses the DOMApp FPGA design.</small></big><span
+ style="font-weight: bold;"><br>
+</span>
+<h3><span style="font-weight: bold;"><a name="completion"></a>COMPLETION
+STATUS</span></h3>
+Most key messages are added now, some fine tuning is in progress.<span
+ style="font-weight: bold;"><br>
+</span>
+<h3><span style="font-weight: bold;"><a name="links"></a>LINKS</span></h3>
+<a href="index.html">Domapp
+Implementation Status</a><br>
+<a href="domapp_testing.html">Domapp Test Scripts</a><br>
+<h3><span style="font-weight: bold;"><a name="overview"></a>API OVERVIEW</span></h3>
+The API to Domapp takes the form of
+fixed-format binary messages (described below).&nbsp; Messages consist
+of an 8 byte header with an additional payload of 0-4084
+bytes.&nbsp;&nbsp; Messages sent by the surface generate reply messages
+from the DOMs.&nbsp; When Domapp is running, the DOM never sends a
+message unless a request
+message has been sent by the surface.
+<h2><b><a name="procedure"></a>OUTLINE OF PROCEDURE FOR TAKING DATA</b></h2>
 <ol start="1">
-  <li> <font size="3">Set DACs (except high
+  <li> <font size="3">Optionally, reset monitoring buffer to eliminate
+messages from the previous run (</font><font style="font-size: 11pt;"
+ size="2"><a href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a>).<br>
+    <br>
+    </font></li>
+  <li><font size="3">Set DACs (except high
 voltage). <b>Flasher Board runs require special DAC settings.</b></font><br>
     <br>
   </li>
@@ -185,13 +255,11 @@ enabled, disable supernova data taking with </font><font
     </font></p>
   </li>
 </ol>
-<p style="margin-bottom: 0in;"><br>
-<b><a name="monitoring"></a>MONITORING<br>
-</b></p>
-<p style="margin-bottom: 0in;">The monitoring is configured and read
+<h2><a name="monitoring"></a>MONITORING</h2>
+The monitoring is configured and read
 out via DATA_ACCESS messages
 described below.&nbsp; The basic types of monitoring messages are as
-followed:</p>
+followed:
 <ul>
   <li>ASCII (diagnostic) messages</li>
   <li>Periodic hardware state snapshot</li>
@@ -212,14 +280,11 @@ High Voltage is read out.<br>
 Scaler readouts now have 1 second coverage and are spaced by a minimum
 of 40,000,000 + 100 clock ticks to avoid duplication of values.<br>
 </font>
-<p style="margin-bottom: 0in;"><b><br>
 <br>
-</b></p>
-<b><a name="triggering"></a>SPE AND CALIBRATION TRIGGERS
+<h2 style="font-weight: bold;"><a name="triggering"></a>SPE AND
+CALIBRATION TRIGGERS
 (Heartbeat/Beacon, Pulser, Flasher
-Issues):<br>
-<br>
-</b>
+Issues):</h2>
 Triggers can occur in the DOM both due to PMT signals, and the
 firing
 of a DOM calibration source.&nbsp; In normal operation, both SPE
@@ -246,10 +311,8 @@ encodes this information (see Joshua Sopher's document <span
  style="color: rgb(255, 0, 0);">[need link]</span>). <span
  style="color: rgb(255, 0, 0);"></span></font><b><br>
 </b><br>
-<p style="margin-bottom: 0in;"><b><a name="messaging"></a>MESSAGING
-SPECIFICATIONS</b></p>
-<b><br>
-</b>
+<h2><b><a name="messaging"></a>MESSAGING
+SPECIFICATIONS</b></h2>
 <table style="text-align: left;" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
@@ -473,8 +536,8 @@ DESCRIBED IN DETAIL</a>," below.<br>
 </table>
 <br>
 <b><br>
-<a name="dataformats"></a>DATA FORMATS and compression modes<br>
 </b>
+<h2><b><a name="dataformats"></a>DATA FORMATS and Compression Modes</b></h2>
 <p style="margin-bottom: 0in;">Data formats and compression modes have
 separate settings because one compression mode may have multiple
 formats, and one format could support multiple compression modes
@@ -669,9 +732,9 @@ roll over
 every ~2 minutes).&nbsp; The least significant bits of the timestamps
 are encoded in the hits themselves.<br>
 <br>
-<a name="supernova"></a><span style="font-weight: bold;">SUPERNOVA DATA</span><br>
-<br>
-The supernova data consists of a running tally of SPE or MPE triggers
+<h2><a name="supernova"></a><span style="font-weight: bold;">SUPERNOVA
+DATA</span></h2>
+The supernova data consist of a running tally of SPE or MPE triggers
 in a fixed 1.6384 millisecond (65536 counts of the 40 MHz clock)
 window.&nbsp; The <a href="#DSC_ENABLE_SN">DSC_ENABLE_SN</a> message
 lets you select SPE (0) or MPE (1) triggers as the basis of the data
@@ -721,7 +784,7 @@ slice 0<br>
       <td style="vertical-align: top;">UB<br>
       </td>
       <td style="vertical-align: top;">trigger count for time slice <span
- style="font-style: italic;">N</span><br>
+ style="font-style: italic;">N-1</span><br>
       </td>
     </tr>
   </tbody>
@@ -742,9 +805,9 @@ If the reply to the <font style="font-size: 11pt;" size="2">DATA_ACC_GET_SN_DATA
 message has a message length of zero, no data are available to be read
 out.</font><br>
 <br>
-<a name="flasher"></a><span style="font-weight: bold;">RUN MODES AND
-FLASHER FUNCTIONALITY</span><br>
-<br>
+<h2><a name="flasher"></a><span style="font-weight: bold;">RUN MODES
+AND
+FLASHER FUNCTIONALITY</span></h2>
 Currently there are two run modes in domapp: "normal" mode and flasher
 mode.&nbsp; In normal mode one first sets up high voltage and other DAC
 settings, then configures the FPGA for triggering on PMT pulses via <font
@@ -774,17 +837,12 @@ used interchangeably.<br>
 above, for a complete summary of the procedure.<br>
 <font size="3"><span style="color: rgb(153, 153, 153);"><span
  style="color: rgb(0, 0, 0);"><br>
-<br>
-</span></span></font>
-<hr style="width: 100%; height: 2px;"><font size="3"><span
- style="color: rgb(153, 153, 153);"><span style="color: rgb(0, 0, 0);"><br>
 </span></span></font><font size="3"><span
- style="color: rgb(153, 153, 153);"><a
- href="api.html#EXPCONTROL_END_FB_RUN"></a></span></font>
-<p style="margin-bottom: 0in;"><b><a name="messagesdescribedindetail"></a>MESSAGES
+ style="color: rgb(153, 153, 153);"><span style="color: rgb(0, 0, 0);"></span></span></font><font
+ size="3"><span style="color: rgb(153, 153, 153);"></span></font>
+<h2><b><a name="messagesdescribedindetail"></a>MESSAGES
 DESCRIBED IN DETAIL<br>
-</b></p>
-<br>
+</b></h2>
 The following tables describe the
 format of messages broken down by type and subtype. <br>
 <b><font size="4"><br>
@@ -1482,7 +1540,6 @@ explicitly.</span> </p>
   </tbody>
 </table>
 <br>
-<p style="margin-bottom: 0in;"></p>
 <table
  style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
  border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
@@ -3476,7 +3533,56 @@ data</a> section, above.&nbsp; <br>
     </tr>
   </tbody>
 </table>
-<p style="margin-bottom: 0in; page-break-before: always;"></p>
+<a name="DATA_ACC_RESET_MONI_BUF"></a><br>
+<table
+ style="width: 576px; text-align: left; margin-left: auto; margin-right: auto; page-break-before: auto;"
+ border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
+  <thead><tr valign="top">
+    <th width="28">
+    <p style="">ID</p>
+    </th>
+    <th style="text-align: center;" width="242">
+    <p style="">Subtype</p>
+    </th>
+    <th style="width: 130px; text-align: center;">
+    <p style="">Input</p>
+    </th>
+    <th width="142">
+    <p style="text-align: center;">Output</p>
+    </th>
+  </tr>
+  </thead> <tbody>
+    <tr>
+      <td sdval="22" sdnum="1033;" width="28">
+      <p style="" align="right">29<br>
+      </p>
+      </td>
+      <td width="242">
+      <p style="" align="center"> <font style="font-size: 11pt;"
+ size="2">DATA_ACC_RESET_MONI_BUF</font></p>
+      </td>
+      <td valign="top" width="130">
+      <p style="" align="center"> </p>
+      <div style="text-align: center;">-<br>
+      </div>
+      </td>
+      <td valign="top" width="142">
+      <p style="" align="center"> </p>
+      <div style="text-align: center;">-<br>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="4"
+ style="width: 566px; vertical-align: middle; text-align: center;">
+      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Reset
+monitoring buffer, eliminating any existing monitoring records<br>
+      </b></font></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
 <p style="margin-bottom: 0in; page-break-before: always;"><b><font
  size="4">Experiment Control Messages</font> (message type 4):</b></p>
 <p style="margin-bottom: 0in;">
@@ -3951,8 +4057,9 @@ board run.&nbsp; Equivalent to <a href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN<
 </p>
 <p style="margin-bottom: 0in; page-break-before: auto;">
 </p>
-<big><a name="differences"></a>DIFFERENCES BETWEEN DOMAPP AND TESTDOMAPP<br>
-</big>
+<h2><big><a name="differences"></a>DIFFERENCES BETWEEN DOMAPP AND
+TESTDOMAPP<br>
+</big></h2>
 <ul>
   <li><span style="font-weight: bold;">Test pattern data is not
 supported</span> by
@@ -4043,11 +4150,15 @@ explicitly.</span></font></span></span></font></li>
  style="font-style: normal;"><font
  style="font-size: 11pt; color: rgb(153, 153, 153);" size="2"><span
  style="color: rgb(0, 0, 0);">EXPCONTROL_FORCE_RUN_RESET is
-removed.&nbsp; Use <a href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>.<br>
-    </span></font></span></span></font></li>
+removed.&nbsp; Use <a href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>.</span></font></span></span></font></li>
+  <li><font style="font-size: 11pt;" size="2"><a
+ href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a> message
+was added.<br>
+    </font></li>
 </ul>
 <b><br>
-</b><a name="changelog"></a><b>CHANGELOG</b>
+</b>
+<h2><a name="changelog"></a><b>CHANGELOG</b></h2>
 <p style="margin-bottom: 0in;"><span style=""><font size="3">V1.0
 5/3/05 JEJ Began document based on
 testdomapp API document on docushare<br>

@@ -1,7 +1,27 @@
 
 Release notes for production domapp -- jacobsen@npxdesigns.com
 =========================================================
+domapp V00-00-05  6/14/2005
+       Requires domapp.sbi: 235, DOM-MB packages domapp-V00-00-05
+       Test with domhub-tools/domapp V00-00-04
 
+Upgrades/bug fixes
+* Lots of clean up
+* FPGA bug fix in pedestal collection
+* DATA_ACC_RESET_MONI_BUF message added
+* Updated docs
+
+Outstanding Issues:
+* Many things are not thoroughly tested yet, notably LC
+  functionality, flashers, and programmable dead time.
+  Compressed data has not been thoroughly examined.
+* DOM becomes unresponsive after many short tests
+  where supernova data are read out.  Currently
+  under investigation.
+* Should implement raw data format so that compressed data
+  can be compared with uncompressed in a one-to-one format.
+
+=========================================================
 domapp V00-00-04  5/31/2005  First beta release
        Requires domapp.sbi: 226, DOM-MB packages domapp-V00-00-04
        Test with domhub-tools: V00-00-03

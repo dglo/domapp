@@ -422,7 +422,7 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   if(hdr->trigbits & 1<<17) {
     msgp = FADCMove((USHORT *) (e+0x10), msgp, (int) FlashADCLen);
   } else {
-    mprintf("FADC data MISSING from raw event!!!");
+    mprintf("WARNING: FADC data MISSING from raw event!!!");
   }
 
   if(hdr->trigbits & 1<<18) {
@@ -431,7 +431,7 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
       msgp = ATWDShortMove((USHORT *) (e+0x210+ich*0x100) , msgp, ATWDChLen[ich]);
     }
   } else {
-    mprintf("ATWD data MISSING from raw event!!!");
+    mprintf("WARNING: ATWD data MISSING from raw event!!!");
   }
 
   int nbytes = msgp-m0;
@@ -563,11 +563,7 @@ int fillMsgWithRGData(UBYTE *msgBuffer, int bufsiz) {
   p += 2;
   
   while(1) {
-    if(RGTimeMSB16(lbmp) != tshi) { 
-      mprintf("RGTimeMSB16(lbmp=%u)(%hu) != tshi(%hu)",
-	      lbmp, RGTimeMSB16(lbmp),tshi); 
-      break; 
-    }
+    if(RGTimeMSB16(lbmp) != tshi) break;
 
     if(!isDataAvailable()) break;
 

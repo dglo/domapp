@@ -225,51 +225,60 @@ void dataAccess(MESSAGE_STRUCT *M) {
 
       break;
       
-      /* JEJ: Deal with requests for monitoring events */
     case DATA_ACC_GET_NEXT_MONI_REC:
       moniBytes = 0;
-      while(1) {
-	/* Get moni record */
+      int done  = 0;
+      while(!done) {
+	if(moniBytes + aMoniRec.dataLen + 10 > MAXDATA_VALUE) {
+	  /* Can't fit any more data */
+	  Message_setDataLen(M, moniBytes);
+          Message_setStatus(M, SUCCESS);
+          break;
+	}
 	ms = moniFetchRec(&aMoniRec);
-
-	if(ms == MONI_NOTINITIALIZED) {
+	switch(ms) {
+	case MONI_NOTINITIALIZED:
 	  DOERROR(DAC_MONI_NOT_INIT, DAC_Moni_Not_Init, SEVERE_ERROR);
+	  done = 1;
 	  break;
-	} else if(ms == MONI_WRAPPED || ms == MONI_OVERFLOW) {
+	case MONI_WRAPPED:
+ 	case MONI_OVERFLOW:
 	  DOERROR(DAC_MONI_OVERFLOW, DAC_Moni_Overrun, WARNING_ERROR);
+	  done = 1;
 	  break;
-	} else if(ms == MONI_NODATA 
-		  || moniBytes + aMoniRec.dataLen + 10 > MAXDATA_VALUE) {
-	  /* If too many bytes, current record will be tossed.  Pick it up
-	     at next message request */
-	  
-	  /* We're done, package reply up and send it on its way */
+	case MONI_NODATA:
 	  Message_setDataLen(M, moniBytes);
 	  Message_setStatus(M, SUCCESS);
+	  done = 1;
 	  break;
-	} else if(ms == MONI_OK) {
+	case MONI_OK:
 	  /* Not done.  Add record and iterate */
 	  moniAcceptRec();
 	  total_moni_len = aMoniRec.dataLen + 10; /* Total rec length */
-
 	  /* Format header */
 	  formatShort(total_moni_len, data);
 	  formatShort(aMoniRec.fiducial.fstruct.moniEvtType, data+2);
 	  formatTime(aMoniRec.time, data+4);
-
 	  /* Copy payload */
 	  len = (aMoniRec.dataLen > MAXMONI_DATA) ? MAXMONI_DATA : aMoniRec.dataLen;
 	  memcpy(data+10, aMoniRec.data, len);
-
 	  moniBytes += total_moni_len;
 	  data += total_moni_len;
-	} else {
-	  DOERROR(DAC_MONI_BADSTAT, DAC_Moni_Badstat, SEVERE_ERROR);
 	  break;
-	}
-      } /* while(1) */
-      break; /* from switch */
-      
+	default:
+	  DOERROR(DAC_MONI_BADSTAT, DAC_Moni_Badstat, SEVERE_ERROR);
+	  done = 1;
+	  break;
+	} /* inner switch */
+      }   /* while(!done) */
+      break; /* from outer switch */
+
+    case DATA_ACC_RESET_MONI_BUF:
+      moniZeroIndices();
+      Message_setDataLen(M, 0);
+      Message_setStatus(M, SUCCESS);
+      break;
+
     case DATA_ACC_SET_ENG_FMT:
       Message_setDataLen(M, 0);
       Message_setStatus(M, SUCCESS);
