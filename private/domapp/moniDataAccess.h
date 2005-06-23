@@ -3,7 +3,7 @@
  * Part of dataAccess thread
  * John Jacobsen, jacobsen@npxdesigns.com, for LBNL
  * May, 2003
- * $Id: moniDataAccess.h,v 1.6 2005-06-07 18:30:25 jacobsen Exp $
+ * $Id: moniDataAccess.h,v 1.7 2005-06-20 15:40:46 jacobsen Exp $
  */
 
 #ifndef _MONI_DATA_ACCESS_
@@ -140,6 +140,8 @@ void moniInit(UBYTE *bufBaseAddr,
 void moniZeroIndices(void);                   /* Resets buffer, assuming moniInit
 						 was called at some point first */
 
+int moniHaveData(void);                       /* Any records in buffer? */
+
 void moniInsertRec(struct moniRec *m);        /* Producer function */
 
 MONI_STATUS moniFetchRec(struct moniRec *m);  /* Consumer function 
@@ -183,10 +185,6 @@ void moniInsertLCWindowChangeMessage(unsigned long long time,
 
 void moniTestAllMonitorRecords(void);         
 /* Generate one of each record */
-
-
-/* /\* Kludge function for time stamps until HAL is fixed *\/ */
-/* unsigned long long moniGetTimeAsUnsigned(void); */
 
 /* The following are utility functions used by the monitoring code per se */
 

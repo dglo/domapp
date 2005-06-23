@@ -3,7 +3,7 @@
  * Routines to store and fetch monitoring data from a circular buffer
  * John Jacobsen, JJ IT Svcs, for LBNL/IceCube
  * May, 2003
- * $Id: moniDataAccess.c,v 1.12 2005-06-02 01:03:11 jacobsen Exp $
+ * $Id: moniDataAccess.c,v 1.14 2005-06-20 21:20:40 jacobsen Exp $
  * CURRENTLY NOT THREAD SAFE -- need to implement moni[Un]LockWriteIndex
  */
 
@@ -131,15 +131,15 @@ void moniInsertRec(struct moniRec *m) {
   moniLockWriteIndex();
   buf = moniGetWriteBufferAddr();
 
-  //printf("Writing record to address %p.\n",
-  //buf);
-
   memcpy(buf, m, MONI_REC_SIZE);
 
   moniIncWriteIndex();
   moniUnlockWriteIndex();
 }
 
+int moniHaveData(void) {
+  return ((moniWriteIndex - moniReadIndex) != 0);
+}
 
 MONI_STATUS moniFetchRec(struct moniRec *m) {
   /* If this function returns MONI_OK, m is filled with 

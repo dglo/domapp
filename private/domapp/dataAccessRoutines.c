@@ -287,7 +287,7 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   dsc_hal_do_LC_settings(); /* See domSControl.c */
 
   hal_FPGA_DOMAPP_rate_monitor_enable(HAL_FPGA_DOMAPP_RATE_MONITOR_SPE|
-				      HAL_FPGA_DOMAPP_RATE_MONITOR_MPE);
+  				      HAL_FPGA_DOMAPP_RATE_MONITOR_MPE);
 
   hal_FPGA_DOMAPP_enable_daq(); /* <-- Can get triggers NOW */
   return TRUE;
@@ -509,11 +509,18 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
   if(saved_bin) {
     saved_bin = 0;
   } else {
-    if(!sn_ready()) return 0;
+    doPong(28);
+    if(!sn_ready()) {
+      doPong(29);
+      return 0;
+    }
+    doPong(30);
     if(sn_event(psn)) {
+      doPong(31);
       mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed!");
       return 0;
     }
+    doPong(32);
   }
 
   /* By now, psn is either our saved_bin or a new event */

@@ -83,14 +83,16 @@ text-align: right;
       </td>
       <td style="vertical-align: top;">John Jacobsen <br>
       <span style="font-family: monospace;">jacobsen@npxdesigns.com</span><br>
-Last revision 6/10/2005<br>
+Last revision 6/14/2005<br>
       <span style="font-family: monospace;">$Id: api.html,v 1.3
 2005/06/10 16:32:32 jacobsen Exp $</span><br>
       </td>
     </tr>
   </tbody>
 </table>
-<a href="index.html">Status</a> | API | <a href="domapp_testing.html">Testing</a>
+<a href="index.html">Code Status</a> | API | <a
+ href="domapp_testing.html">Test SW</a> | <a
+ href="domapp_test_status.html">Testing Status</a><br>
 </div>
 <h2><big>CONTENTS</big></h2>
 <span style="font-weight: bold;">
@@ -3582,6 +3584,64 @@ monitoring buffer, eliminating any existing monitoring records<br>
     </tr>
   </tbody>
 </table>
+<a name="DATA_ACC_MONI_AVAIL"></a><br>
+<table
+ style="width: 576px; text-align: left; margin-left: auto; margin-right: auto; page-break-before: auto;"
+ border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
+  <thead><tr valign="top">
+    <th width="28">
+    <p style="">ID</p>
+    </th>
+    <th style="text-align: center;" width="242">
+    <p style="">Subtype</p>
+    </th>
+    <th style="width: 130px; text-align: center;">
+    <p style="">Input</p>
+    </th>
+    <th width="142">
+    <p style="text-align: center;">Output</p>
+    </th>
+  </tr>
+  </thead> <tbody>
+    <tr>
+      <td sdval="22" sdnum="1033;" width="28">
+      <p style="" align="right">30<br>
+      </p>
+      </td>
+      <td width="242">
+      <p style="" align="center"> <font style="font-size: 11pt;"
+ size="2">DATA_ACC_MONI_AVAIL</font></p>
+      </td>
+      <td valign="top" width="130">
+      <p style="" align="center"> </p>
+      <div style="text-align: center;">-<br>
+      </div>
+      </td>
+      <td valign="top" width="142">
+      <p style="" align="center"> </p>
+      <table style="width: 100%; height: 100%;" border="0"
+ bordercolor="#000000" cellpadding="4" cellspacing="0">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;">UB:<br>
+            </td>
+            <td style="vertical-align: top;">haveData<br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="4"
+ style="width: 566px; vertical-align: middle; text-align: center;">
+      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Return
+1 if any monitoring records are available, else 0<br>
+      </b></font></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
 <br>
 <p style="margin-bottom: 0in; page-break-before: always;"><b><font
  size="4">Experiment Control Messages</font> (message type 4):</b></p>
@@ -4153,19 +4213,13 @@ explicitly.</span></font></span></span></font></li>
 removed.&nbsp; Use <a href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>.</span></font></span></span></font></li>
   <li><font style="font-size: 11pt;" size="2"><a
  href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a> message
-was added.<br>
+was added.</font></li>
+  <li><font style="font-size: 11pt;" size="2"><a
+ href="#DATA_ACC_MONI_AVAIL">DATA_ACC_MONI_AVAIL</a> message was added.<br>
     </font></li>
 </ul>
 <b><br>
 </b>
-<h2><a name="changelog"></a><b>CHANGELOG</b></h2>
-<p style="margin-bottom: 0in;"><span style=""><font size="3">V1.0
-5/3/05 JEJ Began document based on
-testdomapp API document on docushare<br>
-V1.1 5/16/05 JEJ Lots new stuff added to this and the other domapp
-docs; getting close to release version of documentation<br>
-V1.2 5/25/05 JEJ Lots more new stuff, including supernova features<br>
-</font></span></p>
 <p style="margin-bottom: 0in;"><span style=""><font size="3"><br>
 </font></span></p>
 </body>

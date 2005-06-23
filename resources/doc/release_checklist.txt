@@ -1,7 +1,6 @@
 
 DOMAPP RELEASE CHECKLIST
 
-0) If need be, update, commit and tag test software (domhub-tools/domapp)
 1) Commit, update, tag domhub-tools/domapp
 2) Domapp, etc. committed to cvs, checked out and updated:
 cvs -q diff --brief configboot dom-cal dom-fpga dom-loader iceboot testdomapp domapp dom-cpld dom-ws hal stf | grep -v \?
@@ -30,13 +29,14 @@ dmt
 7) Update RELEASE_NOTES
 8) Update HTML documents
 9) Commit changes to docs
-10) tagdomapp
-11) tag other DOM-MB packages (e.g. "domapp-V00-00-06"), e.g.:
+10) pubdomapp
+11) tagdomapp
+12) tag other DOM-MB packages (e.g. "domapp-V00-00-06"), e.g.:
 cvs tag domapp-V00-00-04 configboot dom-cal dom-fpga dom-loader iceboot testdomapp dom-cpld dom-ws hal stf
 
-12) rebuild everything from scratch
-13) sh dorel.sh
-14) ldall again
-15) multitest again
-16) release.hex on glacier
-17) announcement
+13) rebuild everything from scratch
+14) sh dorel.sh
+15) ldall again
+16) multitest again
+17) release.hex on glacier
+18) announcement

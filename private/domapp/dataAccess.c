@@ -24,6 +24,7 @@ Modification: 5/10/04 Jacobsen :-- put more than one monitoring rec. per request
 #include "hal/DOM_MB_domapp.h"
 
 #include "message.h"
+#include "expControl.h"
 #include "dataAccess.h"
 #include "messageAPIstatus.h"
 #include "commonServices.h"
@@ -228,14 +229,17 @@ void dataAccess(MESSAGE_STRUCT *M) {
     case DATA_ACC_GET_NEXT_MONI_REC:
       moniBytes = 0;
       int done  = 0;
+
       while(!done) {
+	ms = moniFetchRec(&aMoniRec);
+
 	if(moniBytes + aMoniRec.dataLen + 10 > MAXDATA_VALUE) {
 	  /* Can't fit any more data */
 	  Message_setDataLen(M, moniBytes);
           Message_setStatus(M, SUCCESS);
           break;
 	}
-	ms = moniFetchRec(&aMoniRec);
+
 	switch(ms) {
 	case MONI_NOTINITIALIZED:
 	  DOERROR(DAC_MONI_NOT_INIT, DAC_Moni_Not_Init, SEVERE_ERROR);
@@ -279,6 +283,12 @@ void dataAccess(MESSAGE_STRUCT *M) {
       Message_setStatus(M, SUCCESS);
       break;
 
+    case DATA_ACC_MONI_AVAIL:
+      Message_setDataLen(M, 1);
+      data[0] = moniHaveData();
+      Message_setStatus(M, SUCCESS);
+      break;
+	
     case DATA_ACC_SET_ENG_FMT:
       Message_setDataLen(M, 0);
       Message_setStatus(M, SUCCESS);
@@ -375,7 +385,9 @@ void dataAccess(MESSAGE_STRUCT *M) {
 
     case DATA_ACC_GET_SN_DATA: 
       { 
+	doPong(26);
 	int nb = fillMsgWithSNData(data, MAXDATA_VALUE);
+	doPong(27);
 	Message_setDataLen(M, nb);
 	Message_setStatus(M, SUCCESS);
 	break;

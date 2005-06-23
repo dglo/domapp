@@ -48,6 +48,7 @@
 #define DATA_ACC_GET_COMP_MODE     27
 #define DATA_ACC_GET_SN_DATA       28
 #define DATA_ACC_RESET_MONI_BUF    29
+#define DATA_ACC_MONI_AVAIL        30
 
 // define service specific error values
 #define DAC_Data_Overrun        4

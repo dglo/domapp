@@ -48,4 +48,5 @@ void expControl(MESSAGE_STRUCT *M);
 void pedestalRunEntryPoint(void);
 void dumpRegs(void);
 
+void doPong(unsigned p);
 #endif
