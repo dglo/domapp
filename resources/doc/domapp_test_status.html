@@ -75,8 +75,9 @@ text-align: right;
       </td>
       <td style="vertical-align: top;">John Jacobsen <br>
       <span style="font-family: monospace;">jacobsen@npxdesigns.com</span><br>
-Last revision 6/23/2005<br>
-      <span style="font-family: monospace;">$Id: domapp_test_status.html,v 1.2 2005-06-23 17:18:36 jacobsen Exp $</span><br>
+Last revision 6/28/2005<br>
+      <span style="font-family: monospace;">$Id:
+domapp_test_status.html,v 1.2 2005/06/23 17:18:36 jacobsen Exp $</span><br>
       </td>
     </tr>
   </tbody>
@@ -84,7 +85,7 @@ Last revision 6/23/2005<br>
 <a href="index.html">Code Status</a> | <a href="api.html">API</a> | <a
  href="domapp_testing.html">Test SW</a> | Testing Status<br>
 <h2>TEST STATUS SUMMARY</h2>
-Testing of the first and second <a href="index.html">beta release</a>
+Testing of the first <a href="index.html">beta releases</a>
 have been under way since June 1, using the <a
  href="domapp_testing.html">DMT test software</a>, using the PSL Cable
 Test System (PCTS) and two hardware configurations at LBNL.&nbsp; The <a
@@ -92,7 +93,98 @@ Test System (PCTS) and two hardware configurations at LBNL.&nbsp; The <a
 of tests</a> on that page gives an idea of what is currently being
 tested.<br>
 <br>
-<h2 style="font-weight: bold;">OUTSTANDING ISSUES</h2>
+<h2 style="font-weight: bold;">MOST RECENT TEST RESULTS<br>
+</h2>
+<ul>
+  <li>Start date: 2005-06-26__08:43:21</li>
+  <li>DOMApp release: V00-00-06</li>
+  <li>domapp-tools release: V00-00-06<br>
+  </li>
+  <li>Test directory:&nbsp;
+pcts-hub:/home/jacobsen/domapp-tests/V00-00-06/36hrs/DMT__2005-06-26__08:43:21<br>
+  </li>
+  <li style="font-weight: bold;">Total test duration: 36 hrs</li>
+  <li style="font-weight: bold;">Total number of tests: 232,086</li>
+  <li style="font-weight: bold;">Nominal freezer temperature: -40 C
+(Iceboot gives ~ -36 C)<br>
+  </li>
+  <li style="font-weight: bold;">Number of DOMs: 12</li>
+  <li style="font-weight: bold; color: rgb(255, 0, 0);">Catastrophic
+failures (DOM crashed):&nbsp;</li>
+  <ul>
+    <li>DOM 02B crashed during "discTrigger" test after about 16
+hrs.&nbsp; All subsequent tests for that DOM failed.<br>
+    </li>
+  </ul>
+  <li style="font-weight: bold;">Minor test failures:</li>
+  <ul>
+    <li>00a (4 failures)<br>
+    </li>
+    <ul>
+      <li>missing 1 pedestal trigger for ATWD A (MISSPED)<br>
+      </li>
+      <li>get forced (pseudo-pulser) trigger when real FE pulser is on
+(UNWANT FORCED)<br>
+      </li>
+      <li>corrupt trigger type (4294967168 vs. 2) (CORRUPT TRIG)<br>
+      </li>
+      <li>MISSPED<br>
+      </li>
+    </ul>
+    <li>00b (4 failures)<br>
+    </li>
+    <ul>
+      <li>CORRUPT TRIG<br>
+      </li>
+      <li>Disc. SPE rate too low (LOWSPE)</li>
+      <li>MISSPED</li>
+      <li>CORRUPT TRIG</li>
+    </ul>
+    <li>01a (5 failures)<br>
+    </li>
+    <ul>
+      <li>MISSPED</li>
+      <li>MISSPED</li>
+      <li>Not enough hits in 1Hz heartbeat test (MISSHITS)</li>
+      <li>CORRUPT TRIG</li>
+      <li>MISSPED</li>
+    </ul>
+    <li>01b (4 failures)<br>
+    </li>
+    <ul>
+      <li>CORRUPT TRIG</li>
+      <li>CORRUPT TRIG</li>
+      <li>CORRUPT TRIG</li>
+      <li>MISSHITS</li>
+    </ul>
+    <li>02a (2 failures)<br>
+    </li>
+    <ul>
+      <li>CORRUPT TRIG</li>
+      <li>MISSPED</li>
+    </ul>
+    <li>02b -- Catastrophic failure, described above</li>
+    <li>03a (5 failures)<br>
+    </li>
+    <ul>
+      <li>MISSPED</li>
+      <li>CORRUPT TRIG</li>
+      <li>MISSPED</li>
+      <li>MISSHITS</li>
+      <li>CORRUPT TRIG</li>
+    </ul>
+    <li>10a (1 failures)<br>
+    </li>
+    <ul>
+      <li>CORRUPT TRIG</li>
+    </ul>
+    <li>11a - no failures</li>
+    <li>20a - no failures</li>
+    <li>21a - no failures</li>
+  </ul>
+</ul>
+<br>
+<h2 style="font-weight: bold;">OTHER KNOWN OUTSTANDING ISSUES</h2>
 <big><span style="font-weight: bold;"></span></big>
 <ul>
   <li>Many things are not thoroughly tested yet, notably LC
@@ -115,11 +207,9 @@ compared with uncompressed in a one-to-one format.<br>
 <ul>
   <li>David Hays is currently testing the integration of domapp with
 the DOM Hub application.</li>
-  <li style="font-weight: bold;"><big><small
- style="color: rgb(153, 51, 0);">Much more testing and use by
-physicists with experience looking at IceCube data (similar to FAT) is
-required!</small><br>
-    </big></li>
+  <li>DOM Main Board Software/Firmware Release Qualification Process
+document is in progress (John Joseph).<br>
+  </li>
 </ul>
 <br>
 <br>

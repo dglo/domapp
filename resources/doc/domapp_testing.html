@@ -76,7 +76,7 @@ DOMApp&nbsp;&nbsp;&nbsp;&nbsp; </big></big><br>
       </td>
       <td style="vertical-align: top;">John Jacobsen <br>
       <span style="font-family: monospace;">jacobsen@npxdesigns.com</span><br>
-Last revision 6/23/2005<br>
+Last revision 6/30/2005<br>
       <span style="font-family: monospace;">$Id: domapp_testing.html,v
 1.2 2005/06/10 15:59:06 jacobsen Exp $</span><br>
       </td>
@@ -108,7 +108,7 @@ Test SW | <a href="domapp_test_status.html">Testing Status</a><br>
 <h2><span style="font-weight: bold;"><a name="release"></a>RELEASE
 STATUS<br>
 </span></h2>
-The current release is V00-00-06.<br>
+The current release is V00-00-07.<br>
 <br>
 <big>
 </big>
@@ -168,7 +168,7 @@ desired).&nbsp; E.g., <br>
 <br>
 <div style="" class="terminal">$ <span style="font-weight: bold;">on
 all</span><br>
-Driver V02-06-01h (dh.c $Revision: 1.8 $)<br>
+Driver V02-06-01h (dh.c $Revision: 1.9 $)<br>
 /proc/driver/domhub/card0 -- PCI=0, FW=010w, DOR=0<br>
 /proc/driver/domhub/card1 -- PCI=0, FW=010w, DOR=0<br>
 /proc/driver/domhub/card2 -- PCI=0, FW=010w, DOR=0<br>
@@ -494,7 +494,7 @@ back HV == set HV +/- 50 V<br>
       <td style="vertical-align: top;">default<br>
       </td>
       <td style="vertical-align: top;">Get response to every echo
-packet <span style="color: rgb(255, 0, 0);">[fixme: check contents <span
+packet <span style="color: rgb(255, 0, 0);">[should check contents <span
  style="font-style: italic;">a la</span> MOAT]</span><br>
       </td>
     </tr>
@@ -519,18 +519,6 @@ monitoring<br>
 at 1 second intervals; records are generated in the monitoring stream</td>
     </tr>
     <tr>
-      <td style="vertical-align: top; font-family: monospace;">hits
-Flasher<br>
-      </td>
-      <td style="vertical-align: top;">flasher<br>
-      </td>
-      <td style="vertical-align: top;">Activate flasher with a rate of
-100 Hz and take data; monitoring data is created and read out
-successfully and is nonempty; forced-trigger hits with flasher current
-are read out;<br>
-      </td>
-    </tr>
-    <tr>
       <td style="vertical-align: top; font-family: monospace;">sn-counts-only<br>
       </td>
       <td style="vertical-align: top;">default<br>
@@ -538,7 +526,18 @@ are read out;<br>
       <td style="vertical-align: top;">Activate and read out supernova
 data collection (only -- no digitized hit data).&nbsp; Verify DOM
 doesn't crash during this operation <span
- style="color: rgb(255, 0, 0);">[fixme: examine SN data stream]</span><br>
+ style="color: rgb(255, 0, 0);">[currently doesn't examine SN data
+stream]</span><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hits
+Flasher</td>
+      <td style="vertical-align: top;">flasher</td>
+      <td style="vertical-align: top;">Activate flasher with a rate of
+100 Hz and take data; monitoring data is created and read out
+successfully and is nonempty; forced-trigger hits with flasher current
+are read out; make sure hit stream is nonempty<br>
       </td>
     </tr>
     <tr>
@@ -547,9 +546,8 @@ SNTrigger<br>
       </td>
       <td style="vertical-align: top;">default<br>
       </td>
-      <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span><br>
-      </td>
+      <td style="vertical-align: top;">Take supernova data and SPE
+hits; check hit and monitoring streams </td>
     </tr>
     <tr>
       <td style="vertical-align: top; font-family: monospace;">hits
@@ -557,8 +555,10 @@ pulserTrigger<br>
       </td>
       <td style="vertical-align: top;">default<br>
       </td>
-      <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span></td>
+      <td style="vertical-align: top;">Take pulser data; check hit and
+monitoring streams; make sure SPE pulser rate is not substantially
+lower than pulser rate;<br>
+      </td>
     </tr>
     <tr>
       <td style="vertical-align: top; font-family: monospace;">hits
@@ -566,8 +566,8 @@ cpuTrigger<br>
       </td>
       <td style="vertical-align: top;">default<br>
       </td>
-      <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span></td>
+      <td style="vertical-align: top;">Take forced trigger data; check
+hit and monitoring streams</td>
     </tr>
     <tr>
       <td style="vertical-align: top; font-family: monospace;">hits
@@ -575,8 +575,11 @@ comprForced<br>
       </td>
       <td style="vertical-align: top;">default<br>
       </td>
-      <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span></td>
+      <td style="vertical-align: top;">Look for beacon "forced"
+triggers at 2000 Hz.&nbsp; Make sure hits are present, compressed bit
+is set; check encapsulation of compressed data for errors using
+"decomp" program.<br>
+      </td>
     </tr>
     <tr>
       <td style="vertical-align: top; font-family: monospace;">hits
@@ -584,8 +587,10 @@ comprPulser<br>
       </td>
       <td style="vertical-align: top;">default<br>
       </td>
-      <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span></td>
+      <td style="vertical-align: top;">Look for pulser-generated SPE
+triggers at 2000 Hz.&nbsp; Make sure hits are
+present, compressed bit is set, and check encapsulation of compressed
+data for errors using "decomp" program.</td>
     </tr>
     <tr>
       <td style="vertical-align: top; font-family: monospace;">hits
@@ -593,8 +598,30 @@ discTrigger<br>
       </td>
       <td style="vertical-align: top;">default<br>
       </td>
+      <td style="vertical-align: top;">HV off, look for beacon "forced"
+triggers at 1 Hz<br>
+      </td>
+    </tr>
+    <tr>
       <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span></td>
+ style="font-family: monospace;">hits HVSPE</span><br>
+      </td>
+      <td style="vertical-align: top;">high voltage<br>
+      </td>
+      <td style="vertical-align: top;">Dark noise test: set high
+voltage to 1311, default DACs, look for SPE triggers.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-family: monospace;">hits HVSPECompr</span></td>
+      <td style="vertical-align: top;">high voltage</td>
+      <td style="vertical-align: top;">Same as <span
+ style="font-family: monospace;">HVSPE </span>but use compressed
+format <span style="color: rgb(255, 0, 0);">[currently does not check
+for correct trigger type within compressed stream]</span>; check
+encapsulation of compressed data for errors using
+"decomp" program. </td>
     </tr>
     <tr>
       <td style="vertical-align: top; font-family: monospace;">moni
@@ -603,7 +630,9 @@ state chg. (1)<br>
       <td style="vertical-align: top;">default<br>
       </td>
       <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span></td>
+ style="color: rgb(255, 0, 0);"><span style="color: rgb(0, 0, 0);">Set
+LC mode to 1, make sure monitoring stream reflects this.</span><br>
+      </span></td>
     </tr>
     <tr>
       <td style="vertical-align: top; font-family: monospace;">moni
@@ -611,7 +640,8 @@ state chg. (2)</td>
       <td style="vertical-align: top;">default<br>
       </td>
       <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span></td>
+ style="color: rgb(255, 0, 0);"><span style="color: rgb(0, 0, 0);">Set
+LC mode to 2, make sure monitoring stream reflects this.</span></span></td>
     </tr>
     <tr>
       <td style="vertical-align: top; font-family: monospace;">moni
@@ -619,7 +649,8 @@ state chg. (3)</td>
       <td style="vertical-align: top;">default<br>
       </td>
       <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span></td>
+ style="color: rgb(255, 0, 0);"><span style="color: rgb(0, 0, 0);">Set
+LC mode to 3, make sure monitoring stream reflects this.</span></span></td>
     </tr>
     <tr>
       <td style="vertical-align: top; font-family: monospace;">hits
@@ -627,8 +658,9 @@ heartbeat_10Hz<br>
       </td>
       <td style="vertical-align: top;">default<br>
       </td>
-      <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span></td>
+      <td style="vertical-align: top;">Take heartbeat/beacon data at 10
+Hz, check trigger rate<span style="color: rgb(255, 0, 0);"><span
+ style="color: rgb(0, 0, 0);"></span></span></td>
     </tr>
     <tr>
       <td style="vertical-align: top; font-family: monospace;">hits
@@ -636,8 +668,8 @@ heartbeat _100Hz<br>
       </td>
       <td style="vertical-align: top;">default<br>
       </td>
-      <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span></td>
+      <td style="vertical-align: top;">Take heartbeat/beacon data at
+100 Hz, check trigger rate</td>
     </tr>
     <tr>
       <td style="vertical-align: top; font-family: monospace;">hits
@@ -645,8 +677,8 @@ heartbeat_1Hz <br>
       </td>
       <td style="vertical-align: top;">default<br>
       </td>
-      <td style="vertical-align: top;"><span
- style="color: rgb(255, 0, 0);">[finish me]</span></td>
+      <td style="vertical-align: top;">Take heartbeat/beacon data at 1
+Hz, check trigger rate</td>
     </tr>
   </tbody>
 </table>

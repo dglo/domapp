@@ -1,7 +1,7 @@
 
 DOMAPP RELEASE CHECKLIST
 
-1) Commit, update, tag domhub-tools/domapp
+1) Commit, update, tag domapp-tools
 2) Domapp, etc. committed to cvs, checked out and updated:
 cvs -q diff --brief configboot dom-cal dom-fpga dom-loader iceboot testdomapp domapp dom-cpld dom-ws hal stf | grep -v \?
 (nfis.c and build-num diffs are ok)

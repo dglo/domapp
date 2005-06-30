@@ -83,7 +83,7 @@ text-align: right;
       </td>
       <td style="vertical-align: top;">John Jacobsen <br>
       <span style="font-family: monospace;">jacobsen@npxdesigns.com</span><br>
-Last revision 6/14/2005<br>
+Last revision 6/30/2005<br>
       <span style="font-family: monospace;">$Id: api.html,v 1.3
 2005/06/10 16:32:32 jacobsen Exp $</span><br>
       </td>
@@ -642,10 +642,14 @@ DOM Data Formats directory</a> on Docushare.&nbsp; Variable/truncated
 engineering records are still supported via the <span
  style="font-family: monospace;">DATA_ACC_SET_ENG_FMT</span> message.<br>
 <br>
+<big><span style="font-weight: bold;">Road Grader Compressed Format</span></big><br>
+<br>
 The "road grader default format" consists of blocks of data in the
 following block data format:<br>
 <br>
-<big><span style="font-family: helvetica,arial,sans-serif;">BLOCK DATA:</span></big><br>
+<span
+ style="font-family: helvetica,arial,sans-serif; font-weight: bold;">BLOCK
+DATA:</span><br>
 <table style="text-align: left;" border="0" cellpadding="2"
  cellspacing="2">
   <tbody>
@@ -716,14 +720,16 @@ length)<br>
   </tbody>
 </table>
 <br>
-Each of the concatenated "Hits" in the block conforms to Joshua
-Sopher's document <span style="color: rgb(255, 0, 0);">[need link]</span>,
-except that Header WORD0 is removed.&nbsp; In particular, the <span
- style="font-weight: bold;">hit length</span> is encoded in bits 10..0
+Each of the concatenated "Hits" in the block conforms to "RoadGrader
+Compression Format" in the <a
+ href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-1537">DOM
+Firmware Directory</a> on DocuShare, except that Header WORD0 is
+removed.&nbsp; In particular, the <span style="font-weight: bold;">hit
+length</span> is encoded in bits 10..0
 of WORD1 (the first 11 bits of Hit <span style="font-style: italic;">x</span>,
-above).&nbsp; Hit data are LITTLE ENDIAN (talk to Joshua) whereas the
+above).&nbsp; Hit data are LITTLE ENDIAN per Joshua Sopher, whereas the
 header values (as well as all the data created by domapp) are BIG
-ENDIAN by convention (talk to Chuck).<br>
+ENDIAN by convention.<br>
 <br>
 Block length, including all hits, will be less than or equal to 4084
 bytes.&nbsp; The Most Significant Bits (MSBs) of the hit timestamps are

@@ -403,8 +403,8 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   } else {
     if(!hadWarning) {
       hadWarning++;
-      mprintf("formatDomappEngEvent: Disallowed source bits from trigger info in event (source=0x%04x)",
-	      source);
+      mprintf("WARNING: formatDomappEngEvent: Disallowed source bits from trigger "
+	      "info in event (source=0x%04x)", source);
     }
     trigmask = TRIG_UNKNOWN_MODE;
   }
