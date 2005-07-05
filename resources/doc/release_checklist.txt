@@ -24,9 +24,9 @@ s" domapp.sbi" find if fpga endif
 fpga-versions
 
 6) test w/ domapp_multitest.pl:
-dmt
+dmt [-V for high voltage if appropriate]
 
-7) Update RELEASE_NOTES
+7) Update RELEASE_NOTES; commit to CVS; update on laptop
 8) Update HTML documents
 9) Commit changes to docs
 10) pubdomapp
@@ -36,7 +36,8 @@ cvs tag domapp-V00-00-04 configboot dom-cal dom-fpga dom-loader iceboot testdoma
 
 13) rebuild everything from scratch
 14) sh dorel.sh
-15) ldall again
-16) multitest again
-17) release.hex on glacier
-18) announcement
+15) save release file under another name, e.g. release-domapp-V00-00-08.hex
+16) ldall again
+17) multitest again
+18) release.hex on glacier
+19) announcement

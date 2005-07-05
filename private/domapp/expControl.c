@@ -117,12 +117,6 @@ void zeroLBM(void) {
   memset(hal_FPGA_DOMAPP_lbm_address(), 0, WHOLE_LBM_MASK+1);
 }
 
-#ifdef  DO_TST_DEBUGGING
-#warning DO_TST_DEBUGGING debug hack in place
-#define DOPONG() FPGA(PONG)=0x666
-#else
-#define DOPONG()
-#endif
 
 int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
   /* return 0 if pedestal run succeeds, else error */
@@ -160,25 +154,25 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
     int numTrigs = (iatwd==0 ? ped0goal : ped1goal);      
     hal_FPGA_DOMAPP_enable_atwds(iatwd==0?HAL_FPGA_DOMAPP_ATWD_A:HAL_FPGA_DOMAPP_ATWD_B);
     hal_FPGA_DOMAPP_enable_daq(); 
-    dumpRegs();
 
     int isamp;
     int it; for(it=0; it<numTrigs; it++) {
       hal_FPGA_DOMAPP_cal_launch();
-      halUSleep(200);
-      if(lbmp == hal_FPGA_DOMAPP_lbm_pointer()) {
-	DOPONG();
+      int trial; 
+      int maxtrials = 10; 
+      int trialtime = 40; /* usec */
+      int done=0;
+      for(trial=0; !done && trial<maxtrials; trial++) {
+	halUSleep(trialtime); /* Give FPGA time to write LBM without CPU hogging the bus */
+	if(hal_FPGA_DOMAPP_lbm_pointer() >= lbmp+FPGA_DOMAPP_LBM_BLOCKSIZE) done = 1;
+      }
+
+      if(!done) {
 	numMissedTriggers++;
 	if(!didMissedTrigWarning) {
 	  didMissedTrigWarning++;
 	  mprintf("pedestalRun: WARNING: missed one or more calibration triggers for ATWD %d! "
 		  "lbmp=0x%08x fpga_ptr=0x%08x", iatwd, lbmp, hal_FPGA_DOMAPP_lbm_pointer());
-	  unsigned char * e = lbmEvent(lbmp);
-	  int ic; for(ic=0; ic<2048; ic++) {
-	    if(e[ic] != 0) {
-	      mprintf("pedestalRun: LBM[%d]=0x%02x", ic,e[ic]);
-	    }
-	  }	
 	  dumpRegs();
 	}
 	continue;
@@ -192,7 +186,6 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
       unsigned atwdsize = (hdr->trigbits>>19)&0x3;
       unsigned long daq = FPGA(DAQ);
       if(dochecks && words->w0>>31) {
-	DOPONG();
 	if(!didUncompressedWarning) {
 	  didUncompressedWarning++;
 	  mprintf("pedestalRun: WARNING: trying to collect waveforms for pedestals but "
@@ -205,7 +198,6 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
 	continue;
       } 
       if(dochecks && atwdsize != 3) {
-	DOPONG();
 	if(!didATWDSizeWarning) {
 	  didATWDSizeWarning++;
 	  mprintf("pedestalRun: WARNING: atwdsize=%d should be 3!  "
@@ -220,7 +212,6 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
       
       /* Check valid FADC data present */
       if(dochecks && ! (hdr->trigbits & 1<<17)) {
-	DOPONG();
 	if(!didMissingFADCWarning) {
 	  didMissingFADCWarning++;
 	  mprintf("pedestalRun: WARNING: NO FADC data present in event!  trigbits=0x%08x", 
@@ -234,7 +225,6 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
 
       /* Check valid ATWD data present */
       if(dochecks && ! (hdr->trigbits & 1<<18)) {
-	DOPONG();
 	if(!didMissingATWDWarning) {
           didMissingATWDWarning++;
           mprintf("pedestalRun: WARNING: NO ATWD data present in event!  trigbits=0x%08x", 

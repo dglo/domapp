@@ -1,5 +1,24 @@
 
 Release notes for production domapp -- jacobsen@npxdesigns.com
+
+=========================================================
+domapp V00-00-08  7/5/2005
+       Requires domapp.sbi: 245, DOM-MB packages domapp-V00-00-08
+       Test with domapp-tools (DMT) V00-00-07
+
+Upgrades/bug fixes
+* Cleaned up pedestal collection to avoid races with FPGA when
+  collecting trigger data ("missing pedestal event" problem)
+
+Outstanding issues known in this release, or not yet addressed from
+previous releases:
+* Occasionally uncompressed data sneak into compressed data when
+  real SPE/PMT triggers are collected (HV is on)
+* DOMs have been seen to crash during very long (36 hr) tests
+* Occasionally get forced triggers when pulser is active (should
+  be disallowed)
+* Occasionally rate drops too low during 1Hz heartbeat test
+
 =========================================================
 domapp V00-00-07  6/30/2005
        Requires domapp.sbi: 245, DOM-MB packages domapp-V00-00-07
