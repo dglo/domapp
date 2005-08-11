@@ -2,6 +2,20 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
 =========================================================
+domapp V00-00-09  8/11/2005
+       Requires domapp.sbi: 264, DOM-MB packages domapp-V00-00-09
+       Test with domapp-tools (DMT) V00-00-07
+
+Upgrades/bug fixes
+* New FPGA design, per Thorsten:
+   - Charge stamp generation fix
+   - Self local coincidence added
+   - New LC option to require up AND down
+   - Fixes problem which occurs when hammering ATWDs at 80kHz
+
+Outstanding issues: see previous release.
+
+=========================================================
 domapp V00-00-08  7/5/2005
        Requires domapp.sbi: 245, DOM-MB packages domapp-V00-00-08
        Test with domapp-tools (DMT) V00-00-07

@@ -28,7 +28,7 @@ dmt [-V for high voltage if appropriate]
 
 7) Update RELEASE_NOTES; commit to CVS; update on laptop
 8) Update HTML documents
-9) Commit changes to docs
+9) Commit changes to docs; update elsewhere (so tagdomapp gets the changes to the docs)
 10) pubdomapp
 11) tagdomapp
 12) tag other DOM-MB packages (e.g. "domapp-V00-00-06"), e.g.:

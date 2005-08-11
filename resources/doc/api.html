@@ -83,7 +83,7 @@ text-align: right;
       </td>
       <td style="vertical-align: top;">John Jacobsen <br>
       <span style="font-family: monospace;">jacobsen@npxdesigns.com</span><br>
-Last revision 6/30/2005<br>
+Last revision 7/18/2005<br>
       <span style="font-family: monospace;">$Id: api.html,v 1.3
 2005/06/10 16:32:32 jacobsen Exp $</span><br>
       </td>
@@ -688,8 +688,7 @@ header): (16 bits, BIG ENDIAN)</td>
     <tr>
       <td style="vertical-align: top;"><span
  style="font-family: courier new,courier,monospace;"><big><small><span
- style="font-family: helvetica,arial,sans-serif;">HITS</span></small> </big></span>(LITTLE
-ENDIAN!!!):
+ style="font-family: helvetica,arial,sans-serif;">HITS</span></small></big></span>:
       <table style="width: 100%; text-align: left;" border="1"
  cellpadding="2" cellspacing="2">
         <tbody>
@@ -722,12 +721,15 @@ length)<br>
 <br>
 Each of the concatenated "Hits" in the block conforms to "RoadGrader
 Compression Format" in the <a
- href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-1537">DOM
+ href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-2465">DOM
 Firmware Directory</a> on DocuShare, except that Header WORD0 is
 removed.&nbsp; In particular, the <span style="font-weight: bold;">hit
 length</span> is encoded in bits 10..0
 of WORD1 (the first 11 bits of Hit <span style="font-style: italic;">x</span>,
-above).&nbsp; Hit data are LITTLE ENDIAN per Joshua Sopher, whereas the
+above).&nbsp; Header data (e.g., timestamps) in the HITS records are
+LITTLE ENDIAN per Joshua Sopher's <a
+ href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-16116/Road+Grader+Data+Format+And+Processes.pdf">compression
+document</a>, whereas the
 header values (as well as all the data created by domapp) are BIG
 ENDIAN by convention.<br>
 <br>
@@ -2019,8 +2021,8 @@ DOMs<br>
       <p style="" align="center"> <font style="font-size: 9pt;"
  size="2">up_pre</font></p>
       </td>
-      <td rowspan="2" valign="top" width="142"> &lt;&gt; <br>
-      <div style="text-align: center;">-&lt;&gt;</div>
+      <td rowspan="2" valign="top" width="142">
+      <div style="text-align: center;">-</div>
       </td>
     </tr>
     <tr valign="top">

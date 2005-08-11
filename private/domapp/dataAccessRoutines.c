@@ -13,6 +13,7 @@
 
 #include "hal/DOM_MB_domapp.h"
 #include "hal/DOM_MB_hal.h"
+#include "hal/DOM_FPGA_domapp_regs.h"
 
 #include "moniDataAccess.h"
 #include "commonServices.h"
@@ -301,8 +302,8 @@ int endRun(void) { /* End either a "regular" or flasher run */
     return FALSE;
   }
   
-  mprintf("Disabling FPGA internal data acquisition... LBM=%u",
-	  hal_FPGA_DOMAPP_lbm_pointer());
+  mprintf("Disabling FPGA internal data acquisition... LBM=%u, firmware dbg regi=0x%08x",
+	  hal_FPGA_DOMAPP_lbm_pointer(), FPGA(FW_DEBUGGING));
   hal_FPGA_DOMAPP_disable_daq();
   hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_OFF);
   hal_FB_set_brightness(0);
