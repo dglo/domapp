@@ -2,6 +2,15 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
 =========================================================
+domapp V00-00-10  8/16/2005
+       Requires domapp.sbi: 264, DOM-MB packages domapp-V00-00-09
+       Test with domapp-tools (DMT) V00-00-07
+
+Upgrades/bug fixes
+* When collecting SPE data, perform extra launch and wait for 
+  TWO events in lookback memory before proceeding
+
+=========================================================
 domapp V00-00-09  8/11/2005
        Requires domapp.sbi: 264, DOM-MB packages domapp-V00-00-09
        Test with domapp-tools (DMT) V00-00-07
