@@ -39,5 +39,5 @@ cvs tag domapp-V00-00-04 configboot dom-cal dom-fpga dom-loader iceboot testdoma
 15) save release file under another name, e.g. release-domapp-V00-00-08.hex
 16) ldall again
 17) multitest again
-18) release.hex on glacier
+18) release.hex and RELEASE_NOTES on glacier
 19) announcement

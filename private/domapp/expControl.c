@@ -155,25 +155,10 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
     hal_FPGA_DOMAPP_enable_atwds(iatwd==0?HAL_FPGA_DOMAPP_ATWD_A:HAL_FPGA_DOMAPP_ATWD_B);
     hal_FPGA_DOMAPP_enable_daq(); 
 
-
-    hal_FPGA_DOMAPP_cal_launch(); /* Do this first, wait for TWO events in main loop
-				     per Thorsten's suggestion */
     int trial,
       maxtrials = 10,
       trialtime = 40, /* usec */
       done      = 0;
-
-    for(trial=0; !done && trial<maxtrials; trial++) {
-      halUSleep(trialtime); 
-      if(hal_FPGA_DOMAPP_lbm_pointer() >= lbmp+FPGA_DOMAPP_LBM_BLOCKSIZE) done = 1;
-    }
-
-    if(!done) {
-      mprintf("pedestalRun: WARNING: missed first (dummy) calibration trigger "
-	      "for ATWD %d! lbmp=0x%08x fpga_ptr=0x%08x", iatwd, lbmp, 
-	      hal_FPGA_DOMAPP_lbm_pointer());
-      dumpRegs();
-    }
 
     int isamp;
     int it; for(it=0; it<numTrigs; it++) {
@@ -181,7 +166,7 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
       done = 0;
       for(trial=0; !done && trial<maxtrials; trial++) {
 	halUSleep(trialtime); /* Give FPGA time to write LBM without CPU hogging the bus */
-	if(hal_FPGA_DOMAPP_lbm_pointer() >= lbmp+(2*FPGA_DOMAPP_LBM_BLOCKSIZE)) done = 1;
+	if(hal_FPGA_DOMAPP_lbm_pointer() >= lbmp+FPGA_DOMAPP_LBM_BLOCKSIZE) done = 1;
       }
 
       if(!done) {

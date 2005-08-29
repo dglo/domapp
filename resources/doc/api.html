@@ -572,18 +572,16 @@ compression algorithm<br>
     </tr>
     <tr>
       <td
- style="vertical-align: top; text-align: center; color: rgb(153, 153, 153);">2<br>
+ style="vertical-align: top; color: rgb(153, 153, 153); text-align: center;">2<br>
       </td>
-      <td style="vertical-align: top; color: rgb(153, 153, 153);">Both
-uncompressed and type-1
-compressed (NOT YET IMPLEMENTED)<br>
-      </td>
+      <td style="vertical-align: top; color: rgb(153, 153, 153);">Delta-compression
+algorithm (NOT YET IMPLEMENTED) </td>
     </tr>
   </tbody>
 </table>
-<p style="margin-bottom: 0in;">At the moment there is one compression
-mode available.&nbsp; Other data compression methods
-(wavelets, software compression) may be available at a later date.<br>
+<p style="margin-bottom: 0in;">Other data compression methods
+(wavelets, software compression) may be available at a later
+date.&nbsp; Delta-compression is currently being implemented.<br>
 <b><br>
 Data Formats (<a href="#DATA_ACC_SET_DATA_FORMAT">DATA_ACC_SET_DATA_FORMAT</a>)<br>
 </b></p>
@@ -611,9 +609,10 @@ compression&nbsp; modes<br>
     <tr>
       <td style="vertical-align: top; text-align: center;">1<br>
       </td>
-      <td style="vertical-align: top;">Road grader default format<br>
+      <td style="vertical-align: top;">Default compression format
+(based on compression modes)<br>
       </td>
-      <td style="vertical-align: top;">1<br>
+      <td style="vertical-align: top;">1, 2<br>
       </td>
     </tr>
     <tr>
@@ -623,8 +622,18 @@ compression&nbsp; modes<br>
       <td style="vertical-align: top; color: rgb(153, 153, 153);">Raw
 (formatted directly as comes
 out of the FPGA, uncompressed)</td>
-      <td style="vertical-align: top; color: rgb(153, 153, 153);">0, 1,
+      <td style="vertical-align: top; color: rgb(153, 153, 153);">0 ..
 2 (NOT YET IMPLEMENTED)<br>
+      </td>
+    </tr>
+    <tr>
+      <td
+ style="vertical-align: top; text-align: center; color: rgb(153, 153, 153);">3<br>
+      </td>
+      <td style="vertical-align: top; color: rgb(153, 153, 153);">Raw +
+compressed<br>
+      </td>
+      <td style="vertical-align: top; color: rgb(153, 153, 153);">1, 2<br>
       </td>
     </tr>
   </tbody>
@@ -642,32 +651,86 @@ DOM Data Formats directory</a> on Docushare.&nbsp; Variable/truncated
 engineering records are still supported via the <span
  style="font-family: monospace;">DATA_ACC_SET_ENG_FMT</span> message.<br>
 <br>
-<big><span style="font-weight: bold;">Road Grader Compressed Format</span></big><br>
+<big><span style="font-weight: bold;">Compressed Data Format</span></big><br>
 <br>
-The "road grader default format" consists of blocks of data in the
+The compressed data consists of blocks of data in the
 following block data format:<br>
 <br>
 <span
  style="font-family: helvetica,arial,sans-serif; font-weight: bold;">BLOCK
-DATA:</span><br>
+DATA<small> (up to 4084 bytes)</small>:</span><span
+ style="font-family: helvetica,arial,sans-serif; font-weight: bold;"></span><br>
 <table style="text-align: left;" border="0" cellpadding="2"
  cellspacing="2">
   <tbody>
     <tr>
       <td colspan="1" rowspan="1" style="vertical-align: top;"><span
- style="font-family: helvetica,arial,sans-serif;">HEADER:</span>
+ style="font-family: helvetica,arial,sans-serif;">HEADER:<br>
+      </span>
       <table style="width: 100%; text-align: left;" border="1"
  cellpadding="2" cellspacing="2">
         <tbody>
           <tr>
-            <td colspan="1" rowspan="1" style="vertical-align: top;"><span
- style="font-weight: bold;">Block length</span> in bytes (including
-header): (16 bits, BIG ENDIAN)</td>
+            <td style="vertical-align: top;">Word 0:<br>
+            </td>
+            <td
+ style="width: 10%; vertical-align: top; background-color: rgb(204, 204, 204);">Bit
+31:<span style="font-weight: bold;"> 1 (compressed)</span> </td>
+            <td
+ style="width: 15%; vertical-align: top; background-color: rgb(204, 204, 204);">Bits
+30..28: <span style="font-weight: bold;">compression type</span>
+(0==Road Grader,
+1==Delta Compression) </td>
+            <td
+ style="width: 25%; vertical-align: top; background-color: rgb(204, 204, 204);">Bits
+27..16:<span style="font-weight: bold;"> Spare</span> </td>
+            <td
+ style="width: 50%; vertical-align: top; background-color: rgb(204, 204, 204);">Bits
+15..0: <span style="font-weight: bold;">Block length</span> in bytes
+(including
+header; BIG ENDIAN) </td>
           </tr>
           <tr>
-            <td colspan="1" rowspan="1" style="vertical-align: top;"><span
- style="font-weight: bold;">Timestamp MSBs</span> of all hits in block:
-(16 bits, BIG ENDIAN)</td>
+            <td style="vertical-align: top;">Word 1:<br>
+            </td>
+            <td colspan="3" rowspan="1"
+ style="vertical-align: top; background-color: rgb(204, 204, 204);">Bits
+31..16: <span style="font-weight: bold;">Spare</span> </td>
+            <td
+ style="vertical-align: top; background-color: rgb(204, 204, 204);">Bits
+15..0: <span style="font-weight: bold;">Timestamp MSBs</span> of all
+hits in block (BIG ENDIAN) </td>
+          </tr>
+          <tr>
+            <td colspan="1" rowspan="4" style="vertical-align: top;">Word
+2..<span style="font-style: italic;">M</span><br>
+            </td>
+            <td colspan="4" rowspan="1"
+ style="vertical-align: top; background-color: rgb(204, 204, 204);">Hit
+0&nbsp; (variable
+length)<br>
+            <br>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="4" rowspan="1"
+ style="vertical-align: top; background-color: rgb(204, 204, 204);">Hit
+1<br>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="4" rowspan="1" style="vertical-align: top;">...<br>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="4" rowspan="1"
+ style="background-color: rgb(204, 204, 204); vertical-align: top;">Hit
+            <span style="font-style: italic;">N<br>
+            <br>
+            <br>
+            </span></td>
           </tr>
         </tbody>
       </table>
@@ -684,37 +747,6 @@ header): (16 bits, BIG ENDIAN)</td>
     <tr>
     </tr>
     <tr>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;"><span
- style="font-family: courier new,courier,monospace;"><big><small><span
- style="font-family: helvetica,arial,sans-serif;">HITS</span></small></big></span>:
-      <table style="width: 100%; text-align: left;" border="1"
- cellpadding="2" cellspacing="2">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">Hit 0&nbsp; (variable
-length)<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">Hit 1 <br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">...<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">Hit <span
- style="font-style: italic;">N</span><br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <span style="font-family: courier new,courier,monospace;"></span><span
- style="font-family: courier new,courier,monospace;"><br>
-      </span></td>
     </tr>
   </tbody>
 </table>
@@ -733,7 +765,8 @@ document</a>, whereas the
 header values (as well as all the data created by domapp) are BIG
 ENDIAN by convention.<br>
 <br>
-Block length, including all hits, will be less than or equal to 4084
+Block length, including header and all hits, will be less than or equal
+to 4084
 bytes.&nbsp; The Most Significant Bits (MSBs) of the hit timestamps are
 the
 same in every block (resulting in the occasional block which has fewer
