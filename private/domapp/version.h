@@ -1,1 +1,1 @@
-#define DOMAPP_RELEASE "V00-00-11"
+#define DOMAPP_RELEASE "V00-00-12"

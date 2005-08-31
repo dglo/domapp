@@ -156,7 +156,6 @@ int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window,
     mprintf("Can't start flasher board run: DOM_state=%d.", DOM_state);
     return 0;
   }
-  DOM_state = DOM_FB_RUN_IN_PROGRESS;
 
   halPowerDownBase(); /* Just to be sure, turn off HV */
 

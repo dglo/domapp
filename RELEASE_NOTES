@@ -1,6 +1,13 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
 =========================================================
+domapp V00-00-12  8/31/2005
+       Requires domapp.sbi: 264, DOM-MB packages domapp-V00-00-12
+
+Upgrades/bug fixes
+* Fix flasher run startup
+
+=========================================================
 domapp V00-00-11  8/29/2005
        Requires domapp.sbi: 264, DOM-MB packages domapp-V00-00-11
        Test with domapp-tools (DMT) V00-00-08
