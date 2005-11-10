@@ -1,5 +1,12 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
+domapp V00-02-00  11/10/2005
+	Requires DOM-MB version 400
+
+Upgrades/bug fixes:
+- minor cleanup of pong debugging cruft.
+- This version links against DOM-MB rel-400
+
 =========================================================
 domapp V00-01-00  10/17/2005
        Requires domapp.sbi: 281, DOM-MB packages domapp-101

@@ -385,9 +385,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
 
     case DATA_ACC_GET_SN_DATA: 
       { 
-	doPong(26);
 	int nb = fillMsgWithSNData(data, MAXDATA_VALUE);
-	doPong(27);
 	Message_setDataLen(M, nb);
 	Message_setStatus(M, SUCCESS);
 	break;

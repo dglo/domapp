@@ -68,14 +68,6 @@ void zeroPedestals() {
   npeds0 = npeds1 = npedsadc = 0;
 }
 
-#define SNPONG
-#ifdef  SNPONG
-# warning SNPONG is set for debugging purposes
-void doPong(unsigned p) { FPGA(PONG)=p; }
-#else
-void doPong(unsigned p) {}
-#endif
-
 void dumpRegs(void) {
 #define dumpReg(a) (mprintf("%20s=0x%08x", #a, FPGA(a)))
   dumpReg(TRIGGER_SOURCE);

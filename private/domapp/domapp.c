@@ -2,8 +2,8 @@
   domapp - IceCube DOM Application program for use with 
            "Real"/"domapp" FPGA
            J. Jacobsen (jacobsen@npxdesigns.com), Chuck McParland
-  $Date: 2005-06-23 02:47:58 $
-  $Revision: 1.31 $
+  $Date: 2005-10-21 16:53:22 $
+  $Revision: 1.32 $
 */
 
 #include <unistd.h> /* Needed for read/write */
@@ -73,9 +73,7 @@ int main(void) {
   halStartReadTemp();
   USHORT temperature = 0; // Chilly
 
-  for (;;) {
-    doPong(21);
-    
+  for (;;) {    
     /* Insert periodic monitoring records */
 
     tcur = hal_FPGA_DOMAPP_get_local_clock();      
@@ -111,15 +109,10 @@ int main(void) {
     }
 
     /* Check for new message */
-    doPong(22);
     if(halIsInputData() && getmsg(message)) {
-      doPong(23);
       msgHandler((MESSAGE_STRUCT *) message);
-      doPong(24);
       putmsg(message);
     }
-    doPong(25);
-
   } /* for(;;) */
 }
 

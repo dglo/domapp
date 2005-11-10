@@ -170,9 +170,9 @@ int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window,
     mprintf("beginFBRun: ERROR: beginRun failed!");
     return 0;
   }
-  mprintf("Started flasher board run!!! bright=%hu window=%hu delay=%h "
-	  "mask=%hu rateRequest=%hu",
-	  bright, window, delay, mask, rate, realRate);
+  mprintf("Started flasher board run!!! bright=%hu window=%hu delay=%d "
+	  "mask=%hu rateRequest=%hu realRate=%d",
+	  bright, window, (int) delay, mask, rate, (int) realRate);
   nTrigsReadOut = 0;
   return 1;
 }
@@ -509,18 +509,13 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
   if(saved_bin) {
     saved_bin = 0;
   } else {
-    doPong(28);
     if(!sn_ready()) {
-      doPong(29);
       return 0;
     }
-    doPong(30);
     if(sn_event(psn)) {
-      doPong(31);
       mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed!");
       return 0;
     }
-    doPong(32);
   }
 
   /* By now, psn is either our saved_bin or a new event */
