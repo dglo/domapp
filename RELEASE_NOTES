@@ -1,5 +1,17 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
+
+domapp V00-02-01  11/23/2005
+	Requires DOM-MB version 403
+
+Upgrades/bug fixes:
+- update compressed data format per documentation & phone
+  call discussions
+- Add format ID to supernova data to make consistent with
+  monitoring stream.
+
+=========================================================
+
 domapp V00-02-00  11/10/2005
 	Requires DOM-MB version 400
 

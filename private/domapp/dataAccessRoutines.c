@@ -26,10 +26,6 @@
 #include "domSControl.h"
 #include "expControl.h"
 
-/* Externally available pedestal waveforms */
-extern unsigned short atwdpedavg[2][4][128];
-extern unsigned short fadcpedavg[256];
-extern USHORT atwdThreshold[2][4], fadcThreshold;
 extern USHORT pulser_rate;
 extern int pulser_running;
 
@@ -57,8 +53,6 @@ extern UBYTE DOM_status;
 extern UBYTE DOM_cmdSource;
 extern ULONG DOM_constraints;
 extern char *DOM_errorString;
-extern USHORT atwdpedavg[2][4][ATWDCHSIZ];
-extern USHORT fadcpedavg[FADCSIZ];
 extern int SW_compression;
 extern int SW_compression_fmt;
 
@@ -452,7 +446,7 @@ unsigned char * RGHitBegin(unsigned mylbmp) {
   return (unsigned char *) &(hdr->word1);
 }
 
-int formatRGEvent(UBYTE * msgp, unsigned mylbmp) {
+int formatCmpEvent(UBYTE * msgp, unsigned mylbmp) {
   int nbytes = nextRGEventSize(mylbmp);
   memcpy(msgp, RGHitBegin(mylbmp), nbytes);
   return nbytes;
@@ -463,7 +457,7 @@ int isCompressBitSet(unsigned mylbmp) {
   return (hdr->word0 >> 31) & 0x01;
 }
 
-unsigned short RGTimeMSB16(unsigned mylbmp) {
+unsigned short RGTimeLSB16(unsigned mylbmp) {
   struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
   return hdr->word0 & 0xFFFF;
 }
@@ -471,7 +465,7 @@ unsigned short RGTimeMSB16(unsigned mylbmp) {
 void mShowHdr(unsigned mylbmp) {
   struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
   mprintf("lbmp=%u C=%d siz=%d TS16=0x%04x w0=0x%08lx w1=0x%08lx w2=0x%08lx w3=0x%08lx",
-	  mylbmp, isCompressBitSet(mylbmp), nextRGEventSize(mylbmp), RGTimeMSB16(mylbmp),
+	  mylbmp, isCompressBitSet(mylbmp), nextRGEventSize(mylbmp), RGTimeLSB16(mylbmp),
 	  hdr->word0, hdr->word1, hdr->word2, hdr->word3);
 }
 
@@ -501,6 +495,8 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
   static int saved_bin = 0;
 
   p += 2; // Skip length portion, fill later
+  formatShort(300, p); // Add format ID
+  p += 2;
 
 # define NCUR() ((int) (p - msgBuffer))
 # define STD_DT 65536
@@ -544,7 +540,7 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
   return NCUR();
 }
 
-int fillMsgWithRGData(UBYTE *msgBuffer, int bufsiz) {
+int fillMsgWithCmpData(UBYTE *msgBuffer, int bufsiz) {
   UBYTE *p  = msgBuffer;
   UBYTE *p0 = msgBuffer;
 # define NCUR() ((int) (p - msgBuffer))
@@ -553,24 +549,29 @@ int fillMsgWithRGData(UBYTE *msgBuffer, int bufsiz) {
   if(!isDataAvailable()) return 0; 
 
   if(!isCompressBitSet(lbmp)) {
-    mprintf("WARNING: dataAccessRoutines: fillMsgWithRGData: have hit data "
+    mprintf("WARNING: dataAccessRoutines: fillMsgWithCmpData: have hit data "
 	    "but compress bit is not set!");
     mShowHdr(lbmp);
     return 0;
   }
 
-  unsigned short tshi = RGTimeMSB16(lbmp); 
-  p += 2; // Skip length portion, fill later
+  /* First 8 bytes are header */
+
+  p += 3; /* Skip length portion and spare byte, fill 2B length later */
+  *p++ = 0x90; /* 0x90 = 0b1000 0000 (compression on) + 0b0001 0000 (delta) */
+
+  unsigned short tshi = RGTimeLSB16(lbmp); 
   formatShort(tshi, p);
   p += 2;
   
+  /* Pack in hit data */
   while(1) {
-    if(RGTimeMSB16(lbmp) != tshi) break;
+    if(RGTimeLSB16(lbmp) != tshi) break;
 
     if(!isDataAvailable()) break;
 
     if(!isCompressBitSet(lbmp)) {
-      mprintf("WARNING: dataAccessRoutines: fillMsgWithRGData: have hit data "
+      mprintf("WARNING: dataAccessRoutines: fillMsgWithCmpData: have hit data "
 	      "but compress bit is not set!  Skipping hit...");
       // Skip this event
       lbmp = nextEvent(lbmp);
@@ -587,14 +588,14 @@ int fillMsgWithRGData(UBYTE *msgBuffer, int bufsiz) {
     //mShowHdr(lbmp);
     // if we get here, we have room for the formatted engineering event
     // and one or more hits are available
-    p += formatRGEvent(p, lbmp);  // Fill data into user's message buffer,
+    p += formatCmpEvent(p, lbmp);  // Fill data into user's message buffer,
 				  //   advance both message pointer...
     lbmp = nextEvent(lbmp);       //          ... and LBM pointer
     nTrigsReadOut++;
   }
 
   formatShort(NCUR(), p0); // Finally, fill length of block and return
-  //mprintf("fillMsgWithRGData: Total block length is %d", NCUR());
+  //mprintf("fillMsgWithCmpData: Total block length is %d", NCUR());
   return NCUR();
 }
 
@@ -625,7 +626,7 @@ int fillMsgWithData(UBYTE *msgBuffer, int bufsiz, UBYTE format, UBYTE compressio
   if(format == FMT_ENG && compression == CMP_NONE) 
     return fillMsgWithEngData(msgBuffer, bufsiz);
   if(format == FMT_RG  && compression == CMP_RG)
-    return fillMsgWithRGData(msgBuffer, bufsiz);
+    return fillMsgWithCmpData(msgBuffer, bufsiz);
   mprintf("dataAccess: fillMsgWithData: WARNING: invalid format/compression combo!  "
 	  "format=%d compression=%d", (int) format, (int) compression);
   return 0;
