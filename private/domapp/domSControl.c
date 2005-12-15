@@ -17,6 +17,7 @@ Jan. 14 '04 Jacobsen -- add monitoring actions for state change operations
 #include "hal/DOM_MB_hal.h"
 #include "hal/DOM_MB_domapp.h"
 #include "hal/DOM_FPGA_regs.h"
+#include "hal/DOM_FPGA_domapp_regs.h"
 
 #include "message.h"
 #include "moniDataAccess.h"
@@ -514,7 +515,9 @@ void domSControl(MESSAGE_STRUCT *M) {
   case DSC_SET_PULSER_RATE:
     pulser_rate = unformatShort(&data[0]);
     // hal set pulser rate (pulser_rate)
-    hal_FPGA_DOMAPP_cal_pulser_rate((double) pulser_rate);
+    double setRate = hal_FPGA_DOMAPP_cal_pulser_rate((double) pulser_rate);
+    mprintf("Setting pulser rate to %hu Hz (rounded by HAL to %d Hz; CAL_CONTROL=0x%08lx))", 
+	    pulser_rate, (int) setRate, FPGA(CAL_CONTROL));
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
     break;

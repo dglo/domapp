@@ -1,5 +1,15 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
+domapp V00-02-02  12/15/2005
+        Requires DOM-MB version 404
+
+Upgrades/bug fixes:
+- Add monitoring debug message to report pulser settings when
+  changed
+- Use only low 8 bits to determine trigger type in events during
+  formatting
+
+=========================================================
 
 domapp V00-02-01  11/23/2005
 	Requires DOM-MB version 403

@@ -381,7 +381,7 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   *msgp++ = (ATWDChMask[1]<<4) | ATWDChMask[0];
   *msgp++ = (ATWDChMask[3]<<4) | ATWDChMask[2];
 
-  int source = hdr->trigbits & 0xFFFF;
+  int source = hdr->trigbits & 0xFF;
   UBYTE trigmask;
 
   // This is a bit hacked, but the event format only allows one trigger type at a time
