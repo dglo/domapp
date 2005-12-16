@@ -2,11 +2,12 @@
   domapp - IceCube DOM Application program for use with 
            "Real"/"domapp" FPGA
            J. Jacobsen (jacobsen@npxdesigns.com), Chuck McParland
-  $Date: 2005-10-21 16:53:22 $
-  $Revision: 1.32 $
+  $Date: 2005-12-16 18:49:53 $
+  $Revision: 1.33 $
 */
 
 #include <unistd.h> /* Needed for read/write */
+#include <string.h>
 
 // DOM-related includes
 #include "hal/DOM_MB_hal.h"
@@ -46,6 +47,9 @@ ULONG CRCproblem;
 
 /* Monitoring buffer, static allocation: */
 UBYTE monibuf[MONI_CIRCBUF_RECS * MONI_REC_SIZE];
+
+char halmsg[MAX_TOTAL_MESSAGE];
+int  halmsg_remain = 0;
 
 int main(void) {
   char message[MAX_TOTAL_MESSAGE];
@@ -109,7 +113,7 @@ int main(void) {
     }
 
     /* Check for new message */
-    if(halIsInputData() && getmsg(message)) {
+    if((halmsg_remain || hal_FPGA_msg_ready()) && getmsg(message)) {
       msgHandler((MESSAGE_STRUCT *) message);
       putmsg(message);
     }
@@ -123,14 +127,45 @@ void putmsg(char *buf) {
   write(STDOUT, buf, nw);
 }
 
+static int receive(char *b) {
+  int nr, type;
+  hal_FPGA_receive(&type, &nr, b);
+  return nr;
+}
+
 int getmsg(char *buf) {
-  int nh = read(STDIN, buf, MSG_HDR_LEN);
-  if(nh != MSG_HDR_LEN) return 0;
+  // If needed, get full HW packet - don't use read()
+  if(!halmsg_remain) {
+    halmsg_remain = receive(halmsg);
+  }
+  
+  if(halmsg_remain < MSG_HDR_LEN) {
+    mprintf("getmsg: short read of header! (only %d bytes available)", halmsg_remain);
+    halmsg_remain = 0;
+    return 0;
+  }
+  
+  memcpy(buf, halmsg, MSG_HDR_LEN);
+  halmsg_remain -= MSG_HDR_LEN;
+
   int len = Message_dataLen((MESSAGE_STRUCT *) buf);
-  if(len > MAXDATA_VALUE) return 0;
+  if(len > MAXDATA_VALUE) {
+    mprintf("getmsg: data length (%d) too long!", len);
+    halmsg_remain = 0;
+    return 0;
+  }
+  
   if(len == 0) return 1;
-  int np = read(STDIN, buf+nh, len);
-  if(np != len) return 0;
+  
+  if(halmsg_remain < len) {
+    mprintf("getmsg: short read of %d bytes! (only %d bytes remain)!", len, halmsg_remain);
+    halmsg_remain = 0;
+    return 0;
+  }
+  
+  memcpy(buf+MSG_HDR_LEN, halmsg, len);
+  halmsg_remain -= len;
+  
   return 1;
 }
 

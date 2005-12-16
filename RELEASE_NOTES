@@ -1,5 +1,14 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
+domapp V00-02-03  12/16/2005
+        Requires DOM-MB version 404
+
+Upgrades/bug fixes:
+- Workaround for unexpected comms. behavior from HAL/comm.
+  FPGA to deal w/ "deferred DOM response" problem
+
+=========================================================
+
 domapp V00-02-02  12/15/2005
         Requires DOM-MB version 404
 
