@@ -2,8 +2,8 @@
   domapp - IceCube DOM Application program for use with 
            "Real"/"domapp" FPGA
            J. Jacobsen (jacobsen@npxdesigns.com), Chuck McParland
-  $Date: 2005-12-16 18:49:53 $
-  $Revision: 1.33 $
+  $Date: 2005-12-16 20:02:47 $
+  $Revision: 1.34 $
 */
 
 #include <unistd.h> /* Needed for read/write */
@@ -124,7 +124,7 @@ void putmsg(char *buf) {
   int len = Message_dataLen((MESSAGE_STRUCT *) buf);
   if(len > MAXDATA_VALUE) return;
   int nw = len + MSG_HDR_LEN;
-  write(STDOUT, buf, nw);
+  hal_FPGA_send(0, nw, buf);
 }
 
 static int receive(char *b) {
@@ -135,6 +135,7 @@ static int receive(char *b) {
 
 int getmsg(char *buf) {
   // If needed, get full HW packet - don't use read()
+
   if(!halmsg_remain) {
     halmsg_remain = receive(halmsg);
   }
@@ -163,7 +164,7 @@ int getmsg(char *buf) {
     return 0;
   }
   
-  memcpy(buf+MSG_HDR_LEN, halmsg, len);
+  memcpy(buf+MSG_HDR_LEN, halmsg+MSG_HDR_LEN, len);
   halmsg_remain -= len;
   
   return 1;
