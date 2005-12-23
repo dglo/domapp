@@ -96,6 +96,7 @@
 #define DSC_Bad_SN_Deadtime 42
 #define DSC_SN_Not_Running 43
 #define DSC_SN_Start_Failed 44
+#define DSC_SN_DataTakingInProgress 45
 
 /* These are DOM Slow Control specific return message
    formats and values.  In most cases, they are formatted

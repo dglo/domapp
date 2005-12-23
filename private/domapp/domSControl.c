@@ -31,6 +31,11 @@ Jan. 14 '04 Jacobsen -- add monitoring actions for state change operations
 #include "DSCmessageAPIstatus.h"
 #include "DOMstateInfo.h"
 
+/* Exported variables */
+UBYTE SNRequestMode;
+unsigned SNRequestDeadTime;
+int SNRequested = 0;
+
 /* extern functions */
 extern void formatLong(ULONG value, UBYTE *buf);
 extern void formatShort(USHORT value, UBYTE *buf);
@@ -209,22 +214,17 @@ void dsc_hal_do_LC_settings(void) {
   updateLCwindows();
 }
 
-int snRunning = 0;
-int dsc_isSNrunning(void) { return snRunning; }
-
 int doStartSN(UBYTE mode, unsigned deadtime) {
   if(hal_FPGA_DOMAPP_sn_dead_time(deadtime)) {
     mprintf("ERROR: hal_FPGA_DOMAPP_sn_dead_time FAILED!\n");
     return -1;
   }
   hal_FPGA_DOMAPP_sn_mode(mode ? HAL_FPGA_DOMAPP_SN_MODE_MPE : HAL_FPGA_DOMAPP_SN_MODE_SPE);
-  snRunning = 1;
   return 0;
 }
 
 void doStopSN(void) {
   hal_FPGA_DOMAPP_sn_mode(HAL_FPGA_DOMAPP_SN_MODE_OFF);
-  snRunning = 0;
 }
 
 #define DOERROR(errstr, errnum, errtype)                       \
@@ -740,8 +740,9 @@ void domSControl(MESSAGE_STRUCT *M) {
 
   case DSC_ENABLE_SN: 
     { 
-      if(dsc_isSNrunning()) {
-	DOERROR("supernova system already running!", DSC_SN_Already_Running, FATAL_ERROR);
+      if(DOM_state != DOM_IDLE) {
+	DOERROR("DSC_ENABLE_SN: ERROR: DOM not in idle state!", DSC_SN_DataTakingInProgress,
+		FATAL_ERROR);
 	break;
       }
       unsigned deadtime = unformatLong(data);
@@ -756,12 +757,12 @@ void domSControl(MESSAGE_STRUCT *M) {
 		DSC_Bad_SN_Deadtime, FATAL_ERROR);
 	break;
       }
-      if(doStartSN(mode, deadtime)) {
-	DOERROR("DSC_ENABLE_SN: doStartSN FAILED.  Check monitoring stream",
-		DSC_SN_Start_Failed, FATAL_ERROR);
-	break;
-      }
-      mprintf("Started supernova data collection (deadtime=%d, mode=%s)",
+
+      /* Enable SN request so SN is started when run is started */
+      SNRequestMode     = mode;
+      SNRequestDeadTime = deadtime;
+      SNRequested       = 1;
+      mprintf("Requested supernova data collection for next run (deadtime=%d, mode=%s)",
 	      deadtime, mode?"MPE":"SPE");
       Message_setStatus(M,SUCCESS);
       Message_setDataLen(M,0);
@@ -769,12 +770,10 @@ void domSControl(MESSAGE_STRUCT *M) {
     break;
 
   case DSC_DISABLE_SN:
-    if(!dsc_isSNrunning()) {
-      DOERROR("DSC_DISABLE_SN: Supernova system NOT running!",
-	      DSC_SN_Not_Running, WARNING_ERROR);
-    }
+    mprintf("Removed request for supernova data taking");
+    SNRequested = 0;
+    // Explicitly disable supernova in case data taking is [pathologically] still in progress:
     doStopSN();
-    mprintf("Stopped supernova data collection");
     Message_setStatus(M,SUCCESS);
     Message_setDataLen(M,0);
     break;

@@ -1,5 +1,16 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
+domapp V00-03-00  12/23/2005
+        Requires DOM-MB version 404
+
+Upgrades/bug fixes:
+- Change message recv'd code to deal w/ partial domapp
+  messages being sent to DOM
+- Slight refactoring of supernova code; DSC_ENABLE_SN
+  message MUST occur before data taking run is started.
+
+=========================================================
+
 domapp V00-02-04  12/16/2005
         Requires DOM-MB version 404
 

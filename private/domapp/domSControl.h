@@ -3,9 +3,12 @@
 #define _DOMSCONTROL_H_
 
 /* Header file for defines, structs, etc. for
-   the Data Access Service. */
+   the Slow Control Service. */
 
-/* Data Access version info. */
+int doStartSN(UBYTE mode, unsigned deadtime);
+void doStopSN();
+
+/* Slow Control version info. */
 #define DSC_MAJOR_VERSION 10
 #define DSC_MINOR_VERSION 1 
 /* major version 10	10 May 2003
@@ -22,7 +25,7 @@
 /* default maximums for PMT HV anode and dynode */
 #define PMT_HV_DEFAULT_MAX 4095
 
-/* Data Access error strings */
+/* Slow Control error strings */
 /* for COMMON_No_Errors */
 #define DSC_ERS_NO_ERRORS "DSC: No errors."
 /* for COMMON_Bad_Msg_Subtype */

@@ -28,6 +28,9 @@
 
 extern USHORT pulser_rate;
 extern int pulser_running;
+extern UBYTE SNRequestMode;
+extern unsigned SNRequestDeadTime;
+extern int SNRequested;
 
 /* LC mode, defined via slow control */
 extern UBYTE LCmode;
@@ -283,6 +286,12 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   hal_FPGA_DOMAPP_rate_monitor_enable(HAL_FPGA_DOMAPP_RATE_MONITOR_SPE|
   				      HAL_FPGA_DOMAPP_RATE_MONITOR_MPE);
 
+  if(SNRequested) {
+    if(doStartSN(SNRequestMode, SNRequestDeadTime)) {
+      mprintf("beginRun: ERROR: couldn't start requested supernova datataking.\n");
+      return FALSE;
+    }
+  }
   hal_FPGA_DOMAPP_enable_daq(); /* <-- Can get triggers NOW */
   return TRUE;
 }
@@ -299,6 +308,7 @@ int endRun(void) { /* End either a "regular" or flasher run */
 	  hal_FPGA_DOMAPP_lbm_pointer(), FPGA(FW_DEBUGGING));
   hal_FPGA_DOMAPP_disable_daq();
   hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_OFF);
+  doStopSN();
   hal_FB_set_brightness(0);
   hal_FB_disable();
   mprintf("Ended run (run type=%s)", DOM_state==DOM_FB_RUN_IN_PROGRESS?"flasher":"normal");
