@@ -444,11 +444,8 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_QUERY_PMT_HV:
-    //data[0]=halPMT_HVisEnabled();
-    data[0]=0;
-    data[1]=0;
-    formatShort(domappReadBaseADC(),&data[2]);
-    formatShort(halReadBaseDAC(),&data[4]);
+    formatShort(domappReadBaseADC(),&data[0]);
+    formatShort(halReadBaseDAC(),&data[2]);
     Message_setDataLen(M,DSC_QUERY_PMT_HV_LEN);
     Message_setStatus(M,SUCCESS);
     break;

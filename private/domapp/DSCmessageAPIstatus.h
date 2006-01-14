@@ -218,12 +218,10 @@
    Size of passed values: 
 	0
    Returned values in data portion of message:
-	UBYTE TRUE/FALSE
-	UBYTE spare
 	USHORT PMT_ADC
 	USHORT PMT_DAC
    Size of returned values in data portion: */ 
-#define DSC_QUERY_PMT_HV_LEN 	6	
+#define DSC_QUERY_PMT_HV_LEN 	4
 
 /* Response to: 
 	subType: DSC_READ_ONE_ADC_REPT

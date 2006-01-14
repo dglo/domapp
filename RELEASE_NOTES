@@ -1,5 +1,27 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
+
+domapp V00-03-01  1/14/2005 CST
+	Requires DOM-MB version 404
+	Requires domapp.sbi tag build329
+
+Upgrades/bug fixes:
+- Use new domapp FPGA which fixes LC/heartbeat interaction.
+- Fix bug with extra bits contaminating FADC/ATWD data 
+  (keep only 10 bits)
+- Fix DSC_QUERY_PMT_HV and documentation to return only 
+  2 shorts: ADC and DAC HV settings
+- Rearrange engineering format code slightly to allow for
+  the possibility of e.g. forced+SPE trig in the same time
+  slice - in which case SPE takes precedence in format.
+  I.e., if Thorsten says:        I say:
+            FORCED+SPE           type 2
+            FLASHER+FORCED       type 3
+            FLASHER+SPE          type 3
+            FLASHER+FORCED+SPE   type 3
+
+=========================================================
+
 domapp V00-03-00  12/23/2005
         Requires DOM-MB version 404
 

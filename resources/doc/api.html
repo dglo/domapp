@@ -1460,7 +1460,13 @@ High Voltage</span> </p>
           <tr>
             <td style="vertical-align: top;">US:<br>
             </td>
-            <td style="vertical-align: top;">value<br>
+            <td style="vertical-align: top;">ADC value (ADC units)<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">US: <br>
+            </td>
+            <td style="vertical-align: top;">DAC value (DAC units)<br>
             </td>
           </tr>
         </tbody>
@@ -1470,7 +1476,9 @@ High Voltage</span> </p>
     <tr>
       <td colspan="4" width="566">
       <p align="left">&nbsp; <span style="font-weight: bold;">Read PMT
-voltage into "value" (DAC/ADC units, i.e. volts * 2)</span> </p>
+voltage (ADC and DAC).&nbsp; If DOM has been softbooted since HV was
+set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts * 2.</span>
+      </p>
       </td>
     </tr>
   </tbody>

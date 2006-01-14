@@ -396,14 +396,12 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
 
   // This is a bit hacked, but the event format only allows one trigger type at a time
   int hadWarning = 0;
-  if(source == HAL_FPGA_DOMAPP_TRIGGER_FORCED) { 
+  if(source == HAL_FPGA_DOMAPP_TRIGGER_FORCED) { /* Flasher or Disc. take precedence */
     trigmask = 1;
-  } else if(source == HAL_FPGA_DOMAPP_TRIGGER_SPE || 
-	    source == HAL_FPGA_DOMAPP_TRIGGER_MPE ||
-	    source == (HAL_FPGA_DOMAPP_TRIGGER_SPE|HAL_FPGA_DOMAPP_TRIGGER_MPE)) {
-    trigmask = 2;
-  } else if(source == HAL_FPGA_DOMAPP_TRIGGER_FLASHER) {
+  } else if(source & HAL_FPGA_DOMAPP_TRIGGER_FLASHER) {
     trigmask = 3;
+  } else if(source & (HAL_FPGA_DOMAPP_TRIGGER_SPE | HAL_FPGA_DOMAPP_TRIGGER_MPE)) {
+    trigmask = 2;
   } else {
     if(!hadWarning) {
       hadWarning++;
@@ -692,9 +690,9 @@ UBYTE *ATWDShortMove(USHORT *data, UBYTE *buffer, int count) {
 
     if(count > ATWDCHSIZ || count <= 0) return buffer; 
     for(i = ATWDCHSIZ - count; i < ATWDCHSIZ; i++) {
-	*buffer++ = *(ptr+1);
-	*buffer++ = *ptr;
-	ptr += 2;
+      *buffer++ = (*(ptr+1))&0x03;  /* Keep a total */
+      *buffer++ = *ptr;             /*  of 10 bits  */
+      ptr += 2;
     }
     return buffer;
 }
@@ -705,9 +703,9 @@ UBYTE *FADCMove(USHORT *data, UBYTE *buffer, int count) {
     UBYTE *ptr = (UBYTE *)data;
 
     for(i = 0; i < count; i++) {
-	*buffer++ = *(ptr+1);
-	*buffer++ = *ptr;
-	ptr+=2;
+      *buffer++ = (*(ptr+1))&0x03;  /* Keep a total */
+      *buffer++ = *ptr;             /*  of 10 bits  */
+      ptr+=2;
     }
     return buffer;
 }
