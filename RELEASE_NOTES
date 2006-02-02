@@ -1,7 +1,16 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
+domapp V00-03-03  2/2/2006 NZT
+        Requires DOM-MB version 405
+        Requires domapp.sbi tag build340
 
-domapp V00-03-02  1/24/2005 CST
+Upgrades/bug fixes:
+- Added more ASCII monitoring output during LC configuration
+- Upgrade to DOM-MB 405
+
+=========================================================
+
+domapp V00-03-02  1/24/2006 CST
         Requires DOM-MB version 404
         Requires domapp.sbi tag build340
 
@@ -11,7 +20,7 @@ Upgrades/bug fixes:
 
 =========================================================
 
-domapp V00-03-01  1/14/2005 CST
+domapp V00-03-01  1/14/2006 CST
 	Requires DOM-MB version 404
 	Requires domapp.sbi tag build329
 

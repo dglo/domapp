@@ -103,7 +103,7 @@ void domSControlInit(void) {
 }
 
 void set_HAL_lc_mode() {
-  //mprintf("set_HAL_lc_mode(LCmode=%d, LCtype=%d)", LCmode, LCtype);
+  mprintf("set_HAL_lc_mode(LCmode=%d, LCtype=%d)", LCmode, LCtype);
   if(LCmode == LC_MODE_NONE) {
     hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);
   } else {
@@ -120,7 +120,7 @@ void set_HAL_lc_mode() {
 void setLCmodeAndTx() {
   /* Enables both triggering by and TX of LC signals */
 
-  //mprintf("setLCmodeAndTx(LCmode=%d, LCtx=%d)", LCmode, LCtx);
+  mprintf("setLCmodeAndTx(LCmode=%d, LCtx=%d)", LCmode, LCtx);
 
   set_HAL_lc_mode(); /* DISABLES LC if LCmode == 0 */
 
@@ -162,7 +162,7 @@ void setLCmodeAndTx() {
 }
 
 void updateLCsrc(void) {
-  //mprintf("updateLCsrc(%d)", LCsrc);
+  mprintf("updateLCsrc(%d)", LCsrc);
   if(LCsrc == LC_SRC_MPE) 
     hal_FPGA_DOMAPP_lc_disc_mpe();
   else
@@ -170,12 +170,12 @@ void updateLCsrc(void) {
 }
 
 void updateLCspan(void) { 
-  //mprintf("updateLCspan(%d)", LCspan);
+  mprintf("updateLCspan(%d)", LCspan);
   hal_FPGA_DOMAPP_lc_span(LCspan); 
 }
 
 int updateLCwindows(void) {
-  //mprintf("updateLCwindows(pre=%d, post=%d)", pre_ns, post_ns);
+  mprintf("updateLCwindows(pre=%d, post=%d)", pre_ns, post_ns);
   if(hal_FPGA_DOMAPP_lc_windows(pre_ns, post_ns)) { 
     mprintf("WARNING: hal_FPGA_DOMAPP_lc_windows failed (pre=%d, post=%d), probably bad args", 
 	    pre_ns, post_ns);
@@ -187,9 +187,9 @@ int updateLCwindows(void) {
 
 void updateLClengths(void) {
   if(LClengthsSet) {
-    //mprintf("updateLClengths UP %d %d %d %d DN %d %d %d %d", 
-    //    LCupLengths[0], LCupLengths[1], LCupLengths[2], LCupLengths[3],
-    //    LCdnLengths[0], LCdnLengths[1], LCdnLengths[2], LCdnLengths[3]);
+    mprintf("updateLClengths UP %d %d %d %d DN %d %d %d %d", 
+	    LCupLengths[0], LCupLengths[1], LCupLengths[2], LCupLengths[3],
+	    LCdnLengths[0], LCdnLengths[1], LCdnLengths[2], LCdnLengths[3]);
     int ispan; for(ispan=0; ispan < 4; ispan++) {
       hal_FPGA_DOMAPP_lc_length_up(ispan, LCupLengths[ispan]);
       hal_FPGA_DOMAPP_lc_length_down(ispan, LCdnLengths[ispan]);
