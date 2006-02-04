@@ -340,7 +340,8 @@ static unsigned nextValidBlock(unsigned ptr) {
 }
 
 static int haveOverflow(unsigned lbmp) {
-  if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > WHOLE_LBM_MASK ) {
+  //if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > WHOLE_LBM_MASK ) {
+  if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > SW_LBM_MASK ) {
     mprintf("LBM OVERFLOW!!! hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
 	    hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
     return 1;

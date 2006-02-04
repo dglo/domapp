@@ -18,6 +18,7 @@
 #define FPGA_DOMAPP_LBM_BLOCKSIZE 2048 /* BYTES not words */
 #define FPGA_DOMAPP_LBM_BLOCKMASK (FPGA_DOMAPP_LBM_BLOCKSIZE-1)
 #define WHOLE_LBM_MASK ((1<<24)-1)
+#define SW_LBM_MASK ((1<<21)-1) /* Throttle back lookback memory to prevent floods of data in DAQ */
 
 struct tstevt {
   unsigned short tlo;
