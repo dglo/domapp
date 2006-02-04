@@ -28,7 +28,6 @@ typedef struct {
 
 void formatLong(ULONG value, UBYTE * buf);
 void formatShort(USHORT value, UBYTE *buf);
-void formatULL(unsigned long long val, UBYTE *buf);
 void formatTime(unsigned long long time, UBYTE *buf);
 ULONG unformatLong(UBYTE *buf);
 USHORT unformatShort(UBYTE *buf);

@@ -1,9 +1,10 @@
 /* 
  * moniDataAccess.c
  * Routines to store and fetch monitoring data from a circular buffer
- * John Jacobsen, npxdesigns.com for IceCube
+ * John Jacobsen, JJ IT Svcs, for LBNL/IceCube
  * May, 2003
- * $Id: moniDataAccess.c,v 1.14.4.6 2007-10-25 20:58:33 jacobsen Exp $
+ * $Id: moniDataAccess.c,v 1.14 2005-06-20 21:20:40 jacobsen Exp $
+ * CURRENTLY NOT THREAD SAFE -- need to implement moni[Un]LockWriteIndex
  */
 
 
@@ -20,7 +21,6 @@
 #include "domSControl.h"
 #include "expControl.h"
 #include "msgHandler.h"
-#include "DOMdata.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -32,40 +32,81 @@
 #define TRUE 1
 #endif
 
-static UBYTE  *moniBaseAddr;
-static int     moniMask;
-static int     moniInitialized = 0;
-static ULONG   moniReadIndex, moniWriteIndex;
-static int     moniCounterWraps;
-static int     moniOverruns;
+static UBYTE *moniBaseAddr;
+static int   moniMask;
+static int   moniInitialized = 0;
+static ULONG moniReadIndex, moniWriteIndex;
+static int   moniCounterWraps;
+static int   moniOverruns;
 static BOOLEAN moniProvisionalRecFetch = FALSE;
-static int     moniIsInTrouble = 0;
+static int   moniIsInTrouble = 0;
+static unsigned long long moniHdwrIval=0, moniConfIval=0;
 
-unsigned short ATWDchargeStampHistos[2][2][NUM_HIST_BINS];
-unsigned       ATWDchargeStampEntries[2][2];
-unsigned short FADCchargeStampHistos[NUM_HIST_BINS];
-unsigned       FADCchargeStampEntries;
-unsigned short histoPrescale = 1;
+static inline void moniLockWriteIndex(void);
+static inline void moniUnlockWriteIndex(void);
 
-/* Charge stamp stuff */
-CHARGE_STAMP_MODE_TYPE chargeStampMode   = CHARGE_STAMP_FADC;
-CHARGE_STAMP_SEL_TYPE chargeStampChanSel = CHARGE_STAMP_BY_CHAN;
-UBYTE chargeStampChannel                 = 0;
+int moniGetElementLen(void) {  return sizeof(struct moniRec);  }
 
-int moniGetElementLen(void)  { return sizeof(struct moniRec);  }
-void moniZeroIndices(void)   { moniReadIndex = moniWriteIndex = 0; }
-void moniIncWriteIndex(void) { moniWriteIndex++; }
+void moniZeroIndices(void) {
+  moniLockWriteIndex();
+  moniReadIndex = moniWriteIndex = 0;
+  moniUnlockWriteIndex();
+}
+
+
+void moniIncWriteIndex(void) {
+  /* Don't forget to protect with moniLockWriteIndex() first!!! */
+  moniWriteIndex++;
+  if((moniWriteIndex & moniMask) == 0) {
+    /* clear masked bits if wrap, a la Chuck ??? */
+    //moniWriteIndex &= ~moniMask;
+  }
+}
+
+unsigned long long moniGetHdwrIval(void) { return moniHdwrIval; }
+unsigned long long moniGetConfIval(void) { return moniConfIval; }
+
+void moniSetIvals(unsigned long long mhi, unsigned long long mci) {
+  moniHdwrIval = mhi;
+  moniConfIval = mci;
+}
+
+ULONG moniGetLockedWriteIndex(void) {
+  ULONG tmp;
+  /* Mutex it just to be safe */
+  moniLockWriteIndex();
+  tmp = moniWriteIndex;
+  moniUnlockWriteIndex();
+  return tmp;
+}
+
+static inline void moniLockWriteIndex(void) {
+  /* When threading is available, implement this */
+}
+
+static inline void moniUnlockWriteIndex(void) {
+  /* When threading is available, implement this */
+}
+
 
 UBYTE * moniGetWriteBufferAddr(void) {
-  return moniBaseAddr + (sizeof(struct moniRec) * (moniWriteIndex & moniMask));
+  UBYTE *temp;
+
+  temp = moniBaseAddr + (MONI_REC_SIZE * (moniWriteIndex & moniMask));
+
+  return temp;
 }
+
 
 UBYTE * moniBufAddr(long idx) {
-  return moniBaseAddr + (sizeof(struct moniRec) * (idx & moniMask));
+  return moniBaseAddr + (MONI_REC_SIZE * (idx & moniMask));
 }
 
 
-void moniInit(UBYTE *bufBaseAddr, int mask) {
+void moniInit(
+	      UBYTE *bufBaseAddr,
+	      int mask) {
+ 
   moniBaseAddr = bufBaseAddr;
   moniMask     = mask;
 
@@ -74,16 +115,26 @@ void moniInit(UBYTE *bufBaseAddr, int mask) {
   moniCounterWraps = 0;
   moniOverruns     = 0;
 
+  moniSetIvals(0,0); /* The idea here is that no monitoring occurs 
+			if these values aren't set to something != 0 */
+
   moniInitialized = 1;
 }
 
 
 void moniInsertRec(struct moniRec *m) {
+  UBYTE *buf;
+
   if(!moniInitialized) return;
   if(moniIsInTrouble) return;
 
-  memcpy(moniGetWriteBufferAddr(), m, sizeof(struct moniRec));
+  moniLockWriteIndex();
+  buf = moniGetWriteBufferAddr();
+
+  memcpy(buf, m, MONI_REC_SIZE);
+
   moniIncWriteIndex();
+  moniUnlockWriteIndex();
 }
 
 int moniHaveData(void) {
@@ -95,25 +146,46 @@ MONI_STATUS moniFetchRec(struct moniRec *m) {
      a proper record.  Contents pointed to by m are undefined
      otherwise. */
 
+  //ULONG writeIndex;
+
   if(!moniInitialized) return MONI_NOTINITIALIZED;
-  if(moniIsInTrouble)  return MONI_ERROR;
+
+  //writeIndex = moniGetLockedWriteIndex();
+
+  moniLockWriteIndex();
 
   /* Have new data? */
-  if((moniWriteIndex - moniReadIndex) == 0)
+  if((moniWriteIndex - moniReadIndex) == 0) {
+    moniUnlockWriteIndex();
     return MONI_NODATA;
+  }
 
-  /* Look for overflow - if so, give oldest that fits */
-  if((moniWriteIndex - moniReadIndex) > MONI_CIRCBUF_RECS)
-    moniReadIndex = moniWriteIndex - MONI_CIRCBUF_RECS; 
+  /* Look for overflow */
+  if((moniWriteIndex - moniReadIndex) > MONI_CIRCBUF_RECS) {
+
+    /* Did this before: 
+    moniOverruns++;
+    moniZeroIndices();
+    moniUnlockWriteIndex();
+    return MONI_OVERFLOW;
+    */
+ 
+    /* Now just point to oldest record that fits in the buffer */
+    moniReadIndex = moniWriteIndex - MONI_CIRCBUF_RECS;
+  }
 
   /* Good to go.  Copy it. */
-  memcpy(m, moniBufAddr(moniReadIndex), sizeof(struct moniRec));
+  memcpy(m, moniBufAddr(moniReadIndex), MONI_REC_SIZE);
 
+  // moniReadIndex++;
   moniProvisionalRecFetch = TRUE;
+
+  moniUnlockWriteIndex();
   return MONI_OK;
 }
 
 void moniAcceptRec(void) {
+
   if(moniProvisionalRecFetch) {
     moniReadIndex++;
     moniProvisionalRecFetch = FALSE;
@@ -121,23 +193,27 @@ void moniAcceptRec(void) {
 }
   
 
+
 /* Type 2 - event log tagged with ASCII
    text string */
 void moniInsertDiagnosticMessage(char *msg, unsigned long long time, int len) {
   struct moniRec mr;
+  /* truncate if too long */
   mr.dataLen = (len > MAXMONI_DATA) ? MAXMONI_DATA : len;
-  mr.moniEvtType = MONI_TYPE_LOG_MSG;
+  mr.fiducial.fstruct.moniEvtType = MONI_TYPE_LOG_MSG;
   mr.time = time;
   memcpy(mr.data, msg, mr.dataLen);
+
   moniInsertRec(&mr);
 }
 
 void mprintf(char *fmt, ...) {
-  unsigned char buf[MAXMONI_DATA]; /* Message portion only! */
+#define BUFLEN 512
+  char buf[BUFLEN];
   va_list ap;
   unsigned long long time = hal_FPGA_DOMAPP_get_local_clock();
   va_start(ap, fmt);
-  int n = vsnprintf(buf, MAXMONI_DATA, fmt, ap);
+  int n = vsnprintf(buf, BUFLEN, fmt, ap);
   va_end(ap);
   moniInsertDiagnosticMessage(buf, time, n);
 }
@@ -239,7 +315,7 @@ void moniInsertConfigStateMessage(unsigned long long time) {
 
   // skip:
   mr.dataLen = sizeof(mc);
-  mr.moniEvtType = MONI_TYPE_CONF_STATE_MSG;
+  mr.fiducial.fstruct.moniEvtType = MONI_TYPE_CONF_STATE_MSG;
   mr.time = time;
   memcpy(mr.data, (UBYTE *) &mc, sizeof(mc));
   moniInsertRec(&mr);
@@ -327,7 +403,7 @@ void moniInsertHdwrStateMessage(unsigned long long time, USHORT temperature,
     mh.MPE_RATE                  = moniBELong(mpe_sum);
   }
   mr.dataLen = sizeof(mh);
-  mr.moniEvtType = MONI_TYPE_HDWR_STATE_MSG;
+  mr.fiducial.fstruct.moniEvtType = MONI_TYPE_HDWR_STATE_MSG;
   mr.time = time;
   memcpy(mr.data, (UBYTE *) &mh, sizeof(mh));
   moniInsertRec(&mr);
@@ -337,7 +413,7 @@ void moniInsertHdwrStateMessage(unsigned long long time, USHORT temperature,
 void moniInsertSetDACMessage(unsigned long long time, UBYTE dacID, unsigned short dacVal) {
   struct moniRec mr;
   mr.dataLen = 6;
-  mr.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
+  mr.fiducial.fstruct.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
   mr.time = time;
   mr.data[0] = DOM_SLOW_CONTROL;
   mr.data[1] = DSC_WRITE_ONE_DAC;
@@ -351,7 +427,7 @@ void moniInsertSetDACMessage(unsigned long long time, UBYTE dacID, unsigned shor
 void moniInsertSetPMT_HV_Message(unsigned long long time, unsigned short hv) {
   struct moniRec mr;
   mr.dataLen = 4;
-  mr.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
+  mr.fiducial.fstruct.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
   mr.time = time;
   mr.data[0] = DOM_SLOW_CONTROL;
   mr.data[1] = DSC_SET_PMT_HV;
@@ -363,7 +439,7 @@ void moniInsertSetPMT_HV_Message(unsigned long long time, unsigned short hv) {
 void moniInsertSetPMT_HV_Limit_Message(unsigned long long time, unsigned short limit) {
   struct moniRec mr;
   mr.dataLen = 4;
-  mr.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
+  mr.fiducial.fstruct.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
   mr.time = time;
   mr.data[0] = DOM_SLOW_CONTROL;
   mr.data[1] = DSC_SET_PMT_HV_LIMIT;
@@ -375,7 +451,7 @@ void moniInsertSetPMT_HV_Limit_Message(unsigned long long time, unsigned short l
 void moniInsertEnablePMT_HV_Message(unsigned long long time) {
   struct moniRec mr;
   mr.dataLen = 2;
-  mr.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
+  mr.fiducial.fstruct.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
   mr.time = time;
   mr.data[0] = DOM_SLOW_CONTROL;
   mr.data[1] = DSC_ENABLE_PMT_HV;
@@ -386,17 +462,19 @@ void moniInsertEnablePMT_HV_Message(unsigned long long time) {
 void moniInsertDisablePMT_HV_Message(unsigned long long time) {
   struct moniRec mr;
   mr.dataLen = 2;
-  mr.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
+  mr.fiducial.fstruct.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
   mr.time = time;
   mr.data[0] = DOM_SLOW_CONTROL;
   mr.data[1] = DSC_DISABLE_PMT_HV;
   moniInsertRec(&mr);
 }
 
+
+
 void moniInsertLCModeChangeMessage(unsigned long long time, UBYTE mode) {
   struct moniRec mr;
   mr.dataLen = 3;
-  mr.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
+  mr.fiducial.fstruct.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
   mr.time = time;
   mr.data[0] = DOM_SLOW_CONTROL;
   mr.data[1] = DSC_SET_LOCAL_COIN_MODE;
@@ -409,7 +487,7 @@ void moniInsertLCWindowChangeMessage(unsigned long long time,
                                      ULONG pre_ns, ULONG post_ns) {
   struct moniRec mr;
   mr.dataLen = 2+4*sizeof(ULONG);
-  mr.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
+  mr.fiducial.fstruct.moniEvtType = MONI_TYPE_CONF_STATE_CHG_MSG;
   mr.time = time;
   mr.data[0] = DOM_SLOW_CONTROL;
   mr.data[1] = DSC_SET_LOCAL_COIN_WINDOW;
@@ -421,77 +499,11 @@ void moniInsertLCWindowChangeMessage(unsigned long long time,
   moniInsertRec(&mr);
 }
 
-void moniZeroAllChargeStampHistos(void) {
-  /* Zero out ALL charge stamp histograms */
-  int i,j;
-  for(i=0;i<2;i++) {
-    for(j=0;j<2;j++) {
-      moniZeroChargeStampHisto(ATWDchargeStampHistos[i][j], 
-			       &(ATWDchargeStampEntries[i][j]), 
-			       NUM_HIST_BINS);
-    }
-  }
-  moniZeroChargeStampHisto(FADCchargeStampHistos, 
-			   &FADCchargeStampEntries, 
-			   NUM_HIST_BINS);
-}
-
-void moniZeroChargeStampHisto(unsigned short *h, unsigned  *entries, int nsamp) {
-  *entries = 0;
-  int s;
-  for(s=0;s<nsamp;s++) {
-    h[s] = 0;
-  }
-}
-
-void moniInsertChargeStampHisto(unsigned short *h, unsigned entries, CHARGE_STAMP_MODE_TYPE mode, 
-				int ichip, int ichan, int nsamp) {
-  /* Insert monitoring record for charge stamp histograms */
-  int is;
-  unsigned char histstr[MAXMONI_DATA];
-
-  unsigned char * this = histstr;
-  if(mode==CHARGE_STAMP_ATWD) {
-    this += snprintf(this, MAXMONI_DATA-((int) (this-histstr)),
-		     "ATWD CS %c %d--%u entries: ", 
-		     ichip+'A', ichan, entries);
-  } else if(mode==CHARGE_STAMP_FADC) {
-    this += snprintf(this, MAXMONI_DATA-((int) (this-histstr)),
-		     "FADC CS--%u entries: ", entries);
-  } else {
-    return;
-  }
-  for(is=0; is < nsamp; is++) {
-    this += snprintf(this, MAXMONI_DATA-((int) (this-histstr)),
-		     " %hu", h[is]);
-    if(((int) (this-histstr)) >= MAXMONI_DATA) break; /* Should never happen */
-  }
-  mprintf(histstr);
-}
-
-void moniDoChargeStampHistos(void) {
-  /* Generate & insert, and then zero, required histograms */
-  if(chargeStampMode == CHARGE_STAMP_ATWD) {
-    int ichip, ichan;
-    for(ichip=0;ichip<2;ichip++) {
-      for(ichan=0;ichan<2;ichan++) {
-	moniInsertChargeStampHisto(ATWDchargeStampHistos[ichip][ichan], 
-				    ATWDchargeStampEntries[ichip][ichan], 
-				    chargeStampMode, ichip, ichan, NUM_HIST_BINS);
-	moniZeroChargeStampHisto(ATWDchargeStampHistos[ichip][ichan], 
-				 &(ATWDchargeStampEntries[ichip][ichan]), 
-				 NUM_HIST_BINS);
-      }
-    }
-  } else if(chargeStampMode == CHARGE_STAMP_FADC) {
-    moniInsertChargeStampHisto(FADCchargeStampHistos, 
-				FADCchargeStampEntries, 
-				chargeStampMode, 0, 0, NUM_HIST_BINS);
-    moniZeroChargeStampHisto(FADCchargeStampHistos, 
-			     &FADCchargeStampEntries, 
-			     NUM_HIST_BINS);
-  }
-}
+/* unsigned long long moniGetTimeAsUnsigned(void) {  */
+/*   /\* Fix signed-like peculiarity in HAL *\/ */
+/*   //return hal_FPGA_DOMAPP_get_local_clock() & 0xFFFFFFFF; */
+/*   return hal_FPGA_DOMAPP_get_local_clock(); */
+/* } */
 
 void moniPuts(char *s) {
   unsigned long long time;

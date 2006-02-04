@@ -37,26 +37,18 @@ Modification: 5/10/04 Jacobsen :-- put more than one monitoring rec. per request
 #include "domSControl.h"
 #include "DOMstateInfo.h"
 #include "DSCmessageAPIstatus.h"
-#include "interval.h"
-
 
 extern void formatLong(ULONG value, UBYTE *buf);
 extern UBYTE DOM_state;
-extern UBYTE LCtype, LCmode; /* domSControl.c */
 extern USHORT pulser_rate;
 USHORT atwdRGthresh[2][4], fadcRGthresh;
 
-UBYTE fMoniRateType     = F_MONI_RATE_HLC;
 UBYTE FPGA_trigger_mode = CPU_TRIG_MODE;
 UBYTE dataFormat        = FMT_ENG;
 UBYTE compMode          = CMP_NONE;
 int FPGA_ATWD_select    = 0;
 int SW_compression      = 0;
 int SW_compression_fmt  = 0;
-int numOverflows        = 0;
-int atwdSelect          = HAL_FPGA_DOMAPP_ATWD_A|HAL_FPGA_DOMAPP_ATWD_B;
-unsigned long sw_lbm_mask = (1<<DEFAULT_LBM_BIT_DEPTH)-1;
-
 /* Format masks: default, and configured by request */
 #define DEF_FADC_SAMP_CNT  255
 #define DEF_ATWD01_MASK    0xFF
@@ -65,94 +57,6 @@ unsigned long sw_lbm_mask = (1<<DEFAULT_LBM_BIT_DEPTH)-1;
 /* struct that contains common service info for
 	this service. */
 COMMON_SERVICE_INFO datacs;
-
-/* Monitoring intervals */
-
-extern unsigned long long moniHdwrIval, 
-                          moniConfIval, 
-                          moniFastIval,
-                          moniHistoIval;
-extern unsigned short     histoPrescale;
-
-extern unsigned lbmp; /* dataAccessRoutines.c */
-
-#define DOERROR(errstr, errnum, errtype)                       \
-   do {                                                        \
-      datacs.msgProcessingErr++;                               \
-      strcpy(datacs.lastErrorStr,(errstr));                    \
-      datacs.lastErrorID=(errnum);                             \
-      datacs.lastErrorSeverity=errtype;                        \
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|errtype);     \
-      Message_setDataLen(M,0);                                 \
-   } while(0)
-
-// utility function
-int fillMsgWithMoniData(MESSAGE_STRUCT *M) {
-  int moniBytes = 0;
-  int total_moni_len;
-  int len;
-  UBYTE *data;
-  MONI_STATUS ms;
-
-  int done  = 0;
-  struct moniRec aMoniRec;
-
-  data = Message_getData(M);
-
-  while(!done) {
-    ms = moniFetchRec(&aMoniRec);
-
-    if(moniBytes + aMoniRec.dataLen + 10 > MAXDATA_VALUE) {
-      /* Can't fit any more data */
-      Message_setDataLen(M, moniBytes);
-      Message_setStatus(M, SUCCESS);
-      break;
-    }
-
-    switch(ms) {
-    case MONI_NOTINITIALIZED:
-      DOERROR(DAC_MONI_NOT_INIT, DAC_Moni_Not_Init, SEVERE_ERROR);
-      done = 1;
-      break;
-    case MONI_WRAPPED:
-    case MONI_OVERFLOW:
-      DOERROR(DAC_MONI_OVERFLOW, DAC_Moni_Overrun, WARNING_ERROR);
-      done = 1;
-      break;
-    case MONI_NODATA:
-      Message_setDataLen(M, moniBytes);
-      Message_setStatus(M, SUCCESS);
-      done = 1;
-      break;
-    case MONI_OK:
-      /* Not done.  Add record and iterate */
-      moniAcceptRec();
-      total_moni_len = aMoniRec.dataLen + 10; /* Total rec length */
-      /* Format header */
-      formatShort(total_moni_len, data);
-      unsigned short mt = aMoniRec.moniEvtType;
-      formatShort(mt, data+2);
-      formatTime(aMoniRec.time, data+4);
-      /* Copy payload */
-      len = (aMoniRec.dataLen > MAXMONI_DATA) ? MAXMONI_DATA : aMoniRec.dataLen;
-      memcpy(data+10, aMoniRec.data, len);
-
-      moniBytes += total_moni_len;
-      data += total_moni_len;
-      break;
-    default:
-      DOERROR(DAC_MONI_BADSTAT, DAC_Moni_Badstat, SEVERE_ERROR);
-      done = 1;
-      break;
-    } /* inner switch */
-  }   /* while(!done) */
-
-  return 0;
-}
-
-
-
-/* data access  Entry Point */
 
 void dataAccessInit(void) {
   //MESSAGE_STRUCT *m;
@@ -176,18 +80,28 @@ void dataAccessInit(void) {
     hal_FPGA_DOMAPP_cal_pulser_rate((double) pulser_rate);
 }
 
-// return 0 if no response is to be sent to the stringhub
-// 1 otherwise
-int dataAccess(MESSAGE_STRUCT *M) {
+#define DOERROR(errstr, errnum, errtype)                       \
+   do {                                                        \
+      datacs.msgProcessingErr++;                               \
+      strcpy(datacs.lastErrorStr,(errstr));                    \
+      datacs.lastErrorID=(errnum);                             \
+      datacs.lastErrorSeverity=errtype;                        \
+      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|errtype);     \
+      Message_setDataLen(M,0);                                 \
+   } while(0)
+
+/* data access  Entry Point */
+void dataAccess(MESSAGE_STRUCT *M) {
     char * idptr;
     UBYTE *data;
     int tmpInt;
     UBYTE *tmpPtr;
     MONI_STATUS ms;
+    unsigned long long moniHdwrIval, moniConfIval;
     struct moniRec aMoniRec;
     int total_moni_len, moniBytes, len;
     int config, valid, reset; /* For hal_FB_enable */
-    int wasEnabled;
+    int wasEnabled, ichip, ich;
     /* get address of data portion. */
     /* Receiver ALWAYS links a message */
     /* to a valid data buffer-even */ 
@@ -278,55 +192,37 @@ int dataAccess(MESSAGE_STRUCT *M) {
       
       /*  check for available data */ 
     case DATA_ACC_DATA_AVAIL:
-      data[0] = isDataAvailable(hal_FPGA_DOMAPP_lbm_pointer(),
-				lbmp, FPGA_DOMAPP_LBM_BLOCKMASK);
+      data[0] = isDataAvailable();
       Message_setStatus(M, SUCCESS);
       Message_setDataLen(M, DAC_ACC_DATA_AVAIL_LEN);
       break;
-
-    case DATA_ACC_GET_INTERVAL:
-      // initialize an interval (ie read out all data for 1 second)
-      // Note:
-      // This used to check and see if supernova data was requested
-      // and return an error otherwise.  Apparently SN data is bad on
-      // a few doms and they want to turn it off AND use intervals.
-      // Check removed.
-      interval_start();
-      Message_setStatus(M, SUCCESS);
-      Message_setDataLen(M, 0);
-      break;
-
+      
+      /*  check for available data */ 
     case DATA_ACC_GET_DATA:
       // try to fill in message buffer with waveform data
-      /*  check for available data */ 
-      // try to fill in message buffer with waveform data                                                                         
       tmpInt = fillMsgWithData(data, MAXDATA_VALUE, dataFormat, compMode);
       Message_setDataLen(M, tmpInt);
       Message_setStatus(M, SUCCESS);
       break;
-
-      /* Deal with configurable intervals for monitoring events; pick up "fast" rate if available;
-         convert to clock ticks when needed. */
+      
+       /* JEJ: Deal with configurable intervals for monitoring events */
     case DATA_ACC_SET_MONI_IVAL:
-      moniHdwrIval = unformatLong(Message_getData(M));
-      if(moniHdwrIval < FPGA_HAL_TICKS_PER_SEC) 
-	moniHdwrIval *= FPGA_HAL_TICKS_PER_SEC;
+      moniHdwrIval = FPGA_HAL_TICKS_PER_SEC * unformatLong(Message_getData(M));
+      moniConfIval = FPGA_HAL_TICKS_PER_SEC * unformatLong(Message_getData(M)+sizeof(ULONG));
 
-      moniConfIval = unformatLong(Message_getData(M)+sizeof(ULONG));
-      if(moniConfIval < FPGA_HAL_TICKS_PER_SEC) 
-	moniConfIval *= FPGA_HAL_TICKS_PER_SEC;
+      /* Set to one second minimum - redundant w/ message units in seconds, of course */
+      if(moniHdwrIval != 0 && moniHdwrIval < FPGA_HAL_TICKS_PER_SEC) 
+	moniHdwrIval = FPGA_HAL_TICKS_PER_SEC;
 
-      if(Message_dataLen(M) >= (3 * sizeof(ULONG))) {
-	moniFastIval = unformatLong(Message_getData(M)+2*sizeof(ULONG));
-	if(moniFastIval < FPGA_HAL_TICKS_PER_SEC) 
-	  moniFastIval *= FPGA_HAL_TICKS_PER_SEC;
-      }
+      if(moniConfIval != 0 && moniConfIval < FPGA_HAL_TICKS_PER_SEC)
+        moniConfIval = FPGA_HAL_TICKS_PER_SEC;
+
+      moniSetIvals(moniHdwrIval, moniConfIval);
       Message_setDataLen(M, 0);
       Message_setStatus(M, SUCCESS);
 
-      mprintf("MONI SET IVAL REQUEST hw=%ldE6 cf=%ldE6 fast=%ldE6 CPU TICKS/RECORD",
-	      (long) (moniHdwrIval/1000000), (long) (moniConfIval/1000000),
-	      (long) (moniFastIval/1000000));
+      mprintf("MONI SET IVAL REQUEST hw=%ldE6 cf=%ldE6 CPU TICKS/RECORD",
+	      (long) (moniHdwrIval/1000000), (long) (moniConfIval/1000000));
 
       break;
       
@@ -365,8 +261,7 @@ int dataAccess(MESSAGE_STRUCT *M) {
 	  total_moni_len = aMoniRec.dataLen + 10; /* Total rec length */
 	  /* Format header */
 	  formatShort(total_moni_len, data);
-	  unsigned short mt = aMoniRec.moniEvtType;
-	  formatShort(mt, data+2);
+	  formatShort(aMoniRec.fiducial.fstruct.moniEvtType, data+2);
 	  formatTime(aMoniRec.time, data+4);
 	  /* Copy payload */
 	  len = (aMoniRec.dataLen > MAXMONI_DATA) ? MAXMONI_DATA : aMoniRec.dataLen;
@@ -374,7 +269,6 @@ int dataAccess(MESSAGE_STRUCT *M) {
 	  moniBytes += total_moni_len;
 	  data += total_moni_len;
 	  break;
-	case MONI_ERROR:
 	default:
 	  DOERROR(DAC_MONI_BADSTAT, DAC_Moni_Badstat, SEVERE_ERROR);
 	  done = 1;
@@ -401,18 +295,42 @@ int dataAccess(MESSAGE_STRUCT *M) {
       initFormatEngineeringEvent(data[0], data[1], data[2]);
       break;
     
+    case DATA_ACC_SET_BASELINE_THRESHOLD:
+      fadcRGthresh = unformatShort(data);
+      hal_FPGA_DOMAPP_RG_fadc_threshold(fadcRGthresh);
+      for(ichip=0;ichip<2;ichip++) {
+	for(ich=0; ich<4; ich++) {
+	  atwdRGthresh[ichip][ich] = unformatShort(data + 2 + ichip*8 + ich*2);
+	  hal_FPGA_DOMAPP_RG_atwd_threshold((short) ichip, (short) ich, 
+					    (short) atwdRGthresh[ichip][ich]);
+	}
+      }
+      Message_setDataLen(M, 0);
+      Message_setStatus(M, SUCCESS);
+      break;
+
+    case DATA_ACC_GET_BASELINE_THRESHOLD:
+      formatShort(fadcRGthresh, data); 
+      for(ichip=0;ichip<2;ichip++) {
+        for(ich=0; ich<4; ich++) {
+          formatShort(atwdRGthresh[ichip][ich], 
+                      data // base pointer
+                      + 2  // skip fadc value
+                      + ichip*8 // ATWD0 or 1
+                      + ich*2   // select channel
+                      );
+        }
+      }
+      Message_setDataLen(M, 18);
+      Message_setStatus(M, SUCCESS);
+      break;
+
     case DATA_ACC_SET_DATA_FORMAT:
-      if(data[0] != FMT_ENG && data[0] != FMT_RG && data[0] != FMT_DELTA) {
+      if(data[0] != FMT_ENG && data[0] != FMT_RG) {
 	DOERROR(DAC_ERS_BAD_ARGUMENT, DAC_Bad_Argument, SEVERE_ERROR);
 	break;
       }
       dataFormat = data[0];
-      /* Reset LC if engineering format given, since eng. fmt. restricts the 
-	 possible LC choices */
-      if(dataFormat == FMT_ENG) {
-	LCtype = LC_TYPE_NONE;
-	LCmode = LC_MODE_NONE;
-      }
       mprintf("Set data format to %d", dataFormat);
 
       Message_setDataLen(M, 0);
@@ -426,7 +344,7 @@ int dataAccess(MESSAGE_STRUCT *M) {
       break;
 
     case DATA_ACC_SET_COMP_MODE:
-      if(data[0] != CMP_NONE && data[0] != CMP_RG && data[0] != CMP_DELTA) {
+      if(data[0] != CMP_NONE && data[0] != CMP_RG) {
 	DOERROR(DAC_ERS_BAD_ARGUMENT, DAC_Bad_Argument, SEVERE_ERROR);
         break;
       }
@@ -474,105 +392,11 @@ int dataAccess(MESSAGE_STRUCT *M) {
       }
       break;
 
-    case DATA_ACC_GET_NUMOVERFLOWS:
-      formatLong(numOverflows, data);
-      Message_setDataLen(M, 4);
-      Message_setStatus(M, SUCCESS);
-      break;
-
-    case DATA_ACC_SET_LBM_BIT_DEPTH:
-      {
-	unsigned char bits = data[0];
-	if(bits < MIN_LBM_BIT_DEPTH || bits > ACTUAL_LBM_BIT_DEPTH) {
-	  DOERROR(DAC_BAD_LBM_DEPTH, DAC_Bad_Lbm_Depth, WARNING_ERROR);
-	  break;
-	}
-	sw_lbm_mask = (1<<bits)-1;
-      }
-      Message_setStatus(M, SUCCESS);
-      break;
-
-    case DATA_ACC_GET_LBM_SIZE:
-      formatLong(sw_lbm_mask+1, data);
-      Message_setDataLen(M, 4);
-      Message_setStatus(M, SUCCESS);
-      break;
-
-    case DATA_ACC_GET_LBM_PTRS:
-      formatLong(hal_FPGA_DOMAPP_lbm_pointer(), data);
-      formatLong(lbmp, data+4);
-      Message_setDataLen(M, 8);
-      Message_setStatus(M, SUCCESS);
-      break;
-
-    case DATA_ACC_HISTO_CHARGE_STAMPS:
-      {
-	
-	moniHistoIval = unformatLong(Message_getData(M));
-	if(moniHistoIval < FPGA_HAL_TICKS_PER_SEC)
-	  moniHistoIval *= FPGA_HAL_TICKS_PER_SEC;
-	histoPrescale = unformatShort(Message_getData(M)+sizeof(ULONG));
-		
-	if(moniHistoIval>0) { 
-	  mprintf("Histogramming charge stamps with ival=%u, prescale=%hu",
-		  moniHistoIval, histoPrescale);
-	} else {
-	  mprintf("Histogramming DISABLED");
-	}
-	
-	Message_setDataLen(M, 0);
-	Message_setStatus(M, SUCCESS);
-      }
-      break;
-
-    case DATA_ACC_SELECT_ATWD:
-      {
-	int mode = (int) data[0];
-
-	if(mode == 0) {
-	  atwdSelect = HAL_FPGA_DOMAPP_ATWD_A;
-	} else if(mode == 1) {
-	  atwdSelect = HAL_FPGA_DOMAPP_ATWD_B;
-	} else if(mode == 2) {
-	  atwdSelect = HAL_FPGA_DOMAPP_ATWD_A|HAL_FPGA_DOMAPP_ATWD_B;
-	} else {
-	  DOERROR(DAC_ERS_BAD_ARGUMENT, DAC_Bad_Argument, SEVERE_ERROR);
-	  break;
-	}
-	mprintf("ATWD chips to enable: A=%s B=%s", 
-		(atwdSelect&HAL_FPGA_DOMAPP_ATWD_A)?"YES":"no",
-		(atwdSelect&HAL_FPGA_DOMAPP_ATWD_B)?"YES":"no");
-
-	Message_setDataLen(M, 0);
-	Message_setStatus(M, SUCCESS);
-      }
-      break;
-      
-    case DATA_ACC_GET_F_MONI_RATE_TYPE:
-      Message_setDataLen(M, 1);
-      Message_setStatus(M, SUCCESS);
-      data[0] = fMoniRateType;
-      break;
-
-    case DATA_ACC_SET_F_MONI_RATE_TYPE:
-      {
-	UBYTE t = data[0];
-	if(t != F_MONI_RATE_HLC && t != F_MONI_RATE_SLC) {
-	  DOERROR(DAC_ERS_BAD_ARGUMENT, DAC_Bad_Argument, SEVERE_ERROR);
-	  break;
-	}
-	fMoniRateType = t;
-	Message_setDataLen(M, 0);
-	Message_setStatus(M, SUCCESS);
-      }
-      break;
-
     default:
       datacs.msgRefused++;
       DOERROR(DAC_ERS_BAD_MSG_SUBTYPE, COMMON_Bad_Msg_Subtype, WARNING_ERROR);
       break;
+      
     } /* Switch message subtype */
-
-    return 1;
 } /* dataAccess subroutine */
 

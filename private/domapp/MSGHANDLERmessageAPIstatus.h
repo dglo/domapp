@@ -94,6 +94,22 @@
 #define MSGHAND_GET_PKT_STATS_LEN 7*4
 
 /* Response to: 
+	subType: MSGHAND_GET_MSG_STATS
+   Passed values:
+	none
+   Size of passed values:
+	0  
+   Returned values in data portion of message:
+	ULONG MSGrecv
+	ULONG MSGsent
+	ULONG tooMuchData
+	ULONG IDMismatch
+	ULONG CRCproblem
+	
+   Size of returned values in data portion: */
+#define MSGHAND_GET_MSG_STATS_LEN 5*4
+
+/* Response to: 
 	subType: MSGHAND_CLR_PKT_STATS
    Passed values:
 	none

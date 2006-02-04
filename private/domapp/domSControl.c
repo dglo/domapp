@@ -41,14 +41,12 @@ extern void formatLong(ULONG value, UBYTE *buf);
 extern void formatShort(USHORT value, UBYTE *buf);
 extern ULONG unformatLong(UBYTE *buf);
 extern USHORT unformatShort(UBYTE *buf);
-extern void updateTriggerModes(void);
 extern UBYTE DOM_state;
 extern UBYTE DOM_config_access;
 
 /* global storage */
 extern UBYTE FPGA_trigger_mode;
 extern int FPGA_ATWD_select;
-extern UBYTE dataFormat; /* From dataAccess.c */
 
 /* local functions, data */
 USHORT PMT_HV_max          = PMT_HV_DEFAULT_MAX;
@@ -57,6 +55,25 @@ USHORT pulser_rate         = 1; /* By default, now take forced triggers at 1 Hz 
 UBYTE selected_mux_channel = 0;
 ULONG deadTime             = 100;
 UBYTE LCmode               = 0;
+typedef enum {
+  LC_MODE_NONE=0, 
+  LC_MODE_BOTH=1,
+  LC_MODE_UP  =2,
+  LC_MODE_DN  =3 } LC_MODE_T;
+typedef enum {
+  LC_TYPE_NONE=0,
+  LC_TYPE_SOFT=1, 
+  LC_TYPE_HARD=2,
+  LC_TYPE_FLABBY=3 } LC_TYPE_T;
+typedef enum {
+  LC_TX_NONE=0,
+  LC_TX_UP  =1,
+  LC_TX_DN  =2,
+  LC_TX_BOTH=3 } LC_TX_T;
+typedef enum {
+  LC_SRC_SPE = 0,
+  LC_SRC_MPE = 1 } LC_SRC_T;
+#define MAXDISTNS 3175
 UBYTE LCtype               = LC_TYPE_HARD;
 UBYTE LCtx                 = LC_TX_BOTH;
 UBYTE LCsrc                = 0;
@@ -68,12 +85,6 @@ UBYTE LClengthsSet         = 0;
 #define LC_WIN_DEFAULT 200
 ULONG pre_ns               = LC_WIN_DEFAULT;
 ULONG post_ns              = LC_WIN_DEFAULT;
-#define MAXDISTNS 3175
-
-/* Charge stamp stuff */
-extern CHARGE_STAMP_MODE_TYPE chargeStampMode;
-extern CHARGE_STAMP_SEL_TYPE  chargeStampChanSel;
-extern UBYTE                  chargeStampChannel;
 
 /* struct that contains common service info for
 	this service. */
@@ -95,8 +106,6 @@ void set_HAL_lc_mode() {
   mprintf("set_HAL_lc_mode(LCmode=%d, LCtype=%d)", LCmode, LCtype);
   if(LCmode == LC_MODE_NONE) {
     hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);
-  } else if(LCmode == LC_MODE_SLC_ONLY) {
-    hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_SOFT);
   } else {
     switch(LCtype) {
     case LC_TYPE_NONE:   hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);    break;
@@ -127,14 +136,6 @@ void setLCmodeAndTx() {
   case LC_MODE_DN:
     rxbits = HAL_FPGA_DOMAPP_LC_ENABLE_RCV_DOWN;
     break;
-  case LC_MODE_SLC_ONLY:
-    rxbits = 0; /* SLC-only means TX LC signals but don't require them for triggers (no RX) */
-    break;
-  case LC_MODE_UP_AND_DOWN:
-    rxbits = HAL_FPGA_DOMAPP_LC_ENABLE_RCV_UP 
-      |      HAL_FPGA_DOMAPP_LC_ENABLE_RCV_DOWN
-      |      HAL_FPGA_DOMAPP_LC_ENABLE_RECV_UP_AND_DOWN;
-    break;
   default:
   case LC_MODE_BOTH:
     rxbits = HAL_FPGA_DOMAPP_LC_ENABLE_RCV_UP | HAL_FPGA_DOMAPP_LC_ENABLE_RCV_DOWN;
@@ -157,7 +158,6 @@ void setLCmodeAndTx() {
     break;
   }
 
-  mprintf("Sending 0x%08x to hal_FPGA_DOMAPP_lc_enable", txbits|rxbits);
   hal_FPGA_DOMAPP_lc_enable( txbits | rxbits );
 }
 
@@ -524,13 +524,14 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_SET_PULSER_ON:
-    if(FPGA_trigger_mode != SPE_DISC_TRIG_MODE && FPGA_trigger_mode != MPE_DISC_TRIG_MODE) {
+
+    if(FPGA_trigger_mode != TEST_DISC_TRIG_MODE) {
       DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
       break;
     }
     mprintf("Turned on front-end pulser");
     pulser_running = TRUE;
-    updateTriggerModes();
+    setSPEPulserTrigMode();
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
     break;
@@ -538,12 +539,12 @@ void domSControl(MESSAGE_STRUCT *M) {
   case DSC_SET_PULSER_OFF:
     pulser_running = FALSE;
 
-    if(FPGA_trigger_mode != SPE_DISC_TRIG_MODE && FPGA_trigger_mode != MPE_DISC_TRIG_MODE) {
+    if(FPGA_trigger_mode != TEST_DISC_TRIG_MODE) {
       DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
       break;
     }
     /* Go back to normal SPE mode */
-    updateTriggerModes();
+    setSPETrigMode();
     mprintf("Turned off front-end pulser");
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
@@ -569,7 +570,6 @@ void domSControl(MESSAGE_STRUCT *M) {
       } else {
 	deadTime = dt;
 	hal_FPGA_DOMAPP_rate_monitor_deadtime((int)deadTime);
-	mprintf("Set scaler deadtime to %d nsec.", dt);
 	Message_setDataLen(M,0);
 	Message_setStatus(M,SUCCESS);
       }
@@ -581,7 +581,7 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_SET_LOCAL_COIN_MODE:
-    if(data[0] > MAX_LC_MODE) {
+    if(data[0] > 3) {
       DOERROR(DSC_ILLEGAL_LC_MODE, DSC_Illegal_LC_Mode, FATAL_ERROR);
       break;
     } 
@@ -625,11 +625,6 @@ void domSControl(MESSAGE_STRUCT *M) {
       UBYTE lct = data[0];
       if(lct != LC_TYPE_SOFT && lct != LC_TYPE_HARD && lct != LC_TYPE_FLABBY) {
 	DOERROR("Invalid local coincidence type", DSC_LC_Bad_Type, FATAL_ERROR);
-      } else if((lct == LC_TYPE_SOFT || lct == LC_TYPE_FLABBY) &&
-		dataFormat == FMT_ENG) {
-	DOERROR("Invalid LC type, only HLC or no LC are allowed"
-		" when engineering format is set!", 
-		DSC_LC_Bad_Type, FATAL_ERROR);
       } else {
 	LCtype = lct;
 	set_HAL_lc_mode();
@@ -776,74 +771,6 @@ void domSControl(MESSAGE_STRUCT *M) {
     SNRequested = 0;
     // Explicitly disable supernova in case data taking is [pathologically] still in progress:
     doStopSN();
-    Message_setStatus(M,SUCCESS);
-    Message_setDataLen(M,0);
-    break;
-
-  case DSC_SELECT_MINBIAS:
-    {
-      UBYTE enable = data[0];
-      if(enable) {
-	mprintf("Enabling minbias (non-LC) hit data");
-	hal_FPGA_DOMAPP_enable_minbias();
-      } else {
-	mprintf("Disabling minbias (non-LC) hit data");
-	hal_FPGA_DOMAPP_disable_minbias();
-      }
-      Message_setStatus(M,SUCCESS);
-      Message_setDataLen(M,0);
-      break;
-    }
-
-  case DSC_SET_CHARGE_STAMP_TYPE:
-    {
-
-      /* Validate inputs */
-      UBYTE mode = data[0];
-      if(mode != CHARGE_STAMP_ATWD && mode != CHARGE_STAMP_FADC) {
-	mprintf("ERROR: bad charge stamp mode, 0x%02x!", mode);
-	DOERROR("bad charge stamp mode", 0, 0);
-	break;
-      }
-      UBYTE chsel     = data[1]; /* 0=auto 1=fixed channel selection 
-				    (ATWD only; ignored for FADC)  */
-      if(chsel != CHARGE_STAMP_AUTO && chsel != CHARGE_STAMP_BY_CHAN) {
-	mprintf("ERROR: bad channel selection arg, 0x%02x!", chsel);
-	DOERROR("bad channel selection arg", 0, 0);
-	break;
-      }
-      UBYTE ch        = data[2]; /* If fixed channel selection, which byte?
-				    (ATWD only; ignored for FADC) */
-      if(ch > 3) {
-	mprintf("ERROR: bad channel selected, %d!", ch);
-	DOERROR("bad channel selected", 0, 0);
-	break;
-      }
-
-      /* Save new state */
-      chargeStampMode = mode;
-      chargeStampChanSel = chsel;
-      chargeStampChannel = ch;
-      mprintf("Set charge stamp type: mode=%d chsel=%d ch=%d",
-	      chargeStampMode, chargeStampChanSel, chargeStampChannel);
-
-      /* Do HAL configuration */
-      hal_FPGA_DOMAPP_disable_icetop_chargestamp();
-
-      if(chargeStampMode == CHARGE_STAMP_ATWD) {
-
-	if(chargeStampChanSel == CHARGE_STAMP_AUTO) {
-	  mprintf("Using AUTO charge stamp channel selector");
-	  hal_FPGA_DOMAPP_set_icetop_chargestamp_mode(HAL_FPGA_DOMAPP_ICETOP_MODE_AUTO, 
-						      chargeStampChannel);
-	} else if(chargeStampChanSel == CHARGE_STAMP_BY_CHAN) {
-	  mprintf("Using channel %d for charge stamps", chargeStampChannel);
-	  hal_FPGA_DOMAPP_set_icetop_chargestamp_mode(HAL_FPGA_DOMAPP_ICETOP_MODE_CHAN,
-						      chargeStampChannel);
-	}
-	hal_FPGA_DOMAPP_enable_icetop_chargestamp();
-      }
-    }
     Message_setStatus(M,SUCCESS);
     Message_setDataLen(M,0);
     break;

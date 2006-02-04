@@ -25,10 +25,8 @@
 #define EXPCONTROL_DO_PEDESTAL_COLLECTION 16 /* in: UL UL UL */
 #define EXPCONTROL_GET_NUM_PEDESTALS 19 /* out: UL UL UL */
 #define EXPCONTROL_GET_PEDESTAL_AVERAGES 20 /* out: UH:128*9 */
-#define EXPCONTROL_BEGIN_FB_RUN 27 /* in: US, US, S, US, US */
+#define EXPCONTROL_BEGIN_FB_RUN 27 /* Out: US US US US US */
 #define EXPCONTROL_END_FB_RUN   28 /* No args */
-#define EXPCONTROL_CHANGE_FB_SETTINGS 29 /* in: US, US, S, US, US */
-#define EXPCONTROL_RUN_UNIT_TESTS 30
 
 #define	EXP_Cannot_Start_Trig 3
 #define	EXP_Cannot_Stop_Trig 4
@@ -41,6 +39,4 @@
 #define EXP_Too_Many_Peds       9
 #define EXP_Pedestals_Not_Avail 10
 #define EXP_Bad_FB_Delay        11
-#define EXP_Cannot_Change_FB_Settings 12
-#define EXP_Unit_Test_Failure 13
 #endif

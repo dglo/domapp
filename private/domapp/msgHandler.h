@@ -39,6 +39,6 @@
 
 /* define msgHandler entry point */
 void msgHandlerInit(void);
-int msgHandler(MESSAGE_STRUCT *M);
+void msgHandler(MESSAGE_STRUCT *M);
 
 #endif

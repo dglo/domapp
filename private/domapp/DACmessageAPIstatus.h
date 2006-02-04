@@ -40,25 +40,15 @@
 /* #define DATA_ACC_SET_SW_DATA_COMPRESSION_FORMAT 20 */
 /* #define DATA_ACC_GET_SW_DATA_COMPRESSION_FORMAT 21 */
 
-#define DATA_ACC_RESET_LBM            22
-#define DATA_ACC_GET_FB_SERIAL        23 /* out: UB*n serial ID */
-#define DATA_ACC_SET_DATA_FORMAT      24
-#define DATA_ACC_GET_DATA_FORMAT      25
-#define DATA_ACC_SET_COMP_MODE        26
-#define DATA_ACC_GET_COMP_MODE        27
-#define DATA_ACC_GET_SN_DATA          28
-#define DATA_ACC_RESET_MONI_BUF       29
-#define DATA_ACC_MONI_AVAIL           30
-#define DATA_ACC_GET_NUMOVERFLOWS     31
-#define DATA_ACC_SET_LBM_BIT_DEPTH    32
-#define DATA_ACC_GET_LBM_SIZE         33
-#define DATA_ACC_HISTO_CHARGE_STAMPS  34
-#define DATA_ACC_SELECT_ATWD          35
-#define DATA_ACC_GET_F_MONI_RATE_TYPE 36
-#define DATA_ACC_SET_F_MONI_RATE_TYPE 37
-#define DATA_ACC_GET_LBM_PTRS         38
-#define DATA_ACC_GET_INTERVAL         39
-
+#define DATA_ACC_RESET_LBM         22
+#define DATA_ACC_GET_FB_SERIAL     23 /* out: UB*n serial ID */
+#define DATA_ACC_SET_DATA_FORMAT   24
+#define DATA_ACC_GET_DATA_FORMAT   25
+#define DATA_ACC_SET_COMP_MODE     26
+#define DATA_ACC_GET_COMP_MODE     27
+#define DATA_ACC_GET_SN_DATA       28
+#define DATA_ACC_RESET_MONI_BUF    29
+#define DATA_ACC_MONI_AVAIL        30
 
 // define service specific error values
 #define DAC_Data_Overrun        4
@@ -70,8 +60,6 @@
 #define DAC_Cant_Get_FB_Serial 10
 #define DAC_Cant_Enable_FB     11
 #define DAC_SN_Not_Running     12
-#define DAC_Bad_Lbm_Depth      13
-#define DAC_SN_Not_Init        14
 
 #define	DAC_ACC_DATA_AVAIL_LEN 1
 

@@ -33,9 +33,6 @@
 #define DAC_ERS_BAD_ARGUMENT     "DAC: Bad message argument"
 #define DAC_CANT_ENABLE_FB       "DAC: Can't enable flasher board"
 #define DAC_CANT_GET_FB_SERIAL   "DAC: Can't get flasher board serial number"
-#define DAC_BAD_LBM_DEPTH        "DAC: LBM depth out of range"
-#define DAC_SN_NOT_INIT          "DAC: Supernova not initialized"
-
 /* define ALLOCATE_READOUT_BUFFER if you want dataAccess
    to allocate memory to be used for FPGA simulation.
    Otherwise define READOUT_BASE_ADDR to the real address
@@ -54,8 +51,6 @@
 
 /* data access entry point */
 void dataAccessInit(void);
-int dataAccess(MESSAGE_STRUCT *M);
+void dataAccess(MESSAGE_STRUCT *M);
 
-int data_access_unit_tests(void);
-int fillMsgWithMoniData(MESSAGE_STRUCT *M);
 #endif
