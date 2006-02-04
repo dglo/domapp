@@ -31,7 +31,6 @@ extern int pulser_running;
 extern UBYTE SNRequestMode;
 extern unsigned SNRequestDeadTime;
 extern int SNRequested;
-extern int numOverflows;
 
 /* LC mode, defined via slow control */
 extern UBYTE LCmode;
@@ -345,7 +344,6 @@ static int haveOverflow(unsigned lbmp) {
   if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > SW_LBM_MASK ) {
     mprintf("LBM OVERFLOW!!! hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
 	    hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
-    numOverflows++;
     return 1;
   }
   return 0;
@@ -520,7 +518,8 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
       return 0;
     }
     if(sn_event(psn)) {
-      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed (HAL overflow)!");
+      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed!");
+      return 0;
     }
   }
 
@@ -535,7 +534,8 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
 
     /* Get next event; may have to save it for later if delta-t != STD_DT */
     if(sn_event(psn)) {
-      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed (HAL overflow)!");
+      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed!");
+      break;
     }
     if((psn->ticks - t0) != STD_DT) {
       saved_bin = 1;

@@ -1,16 +1,5 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
-domapp V00-03-05  6/1/2006 CDT
-        For release as part of DOM-MB 415
-
-Upgrades/bug fixes:
-- Fix missing comment delim. in messageAPIstatus.h and goofy return error masks
-- Issue 443 - don't fail out of SN event loop when HAL indicates overflow
-- Issue 442 - add message to indicate number of LBM overflows
-
-=========================================================
-
-
 domapp V00-03-04  2/4/2006 NZT
         Requires DOM-MB version 405
         Requires domapp.sbi tag build340

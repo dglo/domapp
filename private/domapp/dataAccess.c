@@ -49,7 +49,6 @@ UBYTE compMode          = CMP_NONE;
 int FPGA_ATWD_select    = 0;
 int SW_compression      = 0;
 int SW_compression_fmt  = 0;
-int numOverflows        = 0;
 /* Format masks: default, and configured by request */
 #define DEF_FADC_SAMP_CNT  255
 #define DEF_ATWD01_MASK    0xFF
@@ -391,12 +390,6 @@ void dataAccess(MESSAGE_STRUCT *M) {
 	Message_setStatus(M, SUCCESS);
 	break;
       }
-      break;
-
-    case DATA_ACC_GET_NUMOVERFLOWS:
-      formatLong(numOverflows, data);
-      Message_setDataLen(M, 4);
-      Message_setStatus(M, SUCCESS);
       break;
 
     default:
