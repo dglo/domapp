@@ -518,8 +518,7 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
       return 0;
     }
     if(sn_event(psn)) {
-      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed!");
-      return 0;
+      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event indicates loss of data in HAL SN buffer");
     }
   }
 
@@ -534,7 +533,7 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
 
     /* Get next event; may have to save it for later if delta-t != STD_DT */
     if(sn_event(psn)) {
-      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed (indicates loss of data in HAL SN buffer)");
+      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event indicates loss of data in HAL SN buffer");
       /* Used to exit here, don't do it now because Arthur says the current data is still good - just some data is lost */
     }
     if((psn->ticks - t0) != STD_DT) {
