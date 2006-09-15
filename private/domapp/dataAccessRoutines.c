@@ -184,6 +184,13 @@ void setSPETrigMode(void) {
   hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
 }
 
+void setMPETrigMode(void) {
+  /* Allow for MPE data to be acquired, or periodic forced triggers */
+  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_MPE
+			       | HAL_FPGA_DOMAPP_TRIGGER_FORCED);
+  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
+}
+
 void setSPEPulserTrigMode(void) {
   /* Disallow periodic forced triggers.  Collect SPEs simulated by
      on-board front-end pulser */
@@ -242,7 +249,7 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
 
   if(pulser_running) {
     pulser_running = 0;
-    if(FPGA_trigger_mode == TEST_DISC_TRIG_MODE) {
+    if(FPGA_trigger_mode == SPE_DISC_TRIG_MODE) {
       setSPEPulserTrigMode();
     } else {
       mprintf("WARNING: pulser running but trigger mode (%d) is disallowed. "
@@ -258,7 +265,8 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   } else {
     /* Default mode */
     switch(FPGA_trigger_mode) { // This gets set by a DATA_ACCESS message
-    case TEST_DISC_TRIG_MODE: setSPETrigMode();  break; // can change when pulser starts
+    case SPE_DISC_TRIG_MODE: setSPETrigMode();  break; // can change when pulser starts
+    case MPE_DISC_TRIG_MODE: setMPETrigMode();  break; // disallowed for pulser
     case CPU_TRIG_MODE: 
     default:                  setPeriodicForcedTrigMode(); break;
     }

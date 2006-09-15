@@ -281,9 +281,11 @@ Size of returned values in data portion:
         UBYTE TRIGGER_MODE
 	values: */
 #define TEST_PATTERN_TRIG_MODE 0
-#define CPU_TRIG_MODE 1
-#define TEST_DISC_TRIG_MODE 2
-#define FB_TRIG_MODE 3
+#define CPU_TRIG_MODE          1
+#define SPE_DISC_TRIG_MODE     2
+#define FB_TRIG_MODE           3
+#define MPE_DISC_TRIG_MODE     4
+
 /* Size of passed values: */
 #define DSC_SET_TRIG_MODE_REQ_LEN 1
 /* Returned values in data portion of message:
