@@ -33,10 +33,6 @@ int isDataAvailable(void);
 int fillMsgWithData(UBYTE *msgBuffer, int bsize, UBYTE format, UBYTE compression);
 int fillMsgWithSNData(UBYTE *msgBuffer, int bsize);
 void initFormatEngineeringEvent(UBYTE, UBYTE, UBYTE);
-void setSPETrigMode(void);
-void setSPEPulserTrigMode(void);
-void setFBTrigMode(void);
-void setPeriodicForcedTrigMode(void);
 int  beginRun(UBYTE compressionMode, UBYTE newRunState);
 int  beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window, 
 		short delay, USHORT mask, USHORT rate);

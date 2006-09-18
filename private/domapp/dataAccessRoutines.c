@@ -193,7 +193,7 @@ void updateTriggerModes(void) {
     }
     mprintf("Setting pulser rate to %d.", pulser_rate);
     hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
-  } else if(newRunState == DOM_FB_RUN_IN_PROGRESS) {
+  } else if(DOM_state == DOM_FB_RUN_IN_PROGRESS) {
     /* For now, only allow triggers on flasher board firing, not on SPE disc. */
     /* Rate is set by beginFBRun */
     hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FLASHER);

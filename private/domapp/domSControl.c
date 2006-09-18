@@ -41,6 +41,7 @@ extern void formatLong(ULONG value, UBYTE *buf);
 extern void formatShort(USHORT value, UBYTE *buf);
 extern ULONG unformatLong(UBYTE *buf);
 extern USHORT unformatShort(UBYTE *buf);
+extern void updateTriggerModes(void);
 extern UBYTE DOM_state;
 extern UBYTE DOM_config_access;
 
@@ -524,14 +525,13 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_SET_PULSER_ON:
-
     if(FPGA_trigger_mode != SPE_DISC_TRIG_MODE) {
       DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
       break;
     }
     mprintf("Turned on front-end pulser");
     pulser_running = TRUE;
-    setSPEPulserTrigMode();
+    updateTriggerModes();
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
     break;
@@ -544,7 +544,7 @@ void domSControl(MESSAGE_STRUCT *M) {
       break;
     }
     /* Go back to normal SPE mode */
-    setSPETrigMode();
+    updateTriggerModes();
     mprintf("Turned off front-end pulser");
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
