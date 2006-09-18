@@ -531,7 +531,8 @@ void domSControl(MESSAGE_STRUCT *M) {
     }
     mprintf("Turned on front-end pulser");
     pulser_running = TRUE;
-    updateTriggerModes();
+#warning fixme
+    //updateTriggerModes();
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
     break;
@@ -544,6 +545,7 @@ void domSControl(MESSAGE_STRUCT *M) {
       break;
     }
     /* Go back to normal SPE mode */
+#warning fixme
     updateTriggerModes();
     mprintf("Turned off front-end pulser");
     Message_setDataLen(M,0);

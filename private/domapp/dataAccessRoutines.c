@@ -179,20 +179,21 @@ inline BOOLEAN FBRunIsInProgress(void) { return DOM_state==DOM_FB_RUN_IN_PROGRES
 
 void updateTriggerModes(void) {
   if(pulser_running) {
-    pulser_running = 0;
     /* Only SPE or MPE disc modes allowed w/ pulser */
     if(FPGA_trigger_mode == SPE_DISC_TRIG_MODE) {
       hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE);
       hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER);
+      mprintf("Setting pulser rate to %d.", pulser_rate);
+      hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
     } else if(FPGA_trigger_mode == MPE_DISC_TRIG_MODE) {
       hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_MPE);
       hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER);
+      mprintf("Setting pulser rate to %d.", pulser_rate);
+      hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
     } else {
       mprintf("WARNING: pulser running but trigger mode (%d) is disallowed. "
 	      "Won't allow triggers!", FPGA_trigger_mode);
     }
-    mprintf("Setting pulser rate to %d.", pulser_rate);
-    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
   } else if(DOM_state == DOM_FB_RUN_IN_PROGRESS) {
     /* For now, only allow triggers on flasher board firing, not on SPE disc. */
     /* Rate is set by beginFBRun */
