@@ -177,35 +177,46 @@ int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window,
 
 inline BOOLEAN FBRunIsInProgress(void) { return DOM_state==DOM_FB_RUN_IN_PROGRESS; }
 
-void setSPETrigMode(void) {
-  /* Allow for SPE data to be acquired, or periodic forced triggers */
-  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE
-			       | HAL_FPGA_DOMAPP_TRIGGER_FORCED);
-  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
-}
-
-void setMPETrigMode(void) {
-  /* Allow for MPE data to be acquired, or periodic forced triggers */
-  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_MPE
-			       | HAL_FPGA_DOMAPP_TRIGGER_FORCED);
-  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
-}
-
-void setSPEPulserTrigMode(void) {
-  /* Disallow periodic forced triggers.  Collect SPEs simulated by
-     on-board front-end pulser */
-  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE);
-  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER);
-}
-
-void setFBTrigMode(void) {
-  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FLASHER);
-  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FLASHER);
-}
-
-void setPeriodicForcedTrigMode(void) {
-  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FORCED);
-  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
+void updateTriggerModes(void) {
+  if(pulser_running) {
+    pulser_running = 0;
+    /* Only SPE or MPE disc modes allowed w/ pulser */
+    if(FPGA_trigger_mode == SPE_DISC_TRIG_MODE) {
+      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE);
+      hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER);
+    } else if(FPGA_trigger_mode == MPE_DISC_TRIG_MODE) {
+      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_MPE);
+      hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER);
+    } else {
+      mprintf("WARNING: pulser running but trigger mode (%d) is disallowed. "
+	      "Won't allow triggers!", FPGA_trigger_mode);
+    }
+    mprintf("Setting pulser rate to %d.", pulser_rate);
+    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
+  } else if(newRunState == DOM_FB_RUN_IN_PROGRESS) {
+    /* For now, only allow triggers on flasher board firing, not on SPE disc. */
+    /* Rate is set by beginFBRun */
+    hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FLASHER);
+    hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FLASHER);
+  } else {
+    /* Default modes - no pulser or flasher */
+    switch(FPGA_trigger_mode) { // This gets set by a DATA_ACCESS message
+    case SPE_DISC_TRIG_MODE:
+      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE
+				   | HAL_FPGA_DOMAPP_TRIGGER_FORCED);
+      break;
+    case MPE_DISC_TRIG_MODE:
+      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_MPE
+				   | HAL_FPGA_DOMAPP_TRIGGER_FORCED);
+      break;
+    case CPU_TRIG_MODE: 
+    default:
+        hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FORCED);
+	break;
+    }
+    hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
+    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
+  }
 }
 
 USHORT domappReadBaseADC() { 
@@ -247,40 +258,14 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   hal_FPGA_DOMAPP_lbm_reset();
   lbmp = hal_FPGA_DOMAPP_lbm_pointer();
 
-  if(pulser_running) {
-    pulser_running = 0;
-    if(FPGA_trigger_mode == SPE_DISC_TRIG_MODE) {
-      setSPEPulserTrigMode();
-    } else {
-      mprintf("WARNING: pulser running but trigger mode (%d) is disallowed. "
-	      "Won't allow triggers!", FPGA_trigger_mode);
-    }
-    mprintf("Setting pulser rate to %d.", pulser_rate);
-    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
-
-  } else if(newRunState == DOM_FB_RUN_IN_PROGRESS) {
-    /* For now, only allow triggers on flasher board firing, not on SPE disc. */
-    setFBTrigMode();
-    /* Rate is set by beginFBRun */
-  } else {
-    /* Default mode */
-    switch(FPGA_trigger_mode) { // This gets set by a DATA_ACCESS message
-    case SPE_DISC_TRIG_MODE: setSPETrigMode();  break; // can change when pulser starts
-    case MPE_DISC_TRIG_MODE: setMPETrigMode();  break; // disallowed for pulser
-    case CPU_TRIG_MODE: 
-    default:                  setPeriodicForcedTrigMode(); break;
-    }
-    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
-  }
-  
-  //hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_FORCED);
+  updateTriggerModes();
 
   hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_REPEAT);    
   hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_ATWD_FADC);
   hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_TESTING);
   hal_FPGA_DOMAPP_enable_atwds(HAL_FPGA_DOMAPP_ATWD_A|HAL_FPGA_DOMAPP_ATWD_B);
   hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_WRAP);
-  //hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_STOP);
+
   if(compressionMode == CMP_NONE) {
     hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_OFF);
   } else if(compressionMode == CMP_RG) {
