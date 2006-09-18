@@ -21,7 +21,7 @@
 #include "messageAPIstatus.h"
 #include "commonServices.h"
 #include "commonMessageAPIstatus.h"
-#include "version.h"
+#include "versions.h"
 #include "MSGHANDLERmessageAPIstatus.h"
 
 /* extern functions */
@@ -287,10 +287,22 @@ void msgHandler(MESSAGE_STRUCT *M) {
       Message_setDataLen(M,0);
       break;
     case MSGHAND_GET_DOMAPP_RELEASE:
-      Message_setStatus(M,SUCCESS);
-      int len  =  strlen(DOMAPP_RELEASE);
-      memcpy(data, DOMAPP_RELEASE, len);
-      Message_setDataLen(M,len);
+      {
+	Message_setStatus(M,SUCCESS);
+	char relstr[] = "DOM-MB-";
+#define STR(a) #a
+#define STRING(a) STR(a)
+	char bldstr[] = STRING(ICESOFT_BUILD);
+	int  irel = strlen(relstr);
+	int  brel = strlen(bldstr); // From versions.h
+	if(irel+brel <= MAXDATA_VALUE) {
+	  memcpy(data, relstr, irel);
+	  memcpy(data+irel, bldstr, brel);
+	  Message_setDataLen(M, irel+brel);
+	} else {
+	  Message_setDataLen(M, 0);
+	}
+      }
       break;
       /*----------------------------------- */
       /* unknown service request (i.e. message */
@@ -301,8 +313,7 @@ void msgHandler(MESSAGE_STRUCT *M) {
 	     MSGHAND_ERS_BAD_MSG_SUBTYPE);
       msgHand.lastErrorID = COMMON_Bad_Msg_Subtype;
       msgHand.lastErrorSeverity = WARNING_ERROR;
-      Message_setStatus(M,
-			UNKNOWN_SUBTYPE|WARNING_ERROR);
+      Message_setStatus(M, UNKNOWN_SUBTYPE|WARNING_ERROR);
       break;
     }
     break;
