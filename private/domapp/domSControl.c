@@ -525,7 +525,7 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_SET_PULSER_ON:
-    if(FPGA_trigger_mode != SPE_DISC_TRIG_MODE) {
+    if(FPGA_trigger_mode != SPE_DISC_TRIG_MODE && FPGA_trigger_mode != MPE_DISC_TRIG_MODE) {
       DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
       break;
     }
