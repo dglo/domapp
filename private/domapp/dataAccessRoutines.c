@@ -253,15 +253,16 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
 
   hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_REPEAT);    
   hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_ATWD_FADC);
-  hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_TESTING);
   hal_FPGA_DOMAPP_enable_atwds(HAL_FPGA_DOMAPP_ATWD_A|HAL_FPGA_DOMAPP_ATWD_B);
   hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_WRAP);
 
   switch(compressionMode) {
   case CMP_NONE:
+    hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_TESTING);
     hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_OFF);
     break;
   case CMP_DELTA:
+    hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_NORMAL);
     hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_ON);
     break;
   default:
@@ -432,6 +433,11 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   formatShort(nbytes, m0);
   return nbytes;
 }
+
+struct deltaHit {
+  unsigned long word0;
+  unsigned long word1;
+};
 
 inline unsigned short getDeltaHitTMSB(unsigned lbmp) {
   return ((struct deltaHit *) lbmEvent(lbmp))->word0 & 0xFFFF;
