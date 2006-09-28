@@ -8,11 +8,17 @@
 #define TRIG_LC_LOWER_ENA TBIT(5)
 #define TRIG_FB_RUN       TBIT(4)
 
-#define CMP_NONE  0
-#define CMP_RG    1
+enum {
+  CMP_NONE  = 0,
+  CMP_RG    = 1,
+  CMP_DELTA = 2
+};
 
-#define FMT_ENG 0
-#define FMT_RG  1
+enum {
+  FMT_ENG   = 0,
+  FMT_RG    = 1,
+  FMT_DELTA = 2
+};
 
 /* LBM stuff */
 #define FPGA_DOMAPP_LBM_BLOCKSIZE 2048 /* BYTES not words */

@@ -327,7 +327,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
       break;
 
     case DATA_ACC_SET_DATA_FORMAT:
-      if(data[0] != FMT_ENG && data[0] != FMT_RG) {
+      if(data[0] != FMT_ENG && data[0] != FMT_RG && data[0] != FMT_DELTA) {
 	DOERROR(DAC_ERS_BAD_ARGUMENT, DAC_Bad_Argument, SEVERE_ERROR);
 	break;
       }
@@ -345,7 +345,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
       break;
 
     case DATA_ACC_SET_COMP_MODE:
-      if(data[0] != CMP_NONE && data[0] != CMP_RG) {
+      if(data[0] != CMP_NONE && data[0] != CMP_RG && data[0] != CMP_DELTA) {
 	DOERROR(DAC_ERS_BAD_ARGUMENT, DAC_Bad_Argument, SEVERE_ERROR);
         break;
       }
