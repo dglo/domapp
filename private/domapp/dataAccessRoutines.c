@@ -4,6 +4,7 @@
     Modifications by John Jacobsen 2004 
                   to implement configurable engineering events
     Modifications by Jacobsen 2005 to support production (domapp) FPGA
+    Modifications by Jacobsen 2006 to implement delta-compression and many other features.
 */
 
 #include <stddef.h>
@@ -230,6 +231,7 @@ unsigned long long domappHVSerialRaw(void) {
 
 int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   nTrigsReadOut = 0;
+  numOverflows  = 0;
 
   if(DOM_state!=DOM_IDLE) {
     mprintf("beginRun: ERROR: DOM not in idle state, DOM_state=%d", DOM_IDLE);
