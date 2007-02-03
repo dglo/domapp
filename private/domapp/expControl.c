@@ -63,7 +63,7 @@ void zeroPedestals() {
   memset((void *) fadcpedsum, 0, FADCSIZ * sizeof(ULONG));
   memset((void *) fadcpedavg, 0, FADCSIZ * sizeof(USHORT));
   memset((void *) atwdpedsum, 0, 2*4*ATWDCHSIZ*sizeof(ULONG));
-  memset((void *) atwdpedsum, 0, 2*4*ATWDCHSIZ*sizeof(USHORT));
+  memset((void *) atwdpedavg, 0, 2*4*ATWDCHSIZ*sizeof(USHORT));
   pedestalsAvail = 0;
   npeds0 = npeds1 = npedsadc = 0;
 }
@@ -256,6 +256,17 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
 	  atwdpedavg[iatwd][ich][isamp] = 0;
 	}
       }
+      /* 
+       * Take out any average of the average pedestal - really we
+       * only want to reduce the ATWD fingerprint and are not too
+       * concerned about lingering constant biases (actually we
+       * need this bias to keep the output from underflowing and
+       * clipping.).
+       */
+      int i, pavg = 0;
+      for (i = 0; i < ATWDCHSIZ; i++) pavg += atwdpedavg[iatwd][ich][i];
+      pavg /= ATWDCHSIZ;
+      for (i = 0; i < ATWDCHSIZ; i++) atwdpedavg[iatwd][ich][i] -= pavg;
       /* Program ATWD pedestal pattern into FPGA */
       hal_FPGA_DOMAPP_pedestal(iatwd, ich, atwdpedavg[iatwd][ich]);
     }
