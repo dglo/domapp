@@ -64,6 +64,11 @@ void zeroPedestals() {
   memset((void *) fadcpedavg, 0, FADCSIZ * sizeof(USHORT));
   memset((void *) atwdpedsum, 0, 2*4*ATWDCHSIZ*sizeof(ULONG));
   memset((void *) atwdpedavg, 0, 2*4*ATWDCHSIZ*sizeof(USHORT));
+  int iatwd; for(iatwd=0;iatwd<2;iatwd++) {
+    int ich; for(ich=0; ich<4; ich++) {
+      hal_FPGA_DOMAPP_pedestal(iatwd, ich, atwdpedavg[iatwd][ich]);
+    }
+  }
   pedestalsAvail = 0;
   npeds0 = npeds1 = npedsadc = 0;
 }
