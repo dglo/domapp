@@ -2,33 +2,24 @@
 <html>
 <head>
 
-  
   <meta http-equiv="CONTENT-TYPE" content="text/html; charset=windows-1252">
-
-  
-  
   <title>DOMApp API</title>
-  <meta name="GENERATOR" content="OpenOffice.org 1.9.79  (Win32)">
 
-  
+
+  <meta name="GENERATOR" content="OpenOffice.org 1.9.79 (Win32)">
+
   <meta name="AUTHOR" content="John Jacobsen">
 
-  
   <meta name="CREATED" content="20040823;12325500">
 
-  
   <meta name="CHANGEDBY" content="John Jacobsen">
 
-  
   <meta name="CHANGED" content="20050309;22300700">
 
-  
   <meta name="SDFOOTNOTE" content=";;;;P">
 
-  
   <meta name="SDENDNOTE" content="ARABIC">
 
-  
   <style type="">
 <!--
 body {
@@ -36,7 +27,6 @@ background-color: #F5F5CF;
 font-family: serif;
 font-size: 12pt;
 }
-
 h1 {
 text-align: center;
 font-size: 20pt;
@@ -46,7 +36,6 @@ border-style: ridge none none none;
 border-width: thin 0 0 0;
 padding: .2em 0 0 0;
 }
-
 h2 {
 font-size: 12pt;
 background-color: #FFFFFF;
@@ -54,11 +43,9 @@ border-style: ridge none none none;
 border-width: thin 0 0 0;
 padding: .2em;
 }
-
 h3 {
 font-size: 12pt;
 }
-
 .terminal {
 font: 10pt monospace;
 background-color: #FFFFFF;
@@ -67,7 +54,6 @@ border-width: thin;
 padding: .2em .2em .2em 1em;
 margin: 0 5% 0 2%;
 }
-
 .terminalOld {
 font: 10pt monospace;
 background-color: #FFFFFF;
@@ -77,22 +63,19 @@ padding: .2em .2em .2em 1em;
 white-space: pre;
 margin: 0 5% 0 2%;
 }
-
 font.todo {
 color: red;
 }
-
 .footer {
 font: 10pt monospace;
 text-align: right;
 }
-
 -->
   </style>
 </head>
 
 
-<body dir="ltr" lang="en-US">
+<body style="direction: ltr;" lang="en-US">
 
 <div style="text-align: left;">
 <table style="text-align: left;" border="0" cellpadding="2" cellspacing="2">
@@ -101,8 +84,8 @@ text-align: right;
 
     <tr>
 
-      <td style="vertical-align: top;"> <big><big><big>Domapp API </big>&nbsp;&nbsp;
-      </big></big><br>
+      <td style="vertical-align: top;"> <big><big><big>Domapp
+API </big>&nbsp;&nbsp; </big></big><br>
 
       </td>
 
@@ -110,14 +93,14 @@ text-align: right;
 
 Last revision 11/23/2005<br>
 
-      <span style="font-family: monospace;">$Id: api.html,v 1.3
+      <span style="font-family: monospace;">$Id:
+api.html,v 1.3
 2005/06/10 16:32:32 jacobsen Exp $</span><br>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -155,9 +138,12 @@ Procedure for Taking Data</a><br>
 
 <a href="#flasher">Run Modes and Flasher Functionality</a><br>
 
-<a href="#messagesdescribedindetail">Messages Described in Detail</a><br>
+<a href="#messagesdescribedindetail">Messages Described in
+Detail</a><br>
 
-<span style="font-style: italic; color: rgb(255, 0, 0);">!!! </span><a href="#differences">Differences Between Testdomapp and Domapp</a><span style="font-style: italic; color: rgb(255, 0, 0);"> !!!</span><br>
+<span style="font-style: italic; color: rgb(255, 0, 0);">!!!
+</span><a href="#differences">Differences Between
+Testdomapp and Domapp</a><span style="font-style: italic; color: rgb(255, 0, 0);"> !!!</span><br>
 
 <a href="#changelog">Changelog</a><br>
 
@@ -190,17 +176,21 @@ Implementation Status</a><br>
 <h3><span style="font-weight: bold;"><a name="overview"></a>API OVERVIEW</span></h3>
 
 The API to Domapp takes the form of
-fixed-format binary messages (described below).&nbsp; Messages consist
+fixed-format binary messages (described below).&nbsp; Messages
+consist
 of an 8 byte header with an additional payload of 0-4084
-bytes.&nbsp;&nbsp; Messages sent by the surface generate reply messages
+bytes.&nbsp;&nbsp; Messages sent by the surface generate reply
+messages
 from the DOMs.&nbsp; When Domapp is running, the DOM never sends a
 message unless a request
 message has been sent by the surface.
-<h2><b><a name="procedure"></a>OUTLINE OF PROCEDURE FOR TAKING DATA</b></h2>
+<h2><b><a name="procedure"></a>OUTLINE
+OF PROCEDURE FOR TAKING DATA</b></h2>
 
 <ol start="1">
 
-  <li> <font size="3">Optionally, reset monitoring buffer to eliminate
+  <li> <font size="3">Optionally, reset monitoring
+buffer to eliminate
 messages from the previous run (</font><font style="font-size: 11pt;" size="2"><a href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a>).<br>
 
     <br>
@@ -214,9 +204,11 @@ voltage). <b>Flasher Board runs require special DAC settings.</b></font><br>
 
   </li>
 
-  <li><font size="3">Set DOM high voltage, <b>unless doing Flasher
+  <li><font size="3">Set DOM high voltage, <b>unless
+doing Flasher
 Board run</b>.</font> <span style="color: rgb(153, 153, 153);">Required
-messages: <a href="#DSC_ENABLE_PMT_HV">DSC_ENABLE_PMT_HV</a>, <a href="#DSC_SET_PMT_HV">DSC_SET_PMT_HV</a>, <a href="#DSC_QUERY_PMT_HV">DSC_QUERY_PMT_HV</a>
+messages: <a href="#DSC_ENABLE_PMT_HV">DSC_ENABLE_PMT_HV</a>,
+    <a href="#DSC_SET_PMT_HV">DSC_SET_PMT_HV</a>, <a href="#DSC_QUERY_PMT_HV">DSC_QUERY_PMT_HV</a>
 (to check
 that the voltage is set).</span><br>
 
@@ -228,8 +220,8 @@ that the voltage is set).</span><br>
 local coincide<span style=""><span style="font-style: normal;">nce <span style="color: rgb(153, 153, 153);">with </span><font style="font-size: 11pt; color: rgb(153, 153, 153);" size="2"><a href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a>
 (1)
 and <a href="#DSC_SET_LOCAL_COIN_WINDOW">DSC_SET_LOCAL_COIN_WINDOW</a>.
-Optionally, for new DOMAPP FPGA functions, do any of <a href="#DSC_SET_LC_TYPE">DSC_SET_LC_TYPE</a>,&nbsp; <a href="#DSC_SET_LC_TX">DSC_SET_LC_TX</a>, <a href="#DSC_SET_LC_SRC">DSC_SET_LC_SRC</a>,
-    <a href="#DSC_SET_LC_SPAN">DSC_SET_LC_SPAN</a>, and <a href="#DSC_SET_LC_CABLE_LEN">DSC_SET_LC_CABLE_LEN</a>.<br>
+Optionally, for new DOMAPP FPGA functions, do any of <a href="#DSC_SET_LC_TYPE">DSC_SET_LC_TYPE</a>,&nbsp;
+    <a href="#DSC_SET_LC_TX">DSC_SET_LC_TX</a>, <a href="#DSC_SET_LC_SRC">DSC_SET_LC_SRC</a>, <a href="#DSC_SET_LC_SPAN">DSC_SET_LC_SPAN</a>, and <a href="#DSC_SET_LC_CABLE_LEN">DSC_SET_LC_CABLE_LEN</a>.<br>
 
     </font></span></span></font><br>
 
@@ -259,8 +251,8 @@ data: <span style="color: rgb(153, 153, 153);"><a href="api.html#EXPCONTROL_BEGI
 (flasher board run)</span></font> </li>
 
   <li>
-    
-    <p style="margin-bottom: 0in;"><font size="3">Wait for data to get
+    <p style="margin-bottom: 0in;"><font size="3">Wait
+for data to get
 collected; read out periodically using <a href="#DATA_ACC_GET_DATA">DATA_ACC_GET_DATA</a>.&nbsp;
 Also, fetch monitoring records with </font><font style="font-size: 11pt;" size="2"><a href="#DATA_ACC_GET_NEXT_MONI_REC">DATA_ACC_GET_NEXT_MONI_REC</a>.&nbsp;
 And, if desired, fetch supernova data with <a href="#DATA_ACC_GET_SN_DATA">DATA_ACC_GET_SN_DATA</a>.<br>
@@ -270,15 +262,14 @@ And, if desired, fetch supernova data with <a href="#DATA_ACC_GET_SN_DATA">DATA_
   </li>
 
   <li>
-    
-    <p style="margin-bottom: 0in;"><font size="3">Stop collecting data:
-    <span style="color: rgb(153, 153, 153);"><a href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a> or <a href="#EXPCONTROL_END_FB_RUN">EXPCONTROL_END_FB_RUN</a></span></font></p>
+    <p style="margin-bottom: 0in;"><font size="3">Stop
+collecting data: <span style="color: rgb(153, 153, 153);"><a href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a> or <a href="#EXPCONTROL_END_FB_RUN">EXPCONTROL_END_FB_RUN</a></span></font></p>
 
   </li>
 
   <li>
-    
-    <p style="margin-bottom: 0in;"><font size="3">If previously set,
+    <p style="margin-bottom: 0in;"><font size="3">If
+previously set,
 turn off local coincidence with <span style="color: rgb(153, 153, 153);"><span style="font-style: normal;"><a href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a>
 (0).<br>
 
@@ -287,15 +278,15 @@ turn off local coincidence with <span style="color: rgb(153, 153, 153);"><span s
   </li>
 
   <li>
-    
-    <p style="margin-bottom: 0in;"><font size="3">If previously
+    <p style="margin-bottom: 0in;"><font size="3">If
+previously
 enabled, disable supernova data taking with </font><font style="font-size: 11pt;" size="2"><a href="#DSC_DISABLE_SN">DSC_DISABLE_SN</a></font></p>
 
   </li>
 
   <li>
-    
-    <p style="margin-bottom: 0in;"><font size="3">Turn off high voltage
+    <p style="margin-bottom: 0in;"><font size="3">Turn
+off high voltage
 (<b>unless this was a Flasher Board run</b>).&nbsp;<span style="color: rgb(153, 153, 153);"> Required messages: <a href="#DSC_SET_PMT_HV">DSC_SET_PMT_HV</a>
 (set to 0), <a href="#DSC_DISABLE_PMT_HV">DSC_DISABLE_PMT_HV</a>.</span><br>
 
@@ -309,7 +300,8 @@ enabled, disable supernova data taking with </font><font style="font-size: 11pt;
 
 The monitoring is configured and read
 out via DATA_ACCESS messages
-described below.&nbsp; The basic types of monitoring messages are as
+described below.&nbsp; The basic types of monitoring messages are
+as
 followed:
 <ul>
 
@@ -326,7 +318,9 @@ followed:
 These are described in more detail a <a href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3799/DOMmonitorfmtbinary_3_8.pdf">document</a>
 in the <a href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-517">DOM
 Data Formats</a> directory on <a href="http://docushare.icecube.wisc.edu/docushare/dsweb/HomePage">Docushare</a>.&nbsp;
-<big style="font-style: italic;">Note:</big> <font style="font-size: 11pt;" size="2">Triggering in the DOM is now <span style="font-weight: bold;">disabled </span>momentarily when the PMT
+<big style="font-style: italic;">Note:</big> <font style="font-size: 11pt;" size="2">Triggering in the
+DOM is now <span style="font-weight: bold;">disabled </span>momentarily
+when the PMT
 High Voltage is read out.<br>
 
 <br>
@@ -337,7 +331,8 @@ of 40,000,000 + 100 clock ticks to avoid duplication of values.<br>
 </font>
 <br>
 
-<h2 style="font-weight: bold;"><a name="triggering"></a>SPE AND
+<h2 style="font-weight: bold;"><a name="triggering"></a>SPE
+AND
 CALIBRATION TRIGGERS
 (Heartbeat/Beacon, Pulser, Flasher
 Issues):</h2>
@@ -351,22 +346,28 @@ signal for higher-level DAQ functions downstream.<br>
 
 <br>
 
-The heartbeat rate for the forced triggers is set by the <font style="font-size: 11pt;" size="2">DSC_SET_PULSER_RATE message,
-below.&nbsp; The default is roughly 1 Hz.&nbsp; So, when you start a
+The heartbeat rate for the forced triggers is set by the <font style="font-size: 11pt;" size="2">DSC_SET_PULSER_RATE
+message,
+below.&nbsp; The default is roughly 1 Hz.&nbsp; So, when you
+start a
 run, you will get hit data at this rate even if high voltage is off.<br>
 
 <br>
 
 When operating the DOM main board front end pulser (FE pulser), or the
-DOM flashers, the rate is controlled by the same </font><font style="font-size: 11pt;" size="2">DSC_SET_PULSER_RATE </font><font style="font-size: 11pt;" size="2">message, and the corresponding
+DOM flashers, the rate is controlled by the same </font><font style="font-size: 11pt;" size="2">DSC_SET_PULSER_RATE
+</font><font style="font-size: 11pt;" size="2">message,
+and the corresponding
 events play the role of heartbeat in lieu of the empty "forced"
 triggers that occur in normal data taking.<br>
 
 <br>
 
 Forced triggers are identified as type 1 in the engineering event
-format.&nbsp; SPE triggers (including those generated by the FE pulser)
-are identified as type 2.&nbsp; For compressed data, the "Trigger Word"
+format.&nbsp; SPE triggers (including those generated by the FE
+pulser)
+are identified as type 2.&nbsp; For compressed data, the "Trigger
+Word"
 encodes this information (see Joshua Sopher's document <span style="color: rgb(255, 0, 0);">[need link]</span>). <span style="color: rgb(255, 0, 0);"></span></font><b><br>
 
 </b><br>
@@ -380,8 +381,8 @@ SPECIFICATIONS</b></h2>
 
     <tr>
 
-      <td style="vertical-align: top;"><b>Size / type key:</b>
-      
+      <td style="vertical-align: top;"><b>Size /
+type key:</b>
       <table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">
 
         <tbody>
@@ -464,19 +465,20 @@ length string</td>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
-      <td style="vertical-align: top;"><big><big><big><b>Message</b> = <br>
+      <td style="vertical-align: top;"><big><big><big><b>Message</b>
+= <br>
 
-message header <small><small>(8</small></small></big></big></big> <big><big><big><small><small>bytes)
+message header <small><small>(8</small></small></big></big></big>
+      <big><big><big><small><small>bytes)
       </small></small><br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; + <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
++ <br>
 
 data
 portion <small><small>(0 to 4084 bytes)</small></small></big></big></big><br>
@@ -489,28 +491,25 @@ portion <small><small>(0 to 4084 bytes)</small></small></big></big></big><br>
 
     <tr>
 
-      <td style="vertical-align: top;"><b>Message Header Format (8
+      <td style="vertical-align: top;"><b>Message
+Header Format (8
 bytes):</b><br>
 
-      
       <table border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="354">
 
         <col width="42"> <col width="73"> <col width="213"> <thead> <tr valign="top">
 
           <th width="42">
-          
           <p>Size</p>
 
           </th>
 
           <th width="73">
-          
           <p>Name</p>
 
           </th>
 
           <th width="213">
-          
           <p>Meaning</p>
 
           </th>
@@ -522,19 +521,16 @@ bytes):</b><br>
           <tr valign="top">
 
             <td style="font-weight: bold;" width="42">
-            
             <p>B</p>
 
             </td>
 
             <td style="font-weight: bold;" width="73">
-            
             <p>mt</p>
 
             </td>
 
             <td width="213">
-            
             <p>message subtype (&ldquo;service&rdquo;)</p>
 
             </td>
@@ -544,19 +540,16 @@ bytes):</b><br>
           <tr valign="top">
 
             <td style="font-weight: bold;" width="42">
-            
             <p>B</p>
 
             </td>
 
             <td style="font-weight: bold;" width="73">
-            
             <p>mst</p>
 
             </td>
 
             <td width="213">
-            
             <p>message subtype</p>
 
             </td>
@@ -566,7 +559,6 @@ bytes):</b><br>
           <tr valign="top">
 
             <td style="font-weight: bold;" width="42">
-            
             <p>S<br>
 
             </p>
@@ -574,13 +566,11 @@ bytes):</b><br>
             </td>
 
             <td style="font-weight: bold;" width="73">
-            
             <p>len</p>
 
             </td>
 
             <td width="213">
-            
             <p>data portion length in bytes</p>
 
             </td>
@@ -590,13 +580,11 @@ bytes):</b><br>
           <tr valign="top">
 
             <td style="font-weight: bold;" width="42">
-            
             <p>S</p>
 
             </td>
 
             <td style="font-weight: bold;" width="73">
-            
             <p><br>
 
             </p>
@@ -604,7 +592,6 @@ bytes):</b><br>
             </td>
 
             <td width="213">
-            
             <p>reserved</p>
 
             </td>
@@ -614,19 +601,16 @@ bytes):</b><br>
           <tr valign="top">
 
             <td style="font-weight: bold;" width="42">
-            
             <p>B</p>
 
             </td>
 
             <td style="font-weight: bold;" width="73">
-            
             <p>id</p>
 
             </td>
 
             <td width="213">
-            
             <p>message id</p>
 
             </td>
@@ -636,50 +620,44 @@ bytes):</b><br>
           <tr valign="top">
 
             <td style="font-weight: bold;" width="42">
-            
             <p>B</p>
 
             </td>
 
             <td style="font-weight: bold;" width="73">
-            
             <p>status</p>
 
             </td>
 
             <td width="213">
-            
             <p>message status</p>
 
             </td>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       <br>
 
       </td>
 
-      <td style="vertical-align: top;"><b>Allowed Message Types:<br>
+      <td style="vertical-align: top;"><b>Allowed
+Message Types:<br>
 
       </b>
-      
       <table border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="239">
 
-        <col width="32"> <col width="189"> <thead> <tr valign="top">
+        <col width="32"> <col width="189"> <thead>
+        <tr valign="top">
 
           <td width="32">
-          
           <p>Num</p>
 
           </td>
 
           <td width="189">
-          
           <p>Name</p>
 
           </td>
@@ -691,13 +669,11 @@ bytes):</b><br>
           <tr>
 
             <td sdval="1" sdnum="1033;" valign="bottom" width="32">
-            
             <p>1</p>
 
             </td>
 
             <td style="font-weight: bold;" valign="top" width="189">
-            
             <p>MESSAGE_HANDLER</p>
 
             </td>
@@ -707,13 +683,11 @@ bytes):</b><br>
           <tr>
 
             <td sdval="2" sdnum="1033;" valign="bottom" width="32">
-            
             <p>2</p>
 
             </td>
 
             <td style="font-weight: bold;" valign="top" width="189">
-            
             <p>DOM_SLOW_CONTROL</p>
 
             </td>
@@ -723,13 +697,11 @@ bytes):</b><br>
           <tr>
 
             <td sdval="3" sdnum="1033;" valign="bottom" width="32">
-            
             <p>3</p>
 
             </td>
 
             <td style="font-weight: bold;" valign="top" width="189">
-            
             <p>DATA_ACCESS</p>
 
             </td>
@@ -739,13 +711,11 @@ bytes):</b><br>
           <tr>
 
             <td sdval="4" sdnum="1033;" valign="bottom" width="32">
-            
             <p>4</p>
 
             </td>
 
             <td style="font-weight: bold;" valign="top" width="189">
-            
             <p>EXPERIMENT_CONTROL</p>
 
             </td>
@@ -755,22 +725,18 @@ bytes):</b><br>
           <tr>
 
             <td sdval="5" sdnum="1033;" valign="bottom" width="32">
-            
             <p>5</p>
 
             </td>
 
             <td style="font-weight: bold;" valign="top" width="189">
-            
             <p>TEST_MANAGER</p>
 
             </td>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       <br>
@@ -782,7 +748,6 @@ DESCRIBED IN DETAIL</a>," below.<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -791,9 +756,11 @@ DESCRIBED IN DETAIL</a>," below.<br>
 <b><br>
 
 </b>
-<h2><b><a name="dataformats"></a>DATA FORMATS and Compression Modes</b></h2>
+<h2><b><a name="dataformats"></a>DATA
+FORMATS and Compression Modes</b></h2>
 
-<p style="margin-bottom: 0in;">Data formats and compression modes have
+<p style="margin-bottom: 0in;">Data formats and
+compression modes have
 separate settings because one compression mode may have multiple
 formats, and one format could support multiple compression modes
 (although this is not implemented yet in domapp).<br>
@@ -837,18 +804,19 @@ formats, and one format could support multiple compression modes
 
       </td>
 
-      <td style="vertical-align: top;">Compressed data (delta
+      <td style="vertical-align: top;">Compressed data
+(delta
 compression)<br>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
-<p style="margin-bottom: 0in;">Other data compression methods
+<p style="margin-bottom: 0in;">Other data compression
+methods
 (wavelets, software compression) may be available at a later
 date.&nbsp; Delta-compression is currently being implemented.<br>
 
@@ -885,7 +853,8 @@ compression&nbsp; modes<br>
 
       </td>
 
-      <td style="vertical-align: top;">Engineering format (DEFAULT)<br>
+      <td style="vertical-align: top;">Engineering format
+(DEFAULT)<br>
 
       </td>
 
@@ -901,7 +870,8 @@ compression&nbsp; modes<br>
 
       </td>
 
-      <td style="vertical-align: top;">Default compression format
+      <td style="vertical-align: top;">Default compression
+format
 (based on compression modes)<br>
 
       </td>
@@ -922,7 +892,8 @@ compression&nbsp; modes<br>
 (formatted directly as comes
 out of the FPGA, uncompressed)</td>
 
-      <td style="vertical-align: top; color: rgb(153, 153, 153);">0 ..
+      <td style="vertical-align: top; color: rgb(153, 153, 153);">0
+..
 1 (NOT YET IMPLEMENTED)<br>
 
       </td>
@@ -935,7 +906,8 @@ out of the FPGA, uncompressed)</td>
 
       </td>
 
-      <td style="vertical-align: top; color: rgb(153, 153, 153);">Raw +
+      <td style="vertical-align: top; color: rgb(153, 153, 153);">Raw
++
 compressed<br>
 
       </td>
@@ -946,7 +918,6 @@ compressed<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -960,12 +931,15 @@ combinations are planned for later releases.<br>
 
 The Engineering Format (Format 0) is <a href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3144/DOMdatafmtbinary_1_5.pdf">described
 in detail</a> in a document in <a href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-517">the
-DOM Data Formats directory</a> on Docushare.&nbsp; Variable/truncated
-engineering records are still supported via the <span style="font-family: monospace;">DATA_ACC_SET_ENG_FMT</span> message.<br>
+DOM Data Formats directory</a> on Docushare.&nbsp;
+Variable/truncated
+engineering records are still supported via the <span style="font-family: monospace;">DATA_ACC_SET_ENG_FMT</span>
+message.<br>
 
 <br>
 
-<big><span style="font-weight: bold;">Compressed Data Format</span></big><br>
+<big><span style="font-weight: bold;">Compressed
+Data Format</span></big><br>
 
 <br>
 
@@ -984,7 +958,6 @@ DATA<small> (up to 4084 bytes)</small>:</span><span style="font-family: helvetic
     <tr>
 
       <td colspan="1" rowspan="1" style="vertical-align: top;"><span style="font-family: helvetica,arial,sans-serif;"> </span>
-      
       <table style="width: 100%; text-align: left;" border="1" cellpadding="2" cellspacing="2">
 
         <tbody>
@@ -1004,7 +977,8 @@ DATA<small> (up to 4084 bytes)</small>:</span><span style="font-family: helvetic
             </td>
 
             <td style="width: 10%; vertical-align: top; background-color: rgb(204, 204, 204);">Bit
-31:<span style="font-weight: bold;"> 1 (compressed)</span> </td>
+31:<span style="font-weight: bold;"> 1 (compressed)</span>
+            </td>
 
             <td style="width: 15%; vertical-align: top; background-color: rgb(204, 204, 204);">Bits
 30..28: <span style="font-weight: bold;">compression type</span>
@@ -1012,10 +986,12 @@ DATA<small> (up to 4084 bytes)</small>:</span><span style="font-family: helvetic
 1==Delta Compression) </td>
 
             <td style="width: 25%; vertical-align: top; background-color: rgb(204, 204, 204);">Bits
-27..16:<span style="font-weight: bold;"> Spare</span> </td>
+27..16:<span style="font-weight: bold;"> Spare</span>
+            </td>
 
             <td style="width: 50%; vertical-align: top; background-color: rgb(204, 204, 204);">Bits
-15..0: <span style="font-weight: bold;">Block length</span> in bytes
+15..0: <span style="font-weight: bold;">Block length</span>
+in bytes
 (including
 header; BIG ENDIAN) </td>
 
@@ -1028,10 +1004,12 @@ header; BIG ENDIAN) </td>
             </td>
 
             <td colspan="3" rowspan="1" style="vertical-align: top; background-color: rgb(204, 204, 204);">Bits
-31..16: <span style="font-weight: bold;">Spare</span> </td>
+31..16: <span style="font-weight: bold;">Spare</span>
+            </td>
 
             <td style="vertical-align: top; background-color: rgb(204, 204, 204);">Bits
-15..0: <span style="font-weight: bold;">Timestamp MSBs</span> of all
+15..0: <span style="font-weight: bold;">Timestamp MSBs</span>
+of all
 hits in block (BIG ENDIAN) </td>
 
           </tr>
@@ -1095,9 +1073,7 @@ length)<br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       <span style="font-family: courier new,courier,monospace;"><span style="font-weight: bold;"></span></span><span style="font-family: courier new,courier,monospace;"><span style="font-weight: bold;"></span></span><span style="font-family: courier new,courier,monospace;"><span style="font-weight: bold;"></span></span><br style="font-family: courier new,courier,monospace;">
@@ -1114,7 +1090,6 @@ length)<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -1122,12 +1097,14 @@ length)<br>
 
 Each of the concatenated "Hits" in the hit data block conforms to "<a href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-16687/delta_123611_format_and_processes.pdf">Delta
 Compressor Data Format</a>" in the <a href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-2465">DOM
-Firmware Directory</a> on DocuShare, except that Header WORD0 defined
+Firmware Directory</a> on DocuShare, except that Header WORD0
+defined
 in that document is
 removed by domapp.&nbsp; In particular, the <span style="font-weight: bold;">hit
 length</span> is encoded in bits 10..0
 of WORD1 (the first 11 bits of Hit <span style="font-style: italic;">x</span>,
-above).&nbsp; Unfortunately, header data (e.g., timestamps) in the HITS
+above).&nbsp; Unfortunately, header data (e.g., timestamps) in the
+HITS
 records are
 LITTLE ENDIAN per the Delta Compression document, whereas the domapp
 header values are BIG
@@ -1137,12 +1114,14 @@ ENDIAN (all domapp values are big-endian by convention).<br>
 
 Block length, including header and all hits, will be less than or equal
 to 4084
-bytes.&nbsp; The Most Significant Bits (MSBs) of the hit timestamps are
+bytes.&nbsp; The Most Significant Bits (MSBs) of the hit timestamps
+are
 the
 same in every block (resulting in the occasional block which has fewer
 than the average number of hits, when the 16 LSBs of the DOM timestamp
 roll over
-every ~2 minutes).&nbsp; The least significant bits of the timestamps
+every ~2 minutes).&nbsp; The least significant bits of the
+timestamps
 are encoded in the hits themselves.<br>
 
 <br>
@@ -1152,25 +1131,32 @@ DATA</span></h2>
 
 The supernova data consist of a running tally of SPE or MPE triggers
 in a fixed 1.6384 millisecond (65536 counts of the 40 MHz clock)
-window.&nbsp; The <a href="#DSC_ENABLE_SN">DSC_ENABLE_SN</a> message
+window.&nbsp; The <a href="#DSC_ENABLE_SN">DSC_ENABLE_SN</a>
+message
 lets you select SPE (0) or MPE (1) triggers as the basis of the data
-collection.&nbsp; The programmable dead time argument to DSC_ENABLE_SN
+collection.&nbsp; The programmable dead time argument to
+DSC_ENABLE_SN
 causes the data collection to be disabled for a short period following
-a trigger (to screen out PMT afterpulsing, for example).&nbsp; You'll
+a trigger (to screen out PMT afterpulsing, for example).&nbsp;
+You'll
 have to start an actual run (<font size="3"><span style="color: rgb(153, 153, 153);"><a href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a></span></font>)
 before (nonzero) supernova triggers can be successfully read out.<br>
 
 <br>
 
-The data are read out via the <font style="font-size: 11pt;" size="2"><a href="#DATA_ACC_GET_SN_DATA">DATA_ACC_GET_SN_DATA</a> </font>message
-in the following block format.&nbsp; The format is compatible with the
+The data are read out via the <font style="font-size: 11pt;" size="2"><a href="#DATA_ACC_GET_SN_DATA">DATA_ACC_GET_SN_DATA</a>
+</font>message
+in the following block format.&nbsp; The format is compatible with
+the
 general scheme for monitoring data (see <a href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3799">monitoring
-data format specification</a>), with a header consisting of a 2 byte
+data format specification</a>), with a header consisting of a 2
+byte
 block length, 2 byte format ID, 6 byte time stamp, all big-endian.<br>
 
 <big><br style="font-weight: bold;">
 
-<span style="font-weight: bold;">Supernova Block Data Format</span></big><br>
+<span style="font-weight: bold;">Supernova Block Data
+Format</span></big><br>
 
 <table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">
 
@@ -1202,7 +1188,8 @@ block length, 2 byte format ID, 6 byte time stamp, all big-endian.<br>
 
       </td>
 
-      <td style="vertical-align: top;">format ID (300 decimal, 0x012C)<br>
+      <td style="vertical-align: top;">format ID (300
+decimal, 0x012C)<br>
 
       </td>
 
@@ -1214,7 +1201,8 @@ block length, 2 byte format ID, 6 byte time stamp, all big-endian.<br>
 
       </td>
 
-      <td style="vertical-align: top;">complete time stamp of time
+      <td style="vertical-align: top;">complete time stamp
+of time
 slice 0<br>
 
       </td>
@@ -1235,7 +1223,8 @@ slice 0<br>
 
       </td>
 
-      <td style="vertical-align: top;">trigger count for time slice 0<br>
+      <td style="vertical-align: top;">trigger count for
+time slice 0<br>
 
       </td>
 
@@ -1247,7 +1236,8 @@ slice 0<br>
 
       </td>
 
-      <td style="vertical-align: top;">trigger count for time slice 1<br>
+      <td style="vertical-align: top;">trigger count for
+time slice 1<br>
 
       </td>
 
@@ -1271,20 +1261,21 @@ slice 0<br>
 
       </td>
 
-      <td style="vertical-align: top;">trigger count for time slice <span style="font-style: italic;">N-1</span><br>
+      <td style="vertical-align: top;">trigger count for
+time slice <span style="font-style: italic;">N-1</span><br>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
 <br>
 
 In general, the timestamps for successive slices are separated by 65536
-clock counts.&nbsp; The block will be populated until this condition
+clock counts.&nbsp; The block will be populated until this
+condition
 fails or the maximum block size (4084 B) is reached, which ever comes
 first.<br>
 
@@ -1308,7 +1299,8 @@ AND
 FLASHER FUNCTIONALITY</span></h2>
 
 Currently there are two run modes in domapp: "normal" mode and flasher
-mode.&nbsp; In normal mode one first sets up high voltage and other DAC
+mode.&nbsp; In normal mode one first sets up high voltage and other
+DAC
 settings, then configures the FPGA for triggering on PMT pulses via <font size="3"><span style="color: rgb(153, 153, 153);"><a href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a></span></font>.
 Flasher mode, invoked with <font size="3"><span style="color: rgb(153, 153, 153);"><a href="api.html#EXPCONTROL_BEGIN_FB_RUN">EXPCONTROL_BEGIN_FB_RUN</a></span></font>,
 is similar to normal mode (much of the code is shared), except HV must
@@ -1320,7 +1312,8 @@ specified in the mask is digitized.<br>
 
 <font size="3"><span style="color: rgb(153, 153, 153);"></span></font><br>
 
-<font size="3"><span style="color: rgb(153, 153, 153);"><a href="api.html#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a><span style="color: rgb(0, 0, 0);"> and </span></span></font><font size="3"><span style="color: rgb(153, 153, 153);"><a href="api.html#EXPCONTROL_END_FB_RUN">EXPCONTROL_END_FB_RUN</a></span></font><font size="3"><span style="color: rgb(153, 153, 153);"><span style="color: rgb(0, 0, 0);"> now have the same function and can be
+<font size="3"><span style="color: rgb(153, 153, 153);"><a href="api.html#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a><span style="color: rgb(0, 0, 0);"> and </span></span></font><font size="3"><span style="color: rgb(153, 153, 153);"><a href="api.html#EXPCONTROL_END_FB_RUN">EXPCONTROL_END_FB_RUN</a></span></font><font size="3"><span style="color: rgb(153, 153, 153);"><span style="color: rgb(0, 0, 0);"> now have the same function and
+can be
 used interchangeably.<br>
 
 <br>
@@ -1352,25 +1345,21 @@ Message Handler Messages </font> (message type 1):</b>
   <col width="20"> <col width="251"> <col width="130"> <col width="24"> <col width="110"> <thead> <tr valign="top">
 
     <th width="20">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="251">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th colspan="2" width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -1382,31 +1371,26 @@ Message Handler Messages </font> (message type 1):</b>
     <tr>
 
       <td sdval="10" sdnum="1033;" width="20">
-      
       <p style="" align="center"> 10</p>
 
       </td>
 
       <td width="251">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">MSGHAND_GET_DOM_ID</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
 
       <td valign="top" width="24">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">S</font></p>
 
       </td>
 
       <td valign="top" width="110">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">dom id (12 bytes)</font></p>
 
       </td>
@@ -1416,7 +1400,6 @@ Message Handler Messages </font> (message type 1):</b>
     <tr>
 
       <td colspan="5" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Fetch
 DOM ID
 from DOM</b></font></p>
@@ -1425,7 +1408,6 @@ from DOM</b></font></p>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -1439,28 +1421,25 @@ from DOM</b></font></p>
 <center>
 <table style="page-break-before: auto;" border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="576">
 
-  <col width="20"> <col width="251"> <col width="130"> <col width="24"> <col width="110"> <thead style="color: rgb(153, 153, 153);"> <tr valign="top">
+  <col width="20"> <col width="251"> <col width="130"> <col width="24"> <col width="110"> <thead style="color: rgb(153, 153, 153);">
+  <tr valign="top">
 
     <th width="20">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="251">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th colspan="2" width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -1472,31 +1451,26 @@ from DOM</b></font></p>
     <tr style="color: rgb(153, 153, 153);">
 
       <td sdval="11" sdnum="1033;" width="20">
-      
       <p style="" align="center"> 11</p>
 
       </td>
 
       <td width="251">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">MSGHAND_GET_DOM_NAME</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
 
       <td valign="top" width="24">
-      
       <p style=""><font style="font-size: 9pt;" size="2">S</font></p>
 
       </td>
 
       <td valign="top" width="110">
-      
       <p style=""><font style="font-size: 9pt;" size="2">name string</font></p>
 
       </td>
@@ -1506,9 +1480,9 @@ from DOM</b></font></p>
     <tr>
 
       <td colspan="5" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b><span style="color: rgb(153, 153, 153);">Get ASCII
-representation of DOM name (e.g., &ldquo;Linguine&rdquo;; currently not supported
+representation of DOM name (e.g., &ldquo;Linguine&rdquo;;
+currently not supported
 by HAL)</span><br>
 
       </b></font></p>
@@ -1517,7 +1491,6 @@ by HAL)</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -1531,29 +1504,24 @@ by HAL)</span><br>
 <center>
 <table style="page-break-before: auto;" border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="576">
 
-  <col width="28"> <col width="242"> <col width="27"> <col width="95">
-  <col width="24"> <col width="110"> <thead> <tr valign="top">
+  <col width="28"> <col width="242"> <col width="27"> <col width="95"> <col width="24"> <col width="110"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th colspan="2" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th colspan="2" width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -1565,37 +1533,31 @@ by HAL)</span><br>
     <tr>
 
       <td sdval="18" sdnum="1033;" width="28">
-      
       <p style="" align="center"> 18</p>
 
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">MSGHAND_ECHO_MSG</font></p>
 
       </td>
 
       <td valign="top" width="27">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">S</font></p>
 
       </td>
 
       <td valign="top" width="95">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">data sent</font></p>
 
       </td>
 
       <td valign="top" width="24">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">S</font></p>
 
       </td>
 
       <td valign="top" width="110">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">data receive<span style="font-weight: bold;">d</span></font></p>
 
       </td>
@@ -1605,7 +1567,6 @@ by HAL)</span><br>
     <tr>
 
       <td colspan="6" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Echoes
 the
 sent data; useful for testing purposes</b></font></p>
@@ -1614,7 +1575,6 @@ sent data; useful for testing purposes</b></font></p>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -1627,29 +1587,24 @@ sent data; useful for testing purposes</b></font></p>
 <center>
 <table style="page-break-before: auto;" border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="576">
 
-  <col width="28"> <col width="242"> <col width="28"> <col width="94">
-  <col width="24"> <col width="110"> <thead> <tr valign="top">
+  <col width="28"> <col width="242"> <col width="28"> <col width="94"> <col width="24"> <col width="110"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th colspan="2" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th colspan="2" width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -1661,37 +1616,31 @@ sent data; useful for testing purposes</b></font></p>
     <tr>
 
       <td rowspan="4" sdval="20" sdnum="1033;" width="28">
-      
       <p style="" align="center"> 20</p>
 
       </td>
 
       <td rowspan="4" width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">MSGHAND_ACCESS_MEMORY_CONTENTS</font></p>
 
       </td>
 
       <td valign="top" width="28">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UB</font></p>
 
       </td>
 
       <td valign="top" width="94">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">0=byte, 1=long</font></p>
 
       </td>
 
       <td rowspan="4" valign="top" width="24">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">S</font></p>
 
       </td>
 
       <td rowspan="4" valign="top" width="110">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">actual bytes
 or longs read</font></p>
 
@@ -1702,13 +1651,11 @@ or longs read</font></p>
     <tr valign="top">
 
       <td width="28">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UB</font></p>
 
       </td>
 
       <td width="94">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">0=read, 1=write</font></p>
 
       </td>
@@ -1718,13 +1665,11 @@ or longs read</font></p>
     <tr valign="top">
 
       <td width="28">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">US</font></p>
 
       </td>
 
       <td width="94">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2"># of accesses</font></p>
 
       </td>
@@ -1734,13 +1679,11 @@ or longs read</font></p>
     <tr valign="top">
 
       <td width="28">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UL</font></p>
 
       </td>
 
       <td width="94">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">address</font></p>
 
       </td>
@@ -1749,12 +1692,13 @@ or longs read</font></p>
 
     <tr>
 
-      <td colspan="6" width="566"> <font style="font-size: 11pt;" size="2"><b>Peek or poke
-DOM memory; &ldquo;address&rdquo; is in DOM Application mode</b></font> </td>
+      <td colspan="6" width="566"> <font style="font-size: 11pt;" size="2"><b>Peek or
+poke
+DOM memory; &ldquo;address&rdquo; is in DOM Application mode</b></font>
+      </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -1770,25 +1714,21 @@ DOM memory; &ldquo;address&rdquo; is in DOM Application mode</b></font> </td>
   <col width="28"> <col width="264"> <col width="108"> <col width="24"> <col width="110"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="264">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="108">
-    
     <p style="">Input</p>
 
     </th>
 
     <th colspan="2" width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -1800,31 +1740,26 @@ DOM memory; &ldquo;address&rdquo; is in DOM Application mode</b></font> </td>
     <tr>
 
       <td sdval="24" sdnum="1033;" width="28">
-      
       <p style="" align="right"> 24</p>
 
       </td>
 
       <td width="264">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">MSGHAND_GET_DOMAPP_RELEASE</font></p>
 
       </td>
 
       <td valign="top" width="108">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
 
       <td valign="top" width="24">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">S</font></p>
 
       </td>
 
       <td valign="top" width="110">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">domapp release</font></p>
 
       </td>
@@ -1840,7 +1775,6 @@ e.g., &ldquo;V02-01-10&rdquo;</b></font> </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -1848,7 +1782,8 @@ e.g., &ldquo;V02-01-10&rdquo;</b></font> </td>
 
 <br>
 
-<p style="margin-bottom: 0in; page-break-before: always;"><b><font size="4">Slow Control Messages </font> (message type 2):</b></p>
+<p style="margin-bottom: 0in; page-break-before: always;"><b><font size="4">Slow Control Messages </font> (message type
+2):</b></p>
 
 <p style="margin-bottom: 0in;">
 </p>
@@ -1858,25 +1793,21 @@ e.g., &ldquo;V02-01-10&rdquo;</b></font> </td>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -1888,21 +1819,19 @@ e.g., &ldquo;V02-01-10&rdquo;</b></font> </td>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">13</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_WRITE_ONE_DAC&nbsp; <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_WRITE_ONE_DAC&nbsp;
+      <br>
 
       </font></p>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="27">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -1943,15 +1872,12 @@ e.g., &ldquo;V02-01-10&rdquo;</b></font> </td>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -1961,15 +1887,14 @@ e.g., &ldquo;V02-01-10&rdquo;</b></font> </td>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Write "value"
+      <p align="left"> <span style="font-weight: bold;">Write
+"value"
 to DAC numbered "whichDAC"</span> </p>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -1980,25 +1905,21 @@ to DAC numbered "whichDAC"</span> </p>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -2010,21 +1931,19 @@ to DAC numbered "whichDAC"</span> </p>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">14</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_PMT_HV&nbsp; <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_SET_PMT_HV&nbsp;
+      <br>
 
       </font></p>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="27">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -2041,15 +1960,12 @@ to DAC numbered "whichDAC"</span> </p>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -2059,8 +1975,8 @@ to DAC numbered "whichDAC"</span> </p>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Set PMT high
+      <p align="left"> <span style="font-weight: bold;">Set
+PMT high
 voltage to "value" (DAC units, i.e. volts * 2) (must also
 DSC_ENABLE_PMT_HV)</span> </p>
 
@@ -2068,7 +1984,6 @@ DSC_ENABLE_PMT_HV)</span> </p>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -2079,25 +1994,21 @@ DSC_ENABLE_PMT_HV)</span> </p>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -2109,14 +2020,13 @@ DSC_ENABLE_PMT_HV)</span> </p>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">16</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_ENABLE_PMT_HV&nbsp; <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_ENABLE_PMT_HV&nbsp;
+      <br>
 
       </font></p>
 
@@ -2127,7 +2037,6 @@ DSC_ENABLE_PMT_HV)</span> </p>
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -2137,15 +2046,14 @@ DSC_ENABLE_PMT_HV)</span> </p>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Enable PMT
+      <p align="left"> <span style="font-weight: bold;">Enable
+PMT
 High Voltage</span> </p>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -2156,25 +2064,21 @@ High Voltage</span> </p>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -2186,14 +2090,13 @@ High Voltage</span> </p>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">18</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_DISABLE_PMT_HV&nbsp; <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_DISABLE_PMT_HV&nbsp;
+      <br>
 
       </font></p>
 
@@ -2204,7 +2107,6 @@ High Voltage</span> </p>
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -2214,15 +2116,14 @@ High Voltage</span> </p>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Disable PMT
+      <p align="left"> <span style="font-weight: bold;">Disable
+PMT
 High Voltage</span> </p>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -2233,25 +2134,21 @@ High Voltage</span> </p>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -2263,7 +2160,6 @@ High Voltage</span> </p>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">22<br>
 
       </p>
@@ -2271,8 +2167,8 @@ High Voltage</span> </p>
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_QUERY_PMT_HV&nbsp; <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_QUERY_PMT_HV&nbsp;
+      <br>
 
       </font></p>
 
@@ -2283,10 +2179,8 @@ High Voltage</span> </p>
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -2297,7 +2191,8 @@ High Voltage</span> </p>
 
             </td>
 
-            <td style="vertical-align: top;">ADC value (ADC units)<br>
+            <td style="vertical-align: top;">ADC value
+(ADC units)<br>
 
             </td>
 
@@ -2309,15 +2204,14 @@ High Voltage</span> </p>
 
             </td>
 
-            <td style="vertical-align: top;">DAC value (DAC units)<br>
+            <td style="vertical-align: top;">DAC value
+(DAC units)<br>
 
             </td>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -2327,17 +2221,16 @@ High Voltage</span> </p>
     <tr>
 
       <td colspan="4" width="566">
-      
       <p align="left">&nbsp; <span style="font-weight: bold;">Read PMT
-voltage (ADC and DAC).&nbsp; If DOM has been softbooted since HV was
-set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts * 2.</span>
-      </p>
+voltage (ADC and DAC).&nbsp; If DOM has been softbooted since HV
+was
+set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts
+* 2.</span> </p>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -2346,29 +2239,24 @@ set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts * 2.</span>
 <center>
 <table style="page-break-before: auto;" border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="576">
 
-  <col width="28"> <col width="242"> <col width="27"> <col width="95">
-  <col width="142"> <thead> <tr valign="top">
+  <col width="28"> <col width="242"> <col width="27"> <col width="95"> <col width="142"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th colspan="2" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -2380,31 +2268,26 @@ set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts * 2.</span>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center"> 31</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_TRIG_MODE</font></p>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_SET_TRIG_MODE</font></p>
 
       </td>
 
       <td valign="top" width="27">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UB</font></p>
 
       </td>
 
       <td valign="top" width="95">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">mode</font></p>
 
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -2414,7 +2297,6 @@ set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts * 2.</span>
     <tr>
 
       <td colspan="5" width="566">
-      
       <p align="left"> <font style="font-size: 11pt;" size="2"><b>Modes:<br>
 
 0 = test pattern data<br>
@@ -2424,13 +2306,13 @@ set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts * 2.</span>
 2 = discriminator triggers, SPE only<br>
 
 3 = flasher board runs; digitize flasher board LED current<br>
+
 4 = discriminator triggers, MPE only</b></font></p>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -2446,25 +2328,21 @@ set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts * 2.</span>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -2476,23 +2354,22 @@ set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts * 2.</span>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
-      <p style="" align="center">35&nbsp;&nbsp; <br>
+      <p style="" align="center">35&nbsp;&nbsp;
+      <br>
 
       </p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_MUX_SELECT <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_MUX_SELECT
+      <br>
 
       </font></p>
 
       </td>
 
       <td style="text-align: center;" colspan="1" rowspan="1" valign="top" width="27">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -2509,18 +2386,14 @@ set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts * 2.</span>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <div style="text-align: center;">-<br>
 
       </div>
@@ -2532,7 +2405,6 @@ set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts * 2.</span>
     <tr>
 
       <td colspan="4" width="566">
-      
       <p align="left">&nbsp; <span style="font-weight: bold;">Selects
 analog mux channel.&nbsp; Use 255 (0xFF) to disable analog mux
 explicitly.</span> </p>
@@ -2541,7 +2413,6 @@ explicitly.</span> </p>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -2552,25 +2423,21 @@ explicitly.</span> </p>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -2582,21 +2449,19 @@ explicitly.</span> </p>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">37</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_PULSER_RATE&nbsp; <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_SET_PULSER_RATE&nbsp;
+      <br>
 
       </font></p>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="27">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -2613,15 +2478,12 @@ explicitly.</span> </p>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -2631,12 +2493,14 @@ explicitly.</span> </p>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Set pulser
-rate to &lt;rate&gt; (Hz).&nbsp; IMPORTANT NOTE: this is the rate used
+      <p align="left"> <span style="font-weight: bold;">Set
+pulser
+rate to &lt;rate&gt; (Hz).&nbsp; IMPORTANT NOTE: this is
+the rate used
 both
 for the on-board front-end pulser during calibration operations, as
-well as for the generation heartbeat, "forced" triggers .&nbsp; Another
+well as for the generation heartbeat, "forced" triggers .&nbsp;
+Another
 note: only scaled powers of two are actually used; the HAL rounds the
 requested value to the nearest appropriate value.&nbsp; </span><br>
 
@@ -2646,7 +2510,6 @@ requested value to the nearest appropriate value.&nbsp; </span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -2657,25 +2520,21 @@ requested value to the nearest appropriate value.&nbsp; </span><br>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -2687,14 +2546,13 @@ requested value to the nearest appropriate value.&nbsp; </span><br>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">38</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_GET_PULSER_RATE&nbsp; <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_GET_PULSER_RATE&nbsp;
+      <br>
 
       </font></p>
 
@@ -2705,10 +2563,8 @@ requested value to the nearest appropriate value.&nbsp; </span><br>
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -2725,9 +2581,7 @@ requested value to the nearest appropriate value.&nbsp; </span><br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -2737,9 +2591,9 @@ requested value to the nearest appropriate value.&nbsp; </span><br>
     <tr>
 
       <td colspan="4" width="566">
-      
       <p align="left"> <span style="font-weight: bold;">Get
-pulser&nbsp; &lt;rate&gt; (Hz).&nbsp; See DSC_SET_PULSER_RATE.&nbsp;
+pulser&nbsp; &lt;rate&gt; (Hz).&nbsp; See
+DSC_SET_PULSER_RATE.&nbsp;
 Actual rate may be slightly lower because of rounding in the HAL.</span><br>
 
       </p>
@@ -2748,7 +2602,6 @@ Actual rate may be slightly lower because of rounding in the HAL.</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -2759,25 +2612,21 @@ Actual rate may be slightly lower because of rounding in the HAL.</span><br>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -2789,14 +2638,13 @@ Actual rate may be slightly lower because of rounding in the HAL.</span><br>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">39</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_PULSER_ON&nbsp; <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_SET_PULSER_ON&nbsp;
+      <br>
 
       </font></p>
 
@@ -2807,7 +2655,6 @@ Actual rate may be slightly lower because of rounding in the HAL.</span><br>
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -2817,10 +2664,11 @@ Actual rate may be slightly lower because of rounding in the HAL.</span><br>
     <tr>
 
       <td colspan="4" width="566">
-      
       <p align="left"> <span style="font-weight: bold;">Enable
-on-board pulser.&nbsp; Note that this changes the trigger configuration
-so that heartbeat events are NOT generated.&nbsp; Message must be sent
+on-board pulser.&nbsp; Note that this changes the trigger
+configuration
+so that heartbeat events are NOT generated.&nbsp; Message must be
+sent
 AFTER the trigger type has been set (<a href="#DSC_SET_TRIG_MODE">DSC_SET_TRIG_MODE</a>)
 and before the run has started (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>).</span><br>
 
@@ -2830,7 +2678,6 @@ and before the run has started (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -2841,25 +2688,21 @@ and before the run has started (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -2871,14 +2714,13 @@ and before the run has started (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">40</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_PULSER_OFF&nbsp; <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_SET_PULSER_OFF&nbsp;
+      <br>
 
       </font></p>
 
@@ -2889,7 +2731,6 @@ and before the run has started (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -2899,7 +2740,6 @@ and before the run has started (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN
     <tr>
 
       <td colspan="4" width="566">
-      
       <p align="left"> <span style="font-weight: bold;">Disable
 on-board pulser.</span><br>
 
@@ -2909,7 +2749,6 @@ on-board pulser.</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -2921,25 +2760,21 @@ on-board pulser.</span><br>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -2951,21 +2786,19 @@ on-board pulser.</span><br>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">43</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_SCALER_DEADTIME <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_SET_SCALER_DEADTIME
+      <br>
 
       </font></p>
 
       </td>
 
       <td style="text-align: center;" colspan="1" rowspan="1" valign="top" width="27">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -2982,15 +2815,12 @@ on-board pulser.</span><br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -3000,8 +2830,8 @@ on-board pulser.</span><br>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Set scaler
+      <p align="left"> <span style="font-weight: bold;">Set
+scaler
 deadtime in nsec.&nbsp; Valid range: 100 nsec - 102400 nsec</span><br>
 
       </p>
@@ -3010,7 +2840,6 @@ deadtime in nsec.&nbsp; Valid range: 100 nsec - 102400 nsec</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -3021,25 +2850,21 @@ deadtime in nsec.&nbsp; Valid range: 100 nsec - 102400 nsec</span><br>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -3051,14 +2876,13 @@ deadtime in nsec.&nbsp; Valid range: 100 nsec - 102400 nsec</span><br>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">44</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_GET_SCALER_DEADTIME <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_GET_SCALER_DEADTIME
+      <br>
 
       </font></p>
 
@@ -3069,10 +2893,8 @@ deadtime in nsec.&nbsp; Valid range: 100 nsec - 102400 nsec</span><br>
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -3089,9 +2911,7 @@ deadtime in nsec.&nbsp; Valid range: 100 nsec - 102400 nsec</span><br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -3101,8 +2921,8 @@ deadtime in nsec.&nbsp; Valid range: 100 nsec - 102400 nsec</span><br>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Get scaler
+      <p align="left"> <span style="font-weight: bold;">Get
+scaler
 deadtime</span><br>
 
       </p>
@@ -3111,7 +2931,6 @@ deadtime</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -3119,29 +2938,24 @@ deadtime</span><br>
 
 <table style="page-break-before: auto;" border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="576">
 
-  <col width="28"> <col width="242"> <col width="27"> <col width="95">
-  <col width="142"> <thead> <tr valign="top">
+  <col width="28"> <col width="242"> <col width="27"> <col width="95"> <col width="142"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th colspan="2" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -3153,31 +2967,26 @@ deadtime</span><br>
     <tr>
 
       <td sdval="45" sdnum="1033;" width="28">
-      
       <p style="" align="center"> 45</p>
 
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_LOCAL_COIN_MODE</font></p>
 
       </td>
 
       <td valign="top" width="27">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UB</font></p>
 
       </td>
 
       <td valign="top" width="95">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">mode</font></p>
 
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -3187,7 +2996,6 @@ deadtime</span><br>
     <tr>
 
       <td colspan="5" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Modes:<br>
 
 0 = no local coincidence required<br>
@@ -3203,7 +3011,6 @@ DOMs<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -3217,25 +3024,21 @@ DOMs<br>
   <col width="28"> <col width="242"> <col width="130"> <col width="24"> <col width="110"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th colspan="2" width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -3247,31 +3050,26 @@ DOMs<br>
     <tr>
 
       <td sdval="46" sdnum="1033;" width="28">
-      
       <p style="" align="center"> 46</p>
 
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DSC_GET_LOCAL_COIN_MODE</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
 
       <td valign="top" width="24">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UB</font></p>
 
       </td>
 
       <td valign="top" width="110">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">data received</font></p>
 
       </td>
@@ -3280,12 +3078,12 @@ DOMs<br>
 
     <tr>
 
-      <td colspan="5" width="566"> <font style="font-size: 11pt;" size="2"><b>Modes: see <span style="font-style: normal;"><a href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a>.</span></b></font>
+      <td colspan="5" width="566"> <font style="font-size: 11pt;" size="2"><b>Modes: see
+      <span style="font-style: normal;"><a href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a>.</span></b></font>
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -3296,29 +3094,24 @@ DOMs<br>
 <center>
 <table style="page-break-before: auto;" border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="576">
 
-  <col width="28"> <col width="242"> <col width="28"> <col width="94">
-  <col width="142"> <thead> <tr valign="top">
+  <col width="28"> <col width="242"> <col width="28"> <col width="94"> <col width="142"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th colspan="2" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -3330,31 +3123,26 @@ DOMs<br>
     <tr>
 
       <td rowspan="2" sdval="47" sdnum="1033;" width="28">
-      
       <p style="" align="right"> 47</p>
 
       </td>
 
       <td rowspan="2" width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_LOCAL_COIN_WINDOW</font></p>
 
       </td>
 
       <td valign="top" width="28">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UL</font></p>
 
       </td>
 
       <td valign="top" width="94">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">up_pre</font></p>
 
       </td>
 
       <td rowspan="2" valign="top" width="142">
-      
       <div style="text-align: center;">-</div>
 
       </td>
@@ -3364,13 +3152,11 @@ DOMs<br>
     <tr valign="top">
 
       <td width="28">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UL</font></p>
 
       </td>
 
       <td width="94">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">up_post</font></p>
 
       </td>
@@ -3381,14 +3167,14 @@ DOMs<br>
 
       <td colspan="5" width="566"> <font style="font-size: 11pt;" size="2"><b>Set local
 coincidence windows. Units are nsec. Must be between 100 and 6200 nsec
-inclusive.&nbsp; Default is 200 nsec on each side.&nbsp;&nbsp; Pre- and
+inclusive.&nbsp; Default is 200 nsec on each
+side.&nbsp;&nbsp; Pre- and
 post- refer to
 before and after the ATWD launch window, respectively (ask Thorsten
 Stezelberger for details).</b></font> </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -3402,25 +3188,21 @@ Stezelberger for details).</b></font> </td>
   <col width="28"> <col width="242"> <col width="130"> <col width="24"> <col width="109"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th colspan="2" width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -3432,31 +3214,26 @@ Stezelberger for details).</b></font> </td>
     <tr>
 
       <td rowspan="2" sdval="48" sdnum="1033;" width="28">
-      
       <p style="" align="right"> 48</p>
 
       </td>
 
       <td rowspan="2" width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DSC_GET_LOCAL_COIN_WINDOW</font></p>
 
       </td>
 
       <td rowspan="2" valign="top" width="130">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
 
       <td valign="top" width="24">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UL</font></p>
 
       </td>
 
       <td valign="top" width="109">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">up_pre</font></p>
 
       </td>
@@ -3466,13 +3243,11 @@ Stezelberger for details).</b></font> </td>
     <tr valign="top">
 
       <td width="24">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UL</font></p>
 
       </td>
 
       <td width="109">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">up_post</font></p>
 
       </td>
@@ -3486,7 +3261,6 @@ coincidence windows.&nbsp;</b></font> </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -3497,25 +3271,21 @@ coincidence windows.&nbsp;</b></font> </td>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -3527,7 +3297,6 @@ coincidence windows.&nbsp;</b></font> </td>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">49<br>
 
       </p>
@@ -3535,15 +3304,14 @@ coincidence windows.&nbsp;</b></font> </td>
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_LC_TYPE <br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_SET_LC_TYPE
+      <br>
 
       </font></p>
 
       </td>
 
       <td style="text-align: center;" colspan="1" rowspan="1" valign="top" width="27">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -3560,15 +3328,12 @@ coincidence windows.&nbsp;</b></font> </td>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -3578,8 +3343,8 @@ coincidence windows.&nbsp;</b></font> </td>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Set local
+      <p align="left"> <span style="font-weight: bold;">Set
+local
 coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
 
       </p>
@@ -3588,7 +3353,6 @@ coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -3599,25 +3363,21 @@ coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -3629,14 +3389,13 @@ coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">50</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_GET_LC_TYPE </font></p>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_GET_LC_TYPE
+      </font></p>
 
       </td>
 
@@ -3645,7 +3404,6 @@ coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -3662,9 +3420,7 @@ coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -3674,8 +3430,8 @@ coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Get LC type</span><br>
+      <p align="left"> <span style="font-weight: bold;">Get
+LC type</span><br>
 
       </p>
 
@@ -3683,7 +3439,6 @@ coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -3694,25 +3449,21 @@ coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -3724,19 +3475,17 @@ coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">51</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_LC_TX </font></p>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_SET_LC_TX
+      </font></p>
 
       </td>
 
       <td style="text-align: center;" colspan="1" rowspan="1" valign="top" width="27">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -3753,15 +3502,12 @@ coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -3776,7 +3522,6 @@ only, 3=TX both up and down (DEFAULT)</span></td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -3787,25 +3532,21 @@ only, 3=TX both up and down (DEFAULT)</span></td>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -3817,14 +3558,12 @@ only, 3=TX both up and down (DEFAULT)</span></td>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">52</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_GET_LC_TX</font></p>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_GET_LC_TX</font></p>
 
       </td>
 
@@ -3833,7 +3572,6 @@ only, 3=TX both up and down (DEFAULT)</span></td>
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -3850,9 +3588,7 @@ only, 3=TX both up and down (DEFAULT)</span></td>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -3862,14 +3598,13 @@ only, 3=TX both up and down (DEFAULT)</span></td>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">G</span><span style="font-weight: bold;">et local coincidence transmit mode</span> </p>
+      <p align="left"> <span style="font-weight: bold;">G</span><span style="font-weight: bold;">et local coincidence transmit mode</span>
+      </p>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -3880,25 +3615,21 @@ only, 3=TX both up and down (DEFAULT)</span></td>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -3910,21 +3641,18 @@ only, 3=TX both up and down (DEFAULT)</span></td>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">53</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_LC_SRC<br>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_SET_LC_SRC<br>
 
       </font></p>
 
       </td>
 
       <td style="text-align: center;" colspan="1" rowspan="1" valign="top" width="27">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -3941,15 +3669,12 @@ only, 3=TX both up and down (DEFAULT)</span></td>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -3959,8 +3684,8 @@ only, 3=TX both up and down (DEFAULT)</span></td>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Set local
+      <p align="left"> <span style="font-weight: bold;">Set
+local
 coincidence source 0=SPE (DEFAULT), 1=MPE</span><br>
 
       </p>
@@ -3969,7 +3694,6 @@ coincidence source 0=SPE (DEFAULT), 1=MPE</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -3980,25 +3704,21 @@ coincidence source 0=SPE (DEFAULT), 1=MPE</span><br>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -4010,14 +3730,12 @@ coincidence source 0=SPE (DEFAULT), 1=MPE</span><br>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">54</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_GET_LC_SRC</font></p>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_GET_LC_SRC</font></p>
 
       </td>
 
@@ -4026,10 +3744,8 @@ coincidence source 0=SPE (DEFAULT), 1=MPE</span><br>
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -4046,9 +3762,7 @@ coincidence source 0=SPE (DEFAULT), 1=MPE</span><br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -4058,8 +3772,8 @@ coincidence source 0=SPE (DEFAULT), 1=MPE</span><br>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Get local
+      <p align="left"> <span style="font-weight: bold;">Get
+local
 coincidence source</span><br>
 
       </p>
@@ -4068,7 +3782,6 @@ coincidence source</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -4079,25 +3792,21 @@ coincidence source</span><br>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -4109,19 +3818,16 @@ coincidence source</span><br>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">55</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_LC_SPAN</font></p>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_SET_LC_SPAN</font></p>
 
       </td>
 
       <td style="text-align: center;" colspan="1" rowspan="1" valign="top" width="27">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -4138,15 +3844,12 @@ coincidence source</span><br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -4156,8 +3859,8 @@ coincidence source</span><br>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Set local
+      <p align="left"> <span style="font-weight: bold;">Set
+local
 coincidence span: range 1..4 (DEFAULT: 1)</span><br>
 
       </p>
@@ -4166,7 +3869,6 @@ coincidence span: range 1..4 (DEFAULT: 1)</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -4177,25 +3879,21 @@ coincidence span: range 1..4 (DEFAULT: 1)</span><br>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -4207,14 +3905,12 @@ coincidence span: range 1..4 (DEFAULT: 1)</span><br>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">56</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_GET_LC_SPAN</font></p>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_GET_LC_SPAN</font></p>
 
       </td>
 
@@ -4223,10 +3919,8 @@ coincidence span: range 1..4 (DEFAULT: 1)</span><br>
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -4243,9 +3937,7 @@ coincidence span: range 1..4 (DEFAULT: 1)</span><br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -4255,8 +3947,8 @@ coincidence span: range 1..4 (DEFAULT: 1)</span><br>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Get local
+      <p align="left"> <span style="font-weight: bold;">Get
+local
 coincidence span</span><br>
 
       </p>
@@ -4265,7 +3957,6 @@ coincidence span</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -4276,25 +3967,21 @@ coincidence span</span><br>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -4306,19 +3993,16 @@ coincidence span</span><br>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">57</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_SET_LC_CABLE_LEN</font></p>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_SET_LC_CABLE_LEN</font></p>
 
       </td>
 
       <td style="text-align: center;" colspan="1" rowspan="1" valign="top" width="27">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -4393,15 +4077,12 @@ coincidence span</span><br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -4411,8 +4092,8 @@ coincidence span</span><br>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Set local
+      <p align="left"> <span style="font-weight: bold;">Set
+local
 coincidence cable lengths, UP and DowN, for neighbors 0..3.&nbsp;
 Length &lt; 3175.</span><br>
 
@@ -4422,7 +4103,6 @@ Length &lt; 3175.</span><br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -4433,25 +4113,21 @@ Length &lt; 3175.</span><br>
   <thead><tr valign="top">
 
     <th style="width: 28px; vertical-align: middle; text-align: center;">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="text-align: center; vertical-align: middle;" colspan="1" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th style="width: 142px; vertical-align: middle; text-align: center;">
-    
     <p style="">Output</p>
 
     </th>
@@ -4463,14 +4139,12 @@ Length &lt; 3175.</span><br>
     <tr>
 
       <td sdval="31" sdnum="1033;" width="28">
-      
       <p style="" align="center">58</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="font-style: normal;" align="center"> <font style="font-size: 11pt;" size="2">DSC_GET_LC_CABLE_LEN</font></p>
+      <p style="font-style: normal;" align="center"><font style="font-size: 11pt;" size="2">DSC_GET_LC_CABLE_LEN</font></p>
 
       </td>
 
@@ -4479,10 +4153,8 @@ Length &lt; 3175.</span><br>
       </td>
 
       <td colspan="1" rowspan="1" valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -4557,9 +4229,7 @@ Length &lt; 3175.</span><br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -4569,8 +4239,8 @@ Length &lt; 3175.</span><br>
     <tr>
 
       <td colspan="4" width="566">
-      
-      <p align="left"> <span style="font-weight: bold;">Get local
+      <p align="left"> <span style="font-weight: bold;">Get
+local
 coincidence cable lengths.&nbsp; <span style="color: rgb(255, 0, 0);">Must
 DSC_GET_LC_CABLE_LEN first or this message will return an error!</span></span><br>
 
@@ -4580,7 +4250,6 @@ DSC_GET_LC_CABLE_LEN first or this message will return an error!</span></span><b
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -4591,25 +4260,21 @@ DSC_GET_LC_CABLE_LEN first or this message will return an error!</span></span><b
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -4621,21 +4286,19 @@ DSC_GET_LC_CABLE_LEN first or this message will return an error!</span></span><b
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right"> 59</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DSC_ENABLE_SN<i><b> <br>
+      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DSC_ENABLE_SN<i><b>
+      <br>
 
       </b></i></font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -4664,12 +4327,9 @@ DSC_GET_LC_CABLE_LEN first or this message will return an error!</span></span><b
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
-      
       <p style="" align="center"> </p>
 
       </td>
@@ -4683,18 +4343,17 @@ DSC_GET_LC_CABLE_LEN first or this message will return an error!</span></span><b
     <tr>
 
       <td colspan="4" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Enable
 supernova data collection (fine-grained trigger rate meter).&nbsp;
 Deadtime (enforced period of inactivity after each trigger) is in units
-of nsec.&nbsp; Valid values are 6400 to 512000 inclusive.&nbsp; Mode is
+of nsec.&nbsp; Valid values are 6400 to 512000 inclusive.&nbsp;
+Mode is
 0 (SPE) or 1 (MPE).&nbsp; To get actual triggers, you also must </b></font><font size="3"><span style="color: rgb(153, 153, 153);"><a href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a></span></font><font style="font-size: 11pt;" size="2"><b> </b></font></p>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -4705,25 +4364,21 @@ of nsec.&nbsp; Valid values are 6400 to 512000 inclusive.&nbsp; Mode is
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -4735,26 +4390,23 @@ of nsec.&nbsp; Valid values are 6400 to 512000 inclusive.&nbsp; Mode is
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right"> 60</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DSC_DISABLE_SN<i><b> <br>
+      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DSC_DISABLE_SN<i><b>
+      <br>
 
       </b></i></font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <div style="text-align: center;">-<br>
 
       </div>
 
-      
       <p style="" align="center"> </p>
 
       </td>
@@ -4768,7 +4420,6 @@ of nsec.&nbsp; Valid values are 6400 to 512000 inclusive.&nbsp; Mode is
     <tr>
 
       <td colspan="4" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Disable
 supernova data collection.</b></font><font style="font-size: 11pt;" size="2"><b> </b></font></p>
 
@@ -4776,7 +4427,6 @@ supernova data collection.</b></font><font style="font-size: 11pt;" size="2"><b>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -4800,25 +4450,21 @@ Data Access Messages</font> (message type 3):<br>
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -4830,21 +4476,19 @@ Data Access Messages</font> (message type 3):<br>
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right"> 11</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_GET_DATA&nbsp;<i><b> <br>
+      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_GET_DATA&nbsp;<i><b>
+      <br>
 
       </b></i></font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> -<br>
 
       </p>
@@ -4852,7 +4496,6 @@ Data Access Messages</font> (message type 3):<br>
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UB*N</font></p>
 
       </td>
@@ -4862,7 +4505,6 @@ Data Access Messages</font> (message type 3):<br>
     <tr>
 
       <td colspan="4" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Read
 out
 hit data buffered by FPGA (must do <a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>
@@ -4872,7 +4514,6 @@ first)</b></font><font style="font-size: 11pt;" size="2"><b> </b></font></p>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -4883,25 +4524,21 @@ first)</b></font><font style="font-size: 11pt;" size="2"><b> </b></font></p>
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -4913,21 +4550,19 @@ first)</b></font><font style="font-size: 11pt;" size="2"><b> </b></font></p>
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right"> 12</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_GET_NEXT_MONI_REC&nbsp;<i><b> <br>
+      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_GET_NEXT_MONI_REC&nbsp;<i><b>
+      <br>
 
       </b></i></font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> -<br>
 
       </p>
@@ -4935,7 +4570,6 @@ first)</b></font><font style="font-size: 11pt;" size="2"><b> </b></font></p>
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UB*N</font></p>
 
       </td>
@@ -4945,7 +4579,6 @@ first)</b></font><font style="font-size: 11pt;" size="2"><b> </b></font></p>
     <tr>
 
       <td colspan="4" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Read
 out
 monitoring data <br>
@@ -4956,7 +4589,6 @@ monitoring data <br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -4967,25 +4599,21 @@ monitoring data <br>
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -4997,24 +4625,21 @@ monitoring data <br>
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right"> 13</p>
 
       </td>
 
       <td width="242">
-      
-      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_SET_MONI_IVAL <i><b><br>
+      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_SET_MONI_IVAL
+      <i><b><br>
 
       </b></i></font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -5043,15 +4668,12 @@ monitoring data <br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -5061,10 +4683,11 @@ monitoring data <br>
     <tr>
 
       <td colspan="4" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Set
-monitoring intervals.&nbsp; Times are in CPU clock ticks (40,000,000
-ticks/sec).&nbsp; HW_Ival is time between hardware records.&nbsp;
+monitoring intervals.&nbsp; Times are in CPU clock ticks
+(40,000,000
+ticks/sec).&nbsp; HW_Ival is time between hardware
+records.&nbsp;
 SW_Ival is time between software config. records.<br>
 
       </b></font></p>
@@ -5073,7 +4696,6 @@ SW_Ival is time between software config. records.<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -5091,30 +4713,25 @@ SW_Ival is time between software config. records.<br>
   <col width="28"> <col width="242"> <col width="130"> <col width="34"> <col width="100"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style=""><br>
 
     </p>
 
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th colspan="2" width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -5126,31 +4743,26 @@ SW_Ival is time between software config. records.<br>
     <tr>
 
       <td sdval="23" sdnum="1033;" width="28">
-      
       <p style="" align="right"> 23</p>
 
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_GET_FB_SERIAL</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
 
       <td valign="top" width="34">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">UB*N </font> </p>
 
       </td>
 
       <td valign="top" width="100">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">Flasher board
 ID</font></p>
 
@@ -5161,7 +4773,6 @@ ID</font></p>
     <tr>
 
       <td colspan="5" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Get
 flasher
 board ID string (currently 27 bytes, but check message data length)</b></font></p>
@@ -5170,7 +4781,6 @@ board ID string (currently 27 bytes, but check message data length)</b></font></
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -5186,25 +4796,21 @@ board ID string (currently 27 bytes, but check message data length)</b></font></
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="width: 130px; text-align: center;">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="text-align: center;">Output</p>
 
     </th>
@@ -5216,7 +4822,6 @@ board ID string (currently 27 bytes, but check message data length)</b></font></
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right">24<br>
 
       </p>
@@ -5224,16 +4829,13 @@ board ID string (currently 27 bytes, but check message data length)</b></font></
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_SET_DATA_FORMAT</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -5250,15 +4852,12 @@ board ID string (currently 27 bytes, but check message data length)</b></font></
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -5268,9 +4867,9 @@ board ID string (currently 27 bytes, but check message data length)</b></font></
     <tr>
 
       <td colspan="4" style="width: 566px; vertical-align: middle; text-align: center;">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Set
-data format (see table in "<a href="#dataformats">DATA FORMATS</a>",
+data format (see table in "<a href="#dataformats">DATA
+FORMATS</a>",
 above).<br>
 
       </b></font></p>
@@ -5279,7 +4878,6 @@ above).<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -5292,25 +4890,21 @@ above).<br>
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="width: 130px; text-align: center;">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="text-align: center;">Output</p>
 
     </th>
@@ -5322,7 +4916,6 @@ above).<br>
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right">25<br>
 
       </p>
@@ -5330,16 +4923,13 @@ above).<br>
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_GET_DATA_FORMAT</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> </p>
 
-      
       <div style="text-align: center;">-<br>
 
       </div>
@@ -5347,10 +4937,8 @@ above).<br>
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -5367,9 +4955,7 @@ above).<br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -5379,7 +4965,6 @@ above).<br>
     <tr>
 
       <td colspan="4" style="width: 566px; vertical-align: middle; text-align: center;">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Get
 data format.<br>
 
@@ -5389,7 +4974,6 @@ data format.<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -5402,25 +4986,21 @@ data format.<br>
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="width: 130px; text-align: center;">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="text-align: center;">Output</p>
 
     </th>
@@ -5432,7 +5012,6 @@ data format.<br>
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right">26<br>
 
       </p>
@@ -5440,16 +5019,13 @@ data format.<br>
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_SET_COMP_MODE</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -5466,15 +5042,12 @@ data format.<br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -5484,9 +5057,9 @@ data format.<br>
     <tr>
 
       <td colspan="4" style="width: 566px; vertical-align: middle; text-align: center;">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Set
-data compression mode (see table in "<a href="#dataformats">DATA FORMATS</a>",
+data compression mode (see table in "<a href="#dataformats">DATA
+FORMATS</a>",
 above).<br>
 
       </b></font></p>
@@ -5495,7 +5068,6 @@ above).<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -5508,25 +5080,21 @@ above).<br>
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="width: 130px; text-align: center;">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="text-align: center;">Output</p>
 
     </th>
@@ -5538,7 +5106,6 @@ above).<br>
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right">27<br>
 
       </p>
@@ -5546,16 +5113,13 @@ above).<br>
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_GET_COMP_MODE</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> </p>
 
-      
       <div style="text-align: center;">-<br>
 
       </div>
@@ -5563,10 +5127,8 @@ above).<br>
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -5583,9 +5145,7 @@ above).<br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -5595,7 +5155,6 @@ above).<br>
     <tr>
 
       <td colspan="4" style="width: 566px; vertical-align: middle; text-align: center;">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Get
 data compression mode.<br>
 
@@ -5605,7 +5164,6 @@ data compression mode.<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -5616,25 +5174,21 @@ data compression mode.<br>
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="width: 130px; text-align: center;">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="text-align: center;">Output</p>
 
     </th>
@@ -5646,7 +5200,6 @@ data compression mode.<br>
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right">28<br>
 
       </p>
@@ -5654,16 +5207,13 @@ data compression mode.<br>
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_GET_SN_DATA</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> </p>
 
-      
       <div style="text-align: center;">-<br>
 
       </div>
@@ -5671,10 +5221,8 @@ data compression mode.<br>
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <div style="text-align: center;">UL*N: data<br>
 
       </div>
@@ -5686,9 +5234,9 @@ data compression mode.<br>
     <tr>
 
       <td colspan="4" style="width: 566px; vertical-align: middle; text-align: center;">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Fetch
-supernova data.&nbsp; </b></font><font style="font-size: 11pt;" size="2"><b>The data are in the form of 32 bit words described</b></font><font style="font-size: 11pt;" size="2"><b> in the <a href="#supernova">supernova
+supernova data.&nbsp; </b></font><font style="font-size: 11pt;" size="2"><b>The data
+are in the form of 32 bit words described</b></font><font style="font-size: 11pt;" size="2"><b> in the <a href="#supernova">supernova
 data</a> section, above.&nbsp; <br>
 
       </b></font></p>
@@ -5697,7 +5245,6 @@ data</a> section, above.&nbsp; <br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -5708,25 +5255,21 @@ data</a> section, above.&nbsp; <br>
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="width: 130px; text-align: center;">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="text-align: center;">Output</p>
 
     </th>
@@ -5738,7 +5281,6 @@ data</a> section, above.&nbsp; <br>
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right">29<br>
 
       </p>
@@ -5746,16 +5288,13 @@ data</a> section, above.&nbsp; <br>
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_RESET_MONI_BUF</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> </p>
 
-      
       <div style="text-align: center;">-<br>
 
       </div>
@@ -5763,10 +5302,8 @@ data</a> section, above.&nbsp; <br>
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <div style="text-align: center;">-<br>
 
       </div>
@@ -5778,7 +5315,6 @@ data</a> section, above.&nbsp; <br>
     <tr>
 
       <td colspan="4" style="width: 566px; vertical-align: middle; text-align: center;">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Reset
 monitoring buffer, eliminating any existing monitoring records<br>
 
@@ -5788,7 +5324,6 @@ monitoring buffer, eliminating any existing monitoring records<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -5799,25 +5334,21 @@ monitoring buffer, eliminating any existing monitoring records<br>
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="width: 130px; text-align: center;">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="text-align: center;">Output</p>
 
     </th>
@@ -5829,7 +5360,6 @@ monitoring buffer, eliminating any existing monitoring records<br>
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right">30<br>
 
       </p>
@@ -5837,16 +5367,13 @@ monitoring buffer, eliminating any existing monitoring records<br>
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_MONI_AVAIL</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> </p>
 
-      
       <div style="text-align: center;">-<br>
 
       </div>
@@ -5854,10 +5381,8 @@ monitoring buffer, eliminating any existing monitoring records<br>
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -5874,9 +5399,7 @@ monitoring buffer, eliminating any existing monitoring records<br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -5886,7 +5409,6 @@ monitoring buffer, eliminating any existing monitoring records<br>
     <tr>
 
       <td colspan="4" style="width: 566px; vertical-align: middle; text-align: center;">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Return
 1 if any monitoring records are available, else 0<br>
 
@@ -5896,10 +5418,8 @@ monitoring buffer, eliminating any existing monitoring records<br>
 
     </tr>
 
-  
   </tbody>
 </table>
-
 
 <a name="DATA_ACC_GET_NUMOVERFLOWS"></a><br>
 
@@ -5908,25 +5428,21 @@ monitoring buffer, eliminating any existing monitoring records<br>
   <thead><tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th style="text-align: center;" width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th style="width: 130px; text-align: center;">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="text-align: center;">Output</p>
 
     </th>
@@ -5938,7 +5454,6 @@ monitoring buffer, eliminating any existing monitoring records<br>
     <tr>
 
       <td sdval="22" sdnum="1033;" width="28">
-      
       <p style="" align="right">31<br>
 
       </p>
@@ -5946,16 +5461,13 @@ monitoring buffer, eliminating any existing monitoring records<br>
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_GET_NUMOVERFLOWS</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> </p>
 
-      
       <div style="text-align: center;">-<br>
 
       </div>
@@ -5963,10 +5475,8 @@ monitoring buffer, eliminating any existing monitoring records<br>
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
 
         <tbody>
@@ -5983,9 +5493,7 @@ monitoring buffer, eliminating any existing monitoring records<br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -5995,7 +5503,6 @@ monitoring buffer, eliminating any existing monitoring records<br>
     <tr>
 
       <td colspan="4" style="width: 566px; vertical-align: middle; text-align: center;">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Returns
 number of overflows since domapp started<br>
 
@@ -6005,13 +5512,202 @@ number of overflows since domapp started<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
 <br>
 
-<p style="margin-bottom: 0in; page-break-before: always;"><b><font size="4">Experiment Control Messages</font> (message type 4):</b></p>
+<a name="DATA_ACC_SET_LBM_BIT_DEPTH"></a><br>
+
+<table style="width: 576px; text-align: left; margin-left: auto; margin-right: auto; page-break-before: auto;" border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
+
+  <thead><tr valign="top">
+
+    <th width="28">
+    <p style="">ID</p>
+
+    </th>
+
+    <th style="text-align: center;" width="242">
+    <p style="">Subtype</p>
+
+    </th>
+
+    <th style="width: 130px; text-align: center;">
+    <p style="">Input</p>
+
+    </th>
+
+    <th width="142">
+    <p style="text-align: center;">Output</p>
+
+    </th>
+
+  </tr>
+
+  </thead> <tbody>
+
+    <tr>
+
+      <td sdval="22" sdnum="1033;" width="28">
+      <p style="" align="right">32<br>
+
+      </p>
+
+      </td>
+
+      <td width="242">
+      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_SET_LBM_BIT_DEPTH</font></p>
+
+      </td>
+
+      <td valign="top" width="130">
+      <p style="" align="center"> </p>
+
+      <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
+
+        <tbody>
+
+          <tr>
+
+            <td style="vertical-align: top;">UB:<br>
+
+            </td>
+
+            <td style="vertical-align: top;">depth<br>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+      </table>
+
+      </td>
+
+      <td valign="top" width="142">
+      <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td colspan="4" style="width: 566px; vertical-align: middle; text-align: center;">
+      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Set bit
+depth in the range 8 to 24; default is 21. &nbsp;Actual LBM size is
+(2**(depth))-1 <br>
+
+      </b></font></p>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<br>
+
+<table style="width: 576px; text-align: left; margin-left: auto; margin-right: auto; page-break-before: auto;" border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
+
+  <thead><tr valign="top">
+
+    <th width="33">
+    <p style="">ID</p>
+
+    </th>
+
+    <th style="text-align: center;" width="242">
+    <p style="">Subtype</p>
+
+    </th>
+
+    <th style="width: 130px; text-align: center;">
+    <p style="">Input</p>
+
+    </th>
+
+    <th width="142">
+    <p style="text-align: center;">Output</p>
+
+    </th>
+
+  </tr>
+
+  </thead> <tbody>
+
+    <tr>
+
+      <td sdval="22" sdnum="1033;" width="28">
+      <p style="" align="right">33<br>
+
+      </p>
+
+      </td>
+
+      <td width="242">
+      <p style="" align="center"> <font style="font-size: 11pt;" size="2">DATA_ACC_GET_LBM_SIZE</font></p>
+
+      </td>
+
+      <td valign="top" width="130">
+      <p style="" align="center"> </p>
+
+      <div style="text-align: center;">-<br>
+
+      </div>
+
+      </td>
+
+      <td valign="top" width="142">
+      <p style="" align="center"> </p>
+
+      <table style="width: 100%; height: 100%;" border="0" bordercolor="#000000" cellpadding="4" cellspacing="0">
+
+        <tbody>
+
+          <tr>
+
+            <td style="vertical-align: top;">UL:<br>
+
+            </td>
+
+            <td style="vertical-align: top;">LBM_size<br>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+      </table>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td colspan="4" style="width: 566px; vertical-align: middle; text-align: center;">
+      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Returns
+actual LBM size, in bytes<br>
+
+      </b></font></p>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<br>
+
+<br>
+
+<p style="margin-bottom: 0in; page-break-before: always;"><b><font size="4">Experiment Control Messages</font> (message
+type 4):</b></p>
 
 <p style="margin-bottom: 0in;">
 <a name="EXPCONTROL_BEGIN_RUN"></a><br>
@@ -6024,25 +5720,21 @@ number of overflows since domapp started<br>
   <col width="28"> <col width="242"> <col width="130"> <col width="142"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -6054,25 +5746,21 @@ number of overflows since domapp started<br>
     <tr>
 
       <td sdval="12" sdnum="1033;" width="28">
-      
       <p style="" align="center"> 12</p>
 
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">EXPCONTROL_BEGIN_RUN</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -6082,18 +5770,15 @@ number of overflows since domapp started<br>
     <tr>
 
       <td colspan="4" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Start
 &ldquo;background&rdquo; data taking</b></font></p>
 
-      
       <p style="" align="left"> </p>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -6109,25 +5794,21 @@ number of overflows since domapp started<br>
   <col width="28"> <col width="242"> <col width="130"> <col width="142"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -6139,25 +5820,21 @@ number of overflows since domapp started<br>
     <tr>
 
       <td sdval="13" sdnum="1033;" width="28">
-      
       <p style="" align="center"> 13</p>
 
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">EXPCONTROL_END_RUN</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -6167,9 +5844,9 @@ number of overflows since domapp started<br>
     <tr>
 
       <td colspan="4" width="566">
-      
       <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Stop
-&ldquo;background&rdquo; data taking.&nbsp; This now works for both flasher runs
+&ldquo;background&rdquo; data taking.&nbsp; This now works
+for both flasher runs
 and "regular" runs<br>
 
       </b></font></p>
@@ -6178,7 +5855,6 @@ and "regular" runs<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -6194,25 +5870,21 @@ and "regular" runs<br>
   <col width="28"> <col width="242"> <col width="130"> <col width="142"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -6223,7 +5895,8 @@ and "regular" runs<br>
 
     <tr>
 
-      <td sdval="13" sdnum="1033;" width="28"> 16<br>
+      <td sdval="13" sdnum="1033;" width="28">
+16<br>
 
       </td>
 
@@ -6232,7 +5905,6 @@ and "regular" runs<br>
       </td>
 
       <td width="130">
-      
       <table style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
 
         <tbody>
@@ -6273,15 +5945,12 @@ and "regular" runs<br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
 
       <td width="142">
-      
       <p style="" align="center"> -<br>
 
       </p>
@@ -6293,13 +5962,14 @@ and "regular" runs<br>
     <tr>
 
       <td colspan="4" width="566">
-      
       <p style="" align="left"> <span style="font-weight: bold;">Collects
-requested number of pedestal events.&nbsp; Failure to do this while HV
+requested number of pedestal events.&nbsp; Failure to do this while
+HV
 is off will result in some level of contamination of real SPE hits from
 the PMT.&nbsp; Arguments are number of triggers to collect for each
 ATWD
-and the FADC (max: 1000 for ATWDs, 2000 for FADC).&nbsp; Message reply
+and the FADC (max: 1000 for ATWDs, 2000 for FADC).&nbsp; Message
+reply
 is sent when pedestals
 are collected.&nbsp; NOTE: #FADC must be &lt;= #ATWD0 + #ATWD1.<br>
 
@@ -6309,7 +5979,6 @@ are collected.&nbsp; NOTE: #FADC must be &lt;= #ATWD0 + #ATWD1.<br>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -6323,25 +5992,21 @@ are collected.&nbsp; NOTE: #FADC must be &lt;= #ATWD0 + #ATWD1.<br>
   <col width="28"> <col width="242"> <col width="130"> <col width="142"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -6353,7 +6018,6 @@ are collected.&nbsp; NOTE: #FADC must be &lt;= #ATWD0 + #ATWD1.<br>
     <tr>
 
       <td sdval="13" sdnum="1033;" width="28">
-      
       <p style="" align="center">19<br>
 
       </p>
@@ -6365,13 +6029,11 @@ are collected.&nbsp; NOTE: #FADC must be &lt;= #ATWD0 + #ATWD1.<br>
       </td>
 
       <td width="130">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
 
       <td valign="top" width="142">
-      
       <table style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
 
         <tbody>
@@ -6412,9 +6074,7 @@ are collected.&nbsp; NOTE: #FADC must be &lt;= #ATWD0 + #ATWD1.<br>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -6424,7 +6084,6 @@ are collected.&nbsp; NOTE: #FADC must be &lt;= #ATWD0 + #ATWD1.<br>
     <tr>
 
       <td colspan="4" width="566">
-      
       <p style="" align="left"> <span style="font-weight: bold;">Reports
 the number of pedestals collected with <a href="#EXPCONTROL_DO_PEDESTAL_COLLECTION">EXPCONTROL_DO_PEDESTAL_COLLECTION</a>,
 above.</span></p>
@@ -6433,7 +6092,6 @@ above.</span></p>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -6445,25 +6103,21 @@ above.</span></p>
   <col width="28"> <col width="242"> <col width="130"> <col width="142"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -6475,7 +6129,6 @@ above.</span></p>
     <tr>
 
       <td sdval="13" sdnum="1033;" width="28">
-      
       <p style="" align="center">20<br>
 
       </p>
@@ -6487,16 +6140,13 @@ above.</span></p>
       </td>
 
       <td width="130">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> </p>
 
-      
       <table style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
 
         <tbody>
@@ -6507,7 +6157,8 @@ above.</span></p>
 
             </small></td>
 
-            <td style="vertical-align: top;"><small>ATWD0 ch 0 pattern<br>
+            <td style="vertical-align: top;"><small>ATWD0
+ch 0 pattern<br>
 
             </small></td>
 
@@ -6517,7 +6168,8 @@ above.</span></p>
 
             <td style="vertical-align: top;"><small>US*128</small></td>
 
-            <td style="vertical-align: top;"><small>ATWD0 ch 1 pattern</small></td>
+            <td style="vertical-align: top;"><small>ATWD0
+ch 1 pattern</small></td>
 
           </tr>
 
@@ -6525,7 +6177,8 @@ above.</span></p>
 
             <td style="vertical-align: top;"><small>US*128</small></td>
 
-            <td style="vertical-align: top;"><small>ATWD0 ch 2 pattern</small></td>
+            <td style="vertical-align: top;"><small>ATWD0
+ch 2 pattern</small></td>
 
           </tr>
 
@@ -6533,7 +6186,8 @@ above.</span></p>
 
             <td style="vertical-align: top;"><small>US*128</small></td>
 
-            <td style="vertical-align: top;"><small>ATWD0 ch 3 pattern</small></td>
+            <td style="vertical-align: top;"><small>ATWD0
+ch 3 pattern</small></td>
 
           </tr>
 
@@ -6541,7 +6195,8 @@ above.</span></p>
 
             <td style="vertical-align: top;"><small>US*128</small></td>
 
-            <td style="vertical-align: top;"><small>ATWD1 ch 0 pattern</small></td>
+            <td style="vertical-align: top;"><small>ATWD1
+ch 0 pattern</small></td>
 
           </tr>
 
@@ -6549,7 +6204,8 @@ above.</span></p>
 
             <td style="vertical-align: top;"><small>US*128</small></td>
 
-            <td style="vertical-align: top;"><small>ATWD1 ch 1 pattern</small></td>
+            <td style="vertical-align: top;"><small>ATWD1
+ch 1 pattern</small></td>
 
           </tr>
 
@@ -6557,7 +6213,8 @@ above.</span></p>
 
             <td style="vertical-align: top;"><small>US*128</small></td>
 
-            <td style="vertical-align: top;"><small>ATWD1 ch 2 pattern</small></td>
+            <td style="vertical-align: top;"><small>ATWD1
+ch 2 pattern</small></td>
 
           </tr>
 
@@ -6565,7 +6222,8 @@ above.</span></p>
 
             <td style="vertical-align: top;"><small>US*128</small></td>
 
-            <td style="vertical-align: top;"><small>ATWD1 ch 3 pattern</small></td>
+            <td style="vertical-align: top;"><small>ATWD1
+ch 3 pattern</small></td>
 
           </tr>
 
@@ -6573,13 +6231,12 @@ above.</span></p>
 
             <td style="vertical-align: top;"><small>US*128</small></td>
 
-            <td style="vertical-align: top;"><small>FADC pattern</small></td>
+            <td style="vertical-align: top;"><small>FADC
+pattern</small></td>
 
           </tr>
 
-        
         </tbody>
-      
       </table>
 
       </td>
@@ -6588,11 +6245,11 @@ above.</span></p>
 
     <tr style="font-weight: bold;">
 
-      <td colspan="4" width="566">Collects the average pedestal pattern</td>
+      <td colspan="4" width="566">Collects the
+average pedestal pattern</td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -6607,29 +6264,24 @@ above.</span></p>
 <center>
 <table style="page-break-before: auto;" border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="576">
 
-  <col width="28"> <col width="242"> <col width="28"> <col width="94">
-  <col width="142"> <thead> <tr valign="top">
+  <col width="28"> <col width="242"> <col width="28"> <col width="94"> <col width="142"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th colspan="2" width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -6641,39 +6293,33 @@ above.</span></p>
     <tr>
 
       <td rowspan="5" sdval="27" sdnum="1033;" width="28">
-      
       <p style="" align="center"> 27</p>
 
       </td>
 
       <td rowspan="5" width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">EXPCONTROL_BEGIN_FB_RUN</font></p>
 
       </td>
 
       <td valign="top" width="28">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">US</font></p>
 
       </td>
 
       <td valign="top" width="94">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">brightness
 (0..127)</font></p>
 
       </td>
 
       <td rowspan="5" valign="top" width="142">
-      
       <p style="" align="center"> <br>
 
       <br>
 
       </p>
 
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -6683,13 +6329,11 @@ above.</span></p>
     <tr valign="top">
 
       <td width="28">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">US</font></p>
 
       </td>
 
       <td width="94">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">window (0..127)</font></p>
 
       </td>
@@ -6699,13 +6343,11 @@ above.</span></p>
     <tr valign="top">
 
       <td width="28">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">S</font></p>
 
       </td>
 
       <td width="94">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">delay (-200..175)</font></p>
 
       </td>
@@ -6715,13 +6357,11 @@ above.</span></p>
     <tr valign="top">
 
       <td width="28">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">US</font></p>
 
       </td>
 
       <td width="94">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">mask</font></p>
 
       </td>
@@ -6731,13 +6371,11 @@ above.</span></p>
     <tr valign="top">
 
       <td width="28">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">US</font></p>
 
       </td>
 
       <td width="94">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">rate</font></p>
 
       </td>
@@ -6747,19 +6385,19 @@ above.</span></p>
     <tr>
 
       <td colspan="5" width="566">
-      
-      <p style="margin-left: 0.35in;" align="left"> <font style="font-size: 11pt;" size="2"><b>Starts a
+      <p style="margin-left: 0.35in;" align="left"><font style="font-size: 11pt;" size="2"><b>Starts
+a
 flasher board run. High voltage must be off and no run in progress.
 Units for Window are roughly nsec. Delay is time difference between LED
 trigger and ATWD launch (nsec). Mask selects which LEDs to flash (bit 0
--&gt; LED 1; bit 11 -&gt; LED 12). Rate is the actual flashing rate in
+-&gt; LED 1; bit 11 -&gt; LED 12). Rate is the actual flashing
+rate in
 Hz, max. value 610.</b></font></p>
 
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -6775,25 +6413,21 @@ Hz, max. value 610.</b></font></p>
   <col width="28"> <col width="242"> <col width="130"> <col width="142"> <thead> <tr valign="top">
 
     <th width="28">
-    
     <p style="">ID</p>
 
     </th>
 
     <th width="242">
-    
     <p style="">Subtype</p>
 
     </th>
 
     <th width="130">
-    
     <p style="">Input</p>
 
     </th>
 
     <th width="142">
-    
     <p style="">Output</p>
 
     </th>
@@ -6805,25 +6439,21 @@ Hz, max. value 610.</b></font></p>
     <tr>
 
       <td sdval="28" sdnum="1033;" width="28">
-      
       <p style="" align="center"> 28</p>
 
       </td>
 
       <td width="242">
-      
       <p style="" align="center"> <font style="font-size: 11pt;" size="2">EXPCONTROL_END_FB_RUN</font></p>
 
       </td>
 
       <td valign="top" width="130">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
 
       <td valign="top" width="142">
-      
       <p style="" align="center"> <font style="font-size: 9pt;" size="2">-</font></p>
 
       </td>
@@ -6832,13 +6462,13 @@ Hz, max. value 610.</b></font></p>
 
     <tr>
 
-      <td colspan="4" width="566"><font style="font-size: 11pt;" size="2"><b>Stop flasher
+      <td colspan="4" width="566"><font style="font-size: 11pt;" size="2"><b>Stop
+flasher
 board run.&nbsp; Equivalent to <a href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>.</b></font>
       </td>
 
     </tr>
 
-  
   </tbody>
 </table>
 
@@ -6851,14 +6481,16 @@ board run.&nbsp; Equivalent to <a href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN<
 <p style="margin-bottom: 0in; page-break-before: auto;">
 </p>
 
-<h2><big><a name="differences"></a>DIFFERENCES BETWEEN DOMAPP AND
+<h2><big><a name="differences"></a>DIFFERENCES
+BETWEEN DOMAPP AND
 TESTDOMAPP<br>
 
 </big></h2>
 
 <ul>
 
-  <li><span style="font-weight: bold;">Test pattern data is not
+  <li><span style="font-weight: bold;">Test pattern
+data is not
 supported</span> by
 the DOMAPP FPGA.</li>
 
@@ -6871,64 +6503,85 @@ just required as in the Test FPGA).</li>
   <li><font style="font-size: 11pt;" size="2"><span style="font-weight: bold;">DATA_ACC_RESET_LBM removed</span>.&nbsp;
 This is now done when starting a data taking run (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>)</font></li>
 
-  <li><font style="font-size: 11pt;" size="2"><span style="font-weight: bold;">"Heartbeat events"</span> are now
+  <li><font style="font-size: 11pt;" size="2"><span style="font-weight: bold;">"Heartbeat events"</span>
+are now
 interleaved with SPE triggers to aid in upstream Splicer-type
-operation.&nbsp; The heartbeat events are "Forced Triggers" (formerly
+operation.&nbsp; The heartbeat events are "Forced Triggers"
+(formerly
 known as CPU triggers) and can also be used to form a running pedestal
 average for each ATWD/FADC channel (though some small fraction of SPE
 waveforms may be present).<br>
 
     </font></li>
 
-  <li><span style="font-weight: bold;">Front end pulser can only be
+  <li><span style="font-weight: bold;">Front end
+pulser can only be
 started before the run starts</span>, and <span style="font-weight: bold;"> can only be used in
 trigger mode 2</span> (SPE data).</li>
 
-  <li><font style="font-size: 11pt;" size="2"><span style="font-weight: bold;">Pulser rate is now relevant even if pulser
+  <li><font style="font-size: 11pt;" size="2"><span style="font-weight: bold;">Pulser rate is now relevant even
+if pulser
 is off!&nbsp; If the pulser is off, the rate is the heartbeat event
-rate.</span>&nbsp; <span style="font-weight: bold;">THE DEFAULT RATE
-IS 1 HZ.</span>&nbsp; If the FE pulser is on, the rate is the FE pulser
-rate.&nbsp; This is because both the heartbeat events and the pulser
+rate.</span>&nbsp; <span style="font-weight: bold;">THE
+DEFAULT RATE
+IS 1 HZ.</span>&nbsp; If the FE pulser is on, the rate is the
+FE pulser
+rate.&nbsp; This is because both the heartbeat events and the
+pulser
 events are considered by Thorsten's FPGA design to be calibration
 sources and there is only one rate control.</font></li>
 
-  <li><font style="font-size: 11pt;" size="2">Triggering in the DOM is
-now <span style="font-weight: bold;">disabled </span>momentarily when
+  <li><font style="font-size: 11pt;" size="2">Triggering
+in the DOM is
+now <span style="font-weight: bold;">disabled </span>momentarily
+when
 the PMT High Voltage is read out.</font></li>
 
-  <li><font style="font-size: 11pt;" size="2">Scaler readouts now have
+  <li><font style="font-size: 11pt;" size="2">Scaler
+readouts now have
 ONE SECOND COVERAGE (not 9/10ths of a second) and are spaced by a
 minimum of 40,000,000 + 100 clock
 ticks to avoid duplication of values.</font></li>
 
   <li><font style="font-size: 11pt;" size="2">Data
 formats/compression: software compression not implemented (yet).</font><font style="font-size: 11pt;" size="2">&nbsp; <span style="font-family: courier new,courier,monospace;"></span></font><font style="font-size: 11pt;" size="2"><span style="font-family: courier new,courier,monospace;">DATA_ACCESS</span>
-software compression messages are<span style="font-family: courier new,courier,monospace;"></span></font><span style="font-family: courier new,courier,monospace;"></span><span style="font-family: courier new,courier,monospace;"></span><font style="font-size: 11pt;" size="2"> no longer implemented.&nbsp;<span style="font-weight: bold;"> See "<a href="api.html#dataformats">DATA
+software compression messages are<span style="font-family: courier new,courier,monospace;"></span></font><span style="font-family: courier new,courier,monospace;"></span><span style="font-family: courier new,courier,monospace;"></span><font style="font-size: 11pt;" size="2"> no longer
+implemented.&nbsp;<span style="font-weight: bold;">
+See "<a href="api.html#dataformats">DATA
 FORMATS</a>"
 below</span>
 for current treatment of data compression and data formats.</font></li>
 
-  <li><font style="font-size: 11pt;" size="2">In general, domapp tries
+  <li><font style="font-size: 11pt;" size="2">In
+general, domapp tries
 to log exceptions in the ASCII monitoring messages.&nbsp; Any
 investigation into unexpected problems in DOM operation should include
-an examination of the DOM monitoring stream, e.g. with the </font><font style="font-size: 11pt;" size="2"><span style="font-family: monospace;">decodemoni</span></font><font style="font-size: 11pt;" size="2"> tool in the domhub-tools project.</font></li>
+an examination of the DOM monitoring stream, e.g. with the </font><font style="font-size: 11pt;" size="2"><span style="font-family: monospace;">decodemoni</span></font><font style="font-size: 11pt;" size="2"> tool in the
+domhub-tools project.</font></li>
 
   <li><font style="font-size: 11pt;" size="2"><span style="font-weight: bold;">DIFFERENCES IN LOCAL COINCIDENCE</span>:&nbsp;
-In general, using just </font><font style="color: rgb(0, 0, 0);" size="3"><span style=""><span style="font-style: normal;"><font style="font-size: 11pt; color: rgb(153, 153, 153);" size="2"><a href="api.html#DSC_SET_LOCAL_COIN_MODE">SET_LOCAL_COIN_MODE</a> <span style="color: rgb(0, 0, 0);">and </span><a href="api.html#DSC_SET_LOCAL_COIN_WINDOW"><span style="color: rgb(0, 0, 0);">DSC</span>_SET_LOCAL_COIN_WINDOW</a> <span style="color: rgb(0, 0, 0);">will work as in testdomapp, except that
+In general, using just </font><font style="color: rgb(0, 0, 0);" size="3"><span style=""><span style="font-style: normal;"><font style="font-size: 11pt; color: rgb(153, 153, 153);" size="2"><a href="api.html#DSC_SET_LOCAL_COIN_MODE">SET_LOCAL_COIN_MODE</a>
+    <span style="color: rgb(0, 0, 0);">and </span><a href="api.html#DSC_SET_LOCAL_COIN_WINDOW"><span style="color: rgb(0, 0, 0);">DSC</span>_SET_LOCAL_COIN_WINDOW</a>
+    <span style="color: rgb(0, 0, 0);">will work as in
+testdomapp, except that
 there are only two LC windows instead of four, and also one has new
 functionality (e.g., soft or flabby local coincidence) as defined by </span><a style="color: rgb(0, 0, 0);" href="api.html#DSC_SET_LC_TYPE">DSC_SET_LC_TYPE</a><span style="color: rgb(0, 0, 0);">,&nbsp; </span><a style="color: rgb(0, 0, 0);" href="api.html#DSC_SET_LC_TX">DSC_SET_LC_TX</a><span style="color: rgb(0, 0, 0);">, </span><a style="color: rgb(0, 0, 0);" href="api.html#DSC_SET_LC_SRC">DSC_SET_LC_SRC</a><span style="color: rgb(0, 0, 0);">, </span><a style="color: rgb(0, 0, 0);" href="api.html#DSC_SET_LC_SPAN">DSC_SET_LC_SPAN</a><span style="color: rgb(0, 0, 0);">, and</span> <a href="api.html#DSC_SET_LC_CABLE_LEN">DSC_SET_LC_CABLE_LEN</a>.</font></span></span></font></li>
 
-  <li><font style="color: rgb(0, 0, 0);" size="3"><span style=""><span style="font-style: normal;"><font style="font-size: 11pt; color: rgb(153, 153, 153);" size="2"><span style="color: rgb(0, 0, 0);">Analog MUX is disabled at startup.&nbsp; <a href="#DSC_MUX_SELECT">DSC_MUX_SELECT</a> selects which channel should
+  <li><font style="color: rgb(0, 0, 0);" size="3"><span style=""><span style="font-style: normal;"><font style="font-size: 11pt; color: rgb(153, 153, 153);" size="2"><span style="color: rgb(0, 0, 0);">Analog MUX is disabled at
+startup.&nbsp; <a href="#DSC_MUX_SELECT">DSC_MUX_SELECT</a>
+selects which channel should
 be enabled, but a value of 0xFF (255) now DISABLES the analog MUX
 explicitly.</span></font></span></span></font></li>
 
   <li><font style="color: rgb(0, 0, 0);" size="3"><span style=""><span style="font-style: normal;"><font style="font-size: 11pt; color: rgb(153, 153, 153);" size="2"><span style="color: rgb(0, 0, 0);">EXPCONTROL_FORCE_RUN_RESET is
 removed.&nbsp; Use <a href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>.</span></font></span></span></font></li>
 
-  <li><font style="font-size: 11pt;" size="2"><a href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a> message
+  <li><font style="font-size: 11pt;" size="2"><a href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a>
+message
 was added.</font></li>
 
-  <li><font style="font-size: 11pt;" size="2"><a href="#DATA_ACC_MONI_AVAIL">DATA_ACC_MONI_AVAIL</a> message was added.<br>
+  <li><font style="font-size: 11pt;" size="2"><a href="#DATA_ACC_MONI_AVAIL">DATA_ACC_MONI_AVAIL</a>
+message was added.<br>
 
     </font></li>
 
