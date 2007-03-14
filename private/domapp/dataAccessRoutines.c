@@ -33,6 +33,7 @@ extern UBYTE SNRequestMode;
 extern unsigned SNRequestDeadTime;
 extern int SNRequested;
 extern int numOverflows;
+extern unsigned long sw_lbm_mask;
 
 /* LC mode, defined via slow control */
 extern UBYTE LCmode;
@@ -331,7 +332,7 @@ inline static unsigned nextValidBlock(unsigned ptr) {
 
 static int haveOverflow(unsigned lbmp) {
   //if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > WHOLE_LBM_MASK ) {
-  if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > SW_LBM_MASK ) {
+  if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > sw_lbm_mask) {
     mprintf("LBM OVERFLOW!!! hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
 	    hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
     numOverflows++;

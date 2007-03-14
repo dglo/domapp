@@ -23,8 +23,10 @@ enum {
 /* LBM stuff */
 #define FPGA_DOMAPP_LBM_BLOCKSIZE 2048 /* BYTES not words */
 #define FPGA_DOMAPP_LBM_BLOCKMASK (FPGA_DOMAPP_LBM_BLOCKSIZE-1)
-#define WHOLE_LBM_MASK ((1<<24)-1)
-#define SW_LBM_MASK ((1<<21)-1) /* Throttle back lookback memory to prevent floods of data in DAQ */
+#define MIN_LBM_BIT_DEPTH     8        /* This is somewhat arbitrary */
+#define DEFAULT_LBM_BIT_DEPTH 21       /* 2MB */
+#define ACTUAL_LBM_BIT_DEPTH  24       /* Size is 2**24-1 = 16MB */
+#define WHOLE_LBM_MASK ((1<<ACTUAL_LBM_BIT_DEPTH)-1)
 
 struct tstevt {
   unsigned short tlo;

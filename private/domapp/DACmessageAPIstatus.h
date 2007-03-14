@@ -50,6 +50,8 @@
 #define DATA_ACC_RESET_MONI_BUF    29
 #define DATA_ACC_MONI_AVAIL        30
 #define DATA_ACC_GET_NUMOVERFLOWS  31
+#define DATA_ACC_SET_LBM_BIT_DEPTH 32
+#define DATA_ACC_GET_LBM_SIZE      33
 
 // define service specific error values
 #define DAC_Data_Overrun        4
@@ -61,6 +63,7 @@
 #define DAC_Cant_Get_FB_Serial 10
 #define DAC_Cant_Enable_FB     11
 #define DAC_SN_Not_Running     12
+#define DAC_Bad_Lbm_Depth      13
 
 #define	DAC_ACC_DATA_AVAIL_LEN 1
 

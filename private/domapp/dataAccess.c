@@ -50,6 +50,8 @@ int FPGA_ATWD_select    = 0;
 int SW_compression      = 0;
 int SW_compression_fmt  = 0;
 int numOverflows        = 0;
+unsigned long sw_lbm_mask = (1<<DEFAULT_LBM_BIT_DEPTH)-1;
+
 /* Format masks: default, and configured by request */
 #define DEF_FADC_SAMP_CNT  255
 #define DEF_ATWD01_MASK    0xFF
@@ -395,6 +397,23 @@ void dataAccess(MESSAGE_STRUCT *M) {
 
     case DATA_ACC_GET_NUMOVERFLOWS:
       formatLong(numOverflows, data);
+      Message_setDataLen(M, 4);
+      Message_setStatus(M, SUCCESS);
+      break;
+
+    case DATA_ACC_SET_LBM_BIT_DEPTH:
+      {
+	unsigned char bits = data[0];
+	if(bits < MIN_LBM_BIT_DEPTH || bits > ACTUAL_LBM_BIT_DEPTH) {
+	  DOERROR(DAC_BAD_LBM_DEPTH, DAC_Bad_Lbm_Depth, WARNING_ERROR);
+	  break;
+	}
+	sw_lbm_mask = (1<<bits)-1;
+      }
+      break;
+
+    case DATA_ACC_GET_LBM_SIZE:
+      formatLong(sw_lbm_mask+1, data);
       Message_setDataLen(M, 4);
       Message_setStatus(M, SUCCESS);
       break;
