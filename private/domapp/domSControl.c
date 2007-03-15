@@ -570,6 +570,7 @@ void domSControl(MESSAGE_STRUCT *M) {
       } else {
 	deadTime = dt;
 	hal_FPGA_DOMAPP_rate_monitor_deadtime((int)deadTime);
+	mprintf("Set scaler deadtime to %d nsec.", dt);
 	Message_setDataLen(M,0);
 	Message_setStatus(M,SUCCESS);
       }
