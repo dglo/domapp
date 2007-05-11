@@ -563,13 +563,37 @@ int sim_hal_FPGA_DOMAPP_sn_event(SNEvent *evt) {
 #  define sn_event hal_FPGA_DOMAPP_sn_event
 #endif
 
+extern unsigned long hal_get_interrupt_enables(void);
+
+int checkTime(unsigned long long t, unsigned long long tblock,
+	      unsigned long long * tprev, unsigned dt) {
+  static int virgin = 1;
+  if(virgin) { virgin = 0; *tprev = t; return 0; }
+  int err = 0;
+  char * why = "";
+  if(((long long) t) - ((long long) *tprev) > dt) { /* Gap in time */
+    why = "SN time gap";
+    err = 1;
+  } else if(((long long) t) - ((long long) *tprev) < dt) { /* Time too short or out of order */
+    why = "SN time out of order: ";
+    err = 1;
+  }
+  if(err) {
+    mprintf("%s: t=%lu tprev=%lu tblock=%lu dt=%ld dtblock=%ld irqEnable=%lx", why,
+	    (unsigned long) t, (unsigned long) *tprev, (unsigned long) tblock, 
+	    (long) (t-*tprev), (long) (t-tblock), FPGA(INT_EN));
+  }
+  *tprev = t;
+  return err;
+}
+
 int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
   UBYTE *p  = msgBuffer;
   UBYTE *p0 = msgBuffer;
   static SNEvent sn;
   static SNEvent * psn = &sn;
   static int saved_bin = 0;
-
+  static unsigned long long tprev = 0;
   p += 2; // Skip length portion, fill later
   formatShort(300, p); // Add format ID
   p += 2;
@@ -578,9 +602,7 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
 # define STD_DT 65536
 # define bytelimit(counts) ((unsigned char) ((counts) > 255 ? 255 : (counts)))
 
-  if(saved_bin) {
-    saved_bin = 0;
-  } else {
+  if(!saved_bin) {
     if(!sn_ready()) {
       return 0;
     }
@@ -591,6 +613,11 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
 
   /* By now, psn is either our saved_bin or a new event */
   unsigned long long t0 = psn->ticks;
+  if(saved_bin) {
+    saved_bin = 0;
+  } else {
+    checkTime(t0, t0, &tprev, STD_DT);
+  }
   p    = TimeMove(p, t0);
   *p++ = bytelimit(psn->counts);
 
@@ -602,11 +629,10 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
     if(sn_event(psn)) {
       mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed (HAL overflow)!");
     }
-    if((psn->ticks - t0) != STD_DT) {
+    if(checkTime(psn->ticks, t0, &tprev, STD_DT)) {
       saved_bin = 1;
       break;
-    }
-    t0 = psn->ticks;
+    }      
     *p++ = bytelimit(psn->counts);
   }
 
