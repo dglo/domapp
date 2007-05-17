@@ -104,7 +104,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
     struct moniRec aMoniRec;
     int total_moni_len, moniBytes, len;
     int config, valid, reset; /* For hal_FB_enable */
-    int wasEnabled, ichip, ich;
+    int wasEnabled;
     /* get address of data portion. */
     /* Receiver ALWAYS links a message */
     /* to a valid data buffer-even */ 
@@ -298,36 +298,6 @@ void dataAccess(MESSAGE_STRUCT *M) {
       initFormatEngineeringEvent(data[0], data[1], data[2]);
       break;
     
-    case DATA_ACC_SET_BASELINE_THRESHOLD:
-      fadcRGthresh = unformatShort(data);
-      hal_FPGA_DOMAPP_RG_fadc_threshold(fadcRGthresh);
-      for(ichip=0;ichip<2;ichip++) {
-	for(ich=0; ich<4; ich++) {
-	  atwdRGthresh[ichip][ich] = unformatShort(data + 2 + ichip*8 + ich*2);
-	  hal_FPGA_DOMAPP_RG_atwd_threshold((short) ichip, (short) ich, 
-					    (short) atwdRGthresh[ichip][ich]);
-	}
-      }
-      Message_setDataLen(M, 0);
-      Message_setStatus(M, SUCCESS);
-      break;
-
-    case DATA_ACC_GET_BASELINE_THRESHOLD:
-      formatShort(fadcRGthresh, data); 
-      for(ichip=0;ichip<2;ichip++) {
-        for(ich=0; ich<4; ich++) {
-          formatShort(atwdRGthresh[ichip][ich], 
-                      data // base pointer
-                      + 2  // skip fadc value
-                      + ichip*8 // ATWD0 or 1
-                      + ich*2   // select channel
-                      );
-        }
-      }
-      Message_setDataLen(M, 18);
-      Message_setStatus(M, SUCCESS);
-      break;
-
     case DATA_ACC_SET_DATA_FORMAT:
       if(data[0] != FMT_ENG && data[0] != FMT_RG && data[0] != FMT_DELTA) {
 	DOERROR(DAC_ERS_BAD_ARGUMENT, DAC_Bad_Argument, SEVERE_ERROR);

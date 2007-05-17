@@ -265,8 +265,10 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
     hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_OFF);
     break;
   case CMP_DELTA:
-    hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_NORMAL);
+    hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_BEACON);
     hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_ON);
+    hal_FPGA_DOMAPP_set_delta_compression_lowgain_allbeacon();
+    /* mprintf("beginRun: COMP_CONTROL=0x%08x DAQ=0x%08x", FPGA(COMP_CONTROL), FPGA(DAQ)); */
     break;
   default:
     mprintf("beginRun: ERROR: invalid compression mode given (%d)", (int) compressionMode);
