@@ -347,6 +347,13 @@ inline int engEventSize(void) { return 1550; } // Make this smarter
 
 inline int deltaEventSize(void) { return engEventSize(); } // Make this MUCH smarter
 
+void mDumpEngHeader(struct tstevt * hdr) {
+    mprintf("tlo=0x%04x lbmp=0x%08lx hal_lbm=0x%08lx "
+	    "thi=0x%08lx trig=0x%08lx tdead=0x%04x",
+	    hdr->tlo, lbmp, hal_FPGA_DOMAPP_lbm_pointer(), 
+	    hdr->thi, hdr->trigbits, hdr->tdead);
+}
+  
 int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   unsigned char * e = lbmEvent(lbmp);
   unsigned char * m0 = msgp;
@@ -371,12 +378,8 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   
   unsigned atwdsize = (hdr->trigbits>>19)&0x3;
   if(atwdsize != 3) {
-    mprintf("WARNING: formatDomappEngEvent, trigger bits indicate ATWD size(%u) != 3... "
-	    "stamp 0x%04lx%08lx  tlo=0x%04x lbmp=0x%08lx hal_lbm=0x%08lx "
-	    "thi=0x%08lx trig=0x%08lx tdead=0x%04x",
-	    atwdsize, (unsigned long) ((stamp>>32)&0xFFFFFFFF), 
-	    (unsigned long) (stamp&0xFFFFFFFF), hdr->tlo, lbmp, 
-	    hal_FPGA_DOMAPP_lbm_pointer(), hdr->thi, hdr->trigbits, hdr->tdead);
+    mprintf("WARNING: formatDomappEngEvent, trigger bits indicate ATWD size(%u) != 3... ", atwdsize);
+    mDumpEngHeader(hdr);
   }
 
   // Skip over length
@@ -404,6 +407,7 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
       hadWarning++;
       mprintf("WARNING: formatDomappEngEvent: Disallowed source bits from trigger "
 	      "info in event (source=0x%04x)", source);
+      mDumpEngHeader(hdr);
     }
     trigmask = TRIG_UNKNOWN_MODE;
   }
@@ -422,6 +426,7 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
     msgp = FADCMove((USHORT *) (e+0x10), msgp, (int) FlashADCLen);
   } else {
     mprintf("WARNING: FADC data MISSING from raw event!!!");
+    mDumpEngHeader(hdr);
   }
 
   if(hdr->trigbits & 1<<18) {
@@ -431,6 +436,7 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
     }
   } else {
     mprintf("WARNING: ATWD data MISSING from raw event!!!");
+    mDumpEngHeader(hdr);
   }
 
   int nbytes = msgp-m0;
