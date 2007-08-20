@@ -237,7 +237,7 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   hitCounter    = 0;
 
   if(DOM_state!=DOM_IDLE) {
-    mprintf("beginRun: ERROR: DOM not in idle state, DOM_state=%d", DOM_IDLE);
+    mprintf("beginRun: ERROR: DOM not in idle state (%d), DOM_state=%d", DOM_IDLE, DOM_state);
     return FALSE;
   }
   if(newRunState != DOM_RUN_IN_PROGRESS && newRunState != DOM_FB_RUN_IN_PROGRESS) {

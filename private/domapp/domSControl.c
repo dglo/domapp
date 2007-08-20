@@ -61,8 +61,8 @@ typedef enum {
   LC_MODE_BOTH        = 1,
   LC_MODE_UP          = 2,
   LC_MODE_DN          = 3,
-  LC_MODE_SLC_ONLY    = 4,
-  LC_MODE_UP_AND_DOWN = 5,
+  LC_MODE_UP_AND_DOWN = 4,
+  LC_MODE_SLC_ONLY    = 5,
 } LC_MODE_T;
 #define MAX_LC_MODE LC_MODE_UP_AND_DOWN /* Must agree with highest LC_MODE_T */
 
