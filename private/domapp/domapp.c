@@ -2,8 +2,8 @@
   domapp - IceCube DOM Application program for use with 
            "Real"/"domapp" FPGA
            J. Jacobsen (jacobsen@npxdesigns.com), Chuck McParland
-  $Date: 2005-12-23 21:08:42 $
-  $Revision: 1.35 $
+  $Date: 2007-08-08 19:19:11 $
+  $Revision: 1.35.4.4 $
 */
 
 #include <unistd.h> /* Needed for read/write */
@@ -46,7 +46,7 @@ ULONG IDMismatch;
 ULONG CRCproblem;
 
 /* Monitoring buffer, static allocation: */
-UBYTE monibuf[MONI_CIRCBUF_RECS * MONI_REC_SIZE];
+UBYTE monibuf[MONI_CIRCBUF_RECS * sizeof(struct moniRec)];
 
 char halmsg[MAX_TOTAL_MESSAGE];
 int  halmsg_remain = 0;
@@ -54,10 +54,10 @@ int  halmsg_remain = 0;
 int main(void) {
   char message[MAX_TOTAL_MESSAGE];
 
-  unsigned long long t_hw_last, t_cf_last, tcur;
-  unsigned long long moni_hardware_interval, moni_config_interval;
+  unsigned long long t_hw_last, t_cf_last, t_fa_last, tcur;
+  unsigned long long moni_hardware_interval, moni_config_interval, moni_fast_interval;
 
-  t_hw_last = t_cf_last = hal_FPGA_DOMAPP_get_local_clock();
+  t_hw_last = t_cf_last = t_fa_last = hal_FPGA_DOMAPP_get_local_clock();
 
   /* Start up monitoring system -- do this before other *Init()'s because
      they may want to insert monitoring information */
@@ -85,12 +85,15 @@ int main(void) {
     /* Guarantee that the HW monitoring records occur no faster than at a
        rate specified by MIN_HW_IVAL -- this guarantees a unique SPE/MPE measurement
        each record: */
-    moni_hardware_interval = moniGetHdwrIval();
-    if(moni_hardware_interval < MIN_HW_IVAL) moni_hardware_interval = MIN_HW_IVAL;
     moni_config_interval = moniGetConfIval();
+    moni_fast_interval   = moniGetFastIval();
+    moni_hardware_interval = moniGetHdwrIval();
+    if(moni_hardware_interval > 0 && moni_hardware_interval < MIN_HW_IVAL) 
+      moni_hardware_interval = MIN_HW_IVAL;
 
     long long dthw = tcur-t_hw_last;    
     long long dtcf = tcur-t_cf_last;
+    long long dtfa = tcur-t_fa_last;
 
     /* Hardware monitoring */
     if(   moni_hardware_interval > 0 
@@ -110,6 +113,16 @@ int main(void) {
     if(moni_config_interval > 0 && (dtcf < 0 || dtcf > moni_config_interval)) {
       moniInsertConfigStateMessage(tcur);
       t_cf_last = tcur;
+    }
+
+    /* "Fast" monitoring record */
+    if(moni_fast_interval > 0 && (dtfa < 0 || dtfa > moni_fast_interval)) {
+      mprintf("F %d %d %d %d", 
+	      hal_FPGA_DOMAPP_spe_rate_immediate(),
+	      hal_FPGA_DOMAPP_mpe_rate_immediate(), 
+	      getLastHitCount(), 
+	      hal_FPGA_DOMAPP_deadtime_immediate());
+      t_fa_last = tcur;
     }
 
     /* Check for new message */

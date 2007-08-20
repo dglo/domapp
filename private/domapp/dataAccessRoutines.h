@@ -46,6 +46,8 @@ int  beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window,
 		short delay, USHORT mask, USHORT rate);
 int  endRun(void);
 int  endFBRun(void);
+unsigned getLastHitCount(void);
+unsigned getLastHitCountNoReset(void);
 
 USHORT domappReadBaseADC(void);
 unsigned long long domappHVSerialRaw(void);

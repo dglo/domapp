@@ -28,6 +28,8 @@
 #include "dataAccessRoutines.h"
 #include "domSControl.h"
 
+#include <stdio.h>
+
 /* extern functions */
 extern void formatLong(ULONG value, UBYTE *buf);
 extern UBYTE   compMode;
@@ -59,7 +61,7 @@ USHORT fadcdata[FADCSIZ];
 #define ATWD_TIMEOUT_COUNT 4000
 #define ATWD_TIMEOUT_USEC 5
 
-void zeroPedestals() {
+void zeroPedestals(void) {
   memset((void *) fadcpedsum, 0, FADCSIZ * sizeof(ULONG));
   memset((void *) fadcpedavg, 0, FADCSIZ * sizeof(USHORT));
   memset((void *) atwdpedsum, 0, 2*4*ATWDCHSIZ*sizeof(ULONG));
@@ -114,6 +116,27 @@ void zeroLBM(void) {
   memset(hal_FPGA_DOMAPP_lbm_address(), 0, WHOLE_LBM_MASK+1);
 }
 
+void moniATWDPeds(int iatwd, int ich, int ntrials, int pavg, USHORT * avgs) {
+  /* Put ASCII record of pedestals used into monitoring stream.
+     There will be 8 records in all (2 ATWDs x 4 channels)
+     Pedestal pattern occupies up to N slots in the form "1024 " (4 digits + space) 
+     N = 128 * 5 = 640 */
+
+  unsigned char   pedstr[MAXMONI_DATA];
+  unsigned char * this = pedstr;
+
+  int is; 
+
+  this += snprintf(this, MAXMONI_DATA-((int) (this-pedstr)), 
+		   "PED-ATWD %c CH %d--%d trials, bias %d:",
+		   'A'+iatwd, ich, ntrials, pavg);
+
+  for(is = 0; is < ATWDCHSIZ; is++) {
+    this += snprintf(this, MAXMONI_DATA-((int) (this-pedstr)), " %hd", avgs[is]);
+    if(((int) (this-pedstr)) >= MAXMONI_DATA) break; /* Should never happen */
+  }
+  mprintf(pedstr);
+}
 
 int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
   /* return 0 if pedestal run succeeds, else error */
@@ -274,6 +297,7 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
       for (i = 0; i < ATWDCHSIZ; i++) atwdpedavg[iatwd][ich][i] -= pavg;
       /* Program ATWD pedestal pattern into FPGA */
       hal_FPGA_DOMAPP_pedestal(iatwd, ich, atwdpedavg[iatwd][ich]);
+      moniATWDPeds(iatwd, ich, npeds, pavg, atwdpedavg[iatwd][ich]);
     }
     
     
@@ -509,7 +533,7 @@ void expControl(MESSAGE_STRUCT *M) {
         break;
       }
 #endif
-      
+
       Message_setDataLen(M,0);
       Message_setStatus(M,SUCCESS);
       break;

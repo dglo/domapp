@@ -3,15 +3,26 @@
  * Part of dataAccess thread
  * John Jacobsen, jacobsen@npxdesigns.com, for LBNL
  * May, 2003
- * $Id: moniDataAccess.h,v 1.7 2005-06-20 15:40:46 jacobsen Exp $
+ * $Id: moniDataAccess.h,v 1.7.4.6 2007-08-08 19:19:11 jacobsen Exp $
  */
 
 #ifndef _MONI_DATA_ACCESS_
 #define _MONI_DATA_ACCESS_
 
 #define MONI_TIME_LEN 6
-#define MAXMONI_RECSIZE 512
+#define MAXMONI_RECSIZE 1024
 #define MAXMONI_DATA MAXMONI_RECSIZE-4-MONI_TIME_LEN 
+
+struct moniRec {
+  USHORT dataLen;    /* Number of bytes in data portion */
+  UBYTE moniEvtType; /* One of MONI_TYPE... */
+  UBYTE spare;       /* For alignment */
+  unsigned long long time; /* Make this explicitly 64 bits; use only 48 */
+  UBYTE data[MAXMONI_DATA];  /* Payload data */
+};
+
+/* IMPORTANT NOTE: all data structs to be put in the data portion of monitor
+   records MUST be less than MAXMONI_DATA bytes in length!!! */
 
 #define HARDWARE_STATE_EVENT_VERSION 0x01
 
@@ -27,26 +38,6 @@
 #ifndef FPGA_HAL_TICKS_PER_SEC 
 #define FPGA_HAL_TICKS_PER_SEC 40000000
 #endif
-
-struct moniRec {
-  USHORT dataLen;    /* Number of bytes in data portion */
-
-  union {   /* 2-byte Fiducial indicating event type */
-    struct FID {
-      UBYTE moniEvtType; /* One of MONI_TYPE... */
-      UBYTE spare;
-    } fstruct;
-    USHORT fshort;
-  } fiducial;
-
-  unsigned long long time; /* Make this explicitly 64 bits; use only 48 */
-  /* UBYTE time[MONI_TIME_LEN]; */   /* time tag */
-  UBYTE data[MAXMONI_DATA];  /* Payload data */
-};
-
-
-/* IMPORTANT NOTE: all data structs to be put in the data portion of monitor
-   records MUST be less than MAXMONI_DATA bytes in length!!! */
 
 struct moniConfig {
   /* ALL SHORT FIELDS MUST BE FILLED BIG-ENDIAN!!! i.e. use moniBEShort() */
@@ -107,15 +98,12 @@ struct moniHardware {
   ULONG  MPE_RATE;
 };
 
-#define MONI_REC_SIZE (MAXMONI_DATA + sizeof(USHORT)*2)
-
 /** The circular buffer will be 
-   MONI_CIRCBUF_RECS * MONI_REC_SIZE bytes.
+   MONI_CIRCBUF_RECS * sizeof(struct moniRec) bytes.
    MUST BE POWER OF TWO!!! */
 #define MONI_CIRCBUF_RECS 1024
 
 #define MONI_MASK (MONI_CIRCBUF_RECS-1)
-
 
 /* Return type for consumer function */
 typedef enum {
@@ -123,7 +111,8 @@ typedef enum {
   MONI_NODATA   = 2,
   MONI_WRAPPED  = 3,
   MONI_OVERFLOW = 4,
-  MONI_NOTINITIALIZED = 5
+  MONI_NOTINITIALIZED = 5,
+  MONI_ERROR    = 6
 } MONI_STATUS;
 
 
@@ -132,6 +121,7 @@ typedef enum {
 void moniRunTests(void);
 unsigned long long moniGetHdwrIval(void);
 unsigned long long moniGetConfIval(void);
+unsigned long long moniGetFastIval(void);
 
 void moniInit(UBYTE *bufBaseAddr, 
 	      int mask);                      /* Initializes circular buffer 
@@ -150,7 +140,7 @@ MONI_STATUS moniFetchRec(struct moniRec *m);  /* Consumer function
 void moniAcceptRec(void);	              /* accept previously fetched record */
 
 
-void moniSetIvals(unsigned long long mhi, unsigned long long mci);
+void moniSetIvals(unsigned long long mhi, unsigned long long mci, unsigned long long mfi);
 
 /* The following functions use moniInsertRec to insert data */
 

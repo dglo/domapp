@@ -100,7 +100,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
     int tmpInt;
     UBYTE *tmpPtr;
     MONI_STATUS ms;
-    unsigned long long moniHdwrIval, moniConfIval;
+    unsigned long long moniHdwrIval, moniConfIval, moniFastIval;
     struct moniRec aMoniRec;
     int total_moni_len, moniBytes, len;
     int config, valid, reset; /* For hal_FB_enable */
@@ -208,24 +208,28 @@ void dataAccess(MESSAGE_STRUCT *M) {
       Message_setStatus(M, SUCCESS);
       break;
       
-       /* JEJ: Deal with configurable intervals for monitoring events */
+      /* Deal with configurable intervals for monitoring events; pick up "fast" rate if available;
+         convert to clock ticks when needed. */
     case DATA_ACC_SET_MONI_IVAL:
-      moniHdwrIval = FPGA_HAL_TICKS_PER_SEC * unformatLong(Message_getData(M));
-      moniConfIval = FPGA_HAL_TICKS_PER_SEC * unformatLong(Message_getData(M)+sizeof(ULONG));
+      moniHdwrIval = unformatLong(Message_getData(M));
+      if(moniHdwrIval < FPGA_HAL_TICKS_PER_SEC) moniHdwrIval *= FPGA_HAL_TICKS_PER_SEC;
 
-      /* Set to one second minimum - redundant w/ message units in seconds, of course */
-      if(moniHdwrIval != 0 && moniHdwrIval < FPGA_HAL_TICKS_PER_SEC) 
-	moniHdwrIval = FPGA_HAL_TICKS_PER_SEC;
+      moniConfIval = unformatLong(Message_getData(M)+sizeof(ULONG));
+      if(moniConfIval < FPGA_HAL_TICKS_PER_SEC) moniConfIval *= FPGA_HAL_TICKS_PER_SEC;
 
-      if(moniConfIval != 0 && moniConfIval < FPGA_HAL_TICKS_PER_SEC)
-        moniConfIval = FPGA_HAL_TICKS_PER_SEC;
-
-      moniSetIvals(moniHdwrIval, moniConfIval);
+      if(Message_dataLen(M) >= (3 * sizeof(ULONG))) {
+	moniFastIval = unformatLong(Message_getData(M)+2*sizeof(ULONG));
+	if(moniFastIval < FPGA_HAL_TICKS_PER_SEC) moniFastIval *= FPGA_HAL_TICKS_PER_SEC;
+      } else {
+	moniFastIval = moniGetFastIval(); /* If no 3rd argument given, use current/default value */
+      }
+      moniSetIvals(moniHdwrIval, moniConfIval, moniFastIval);
       Message_setDataLen(M, 0);
       Message_setStatus(M, SUCCESS);
 
-      mprintf("MONI SET IVAL REQUEST hw=%ldE6 cf=%ldE6 CPU TICKS/RECORD",
-	      (long) (moniHdwrIval/1000000), (long) (moniConfIval/1000000));
+      mprintf("MONI SET IVAL REQUEST hw=%ldE6 cf=%ldE6 fast=%ldE6 CPU TICKS/RECORD",
+	      (long) (moniHdwrIval/1000000), (long) (moniConfIval/1000000),
+	      (long) (moniFastIval/1000000));
 
       break;
       
@@ -264,7 +268,8 @@ void dataAccess(MESSAGE_STRUCT *M) {
 	  total_moni_len = aMoniRec.dataLen + 10; /* Total rec length */
 	  /* Format header */
 	  formatShort(total_moni_len, data);
-	  formatShort(aMoniRec.fiducial.fstruct.moniEvtType, data+2);
+	  unsigned short mt = aMoniRec.moniEvtType;
+	  formatShort(mt, data+2);
 	  formatTime(aMoniRec.time, data+4);
 	  /* Copy payload */
 	  len = (aMoniRec.dataLen > MAXMONI_DATA) ? MAXMONI_DATA : aMoniRec.dataLen;
@@ -272,6 +277,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
 	  moniBytes += total_moni_len;
 	  data += total_moni_len;
 	  break;
+	case MONI_ERROR:
 	default:
 	  DOERROR(DAC_MONI_BADSTAT, DAC_Moni_Badstat, SEVERE_ERROR);
 	  done = 1;

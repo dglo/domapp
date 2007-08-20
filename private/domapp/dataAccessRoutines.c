@@ -75,6 +75,7 @@ USHORT Channel3Data[ATWDCHSIZ];
 USHORT FADCData[FADCSIZ];
 
 unsigned lbmp;
+unsigned hitCounter;
 
 #define TIMELBM
 #undef TIMELBM
@@ -233,6 +234,7 @@ unsigned long long domappHVSerialRaw(void) {
 int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   nTrigsReadOut = 0;
   numOverflows  = 0;
+  hitCounter    = 0;
 
   if(DOM_state!=DOM_IDLE) {
     mprintf("beginRun: ERROR: DOM not in idle state, DOM_state=%d", DOM_IDLE);
@@ -276,9 +278,13 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   }
 
   dsc_hal_do_LC_settings(); /* See domSControl.c */
+  unsigned masks = 
+    HAL_FPGA_DOMAPP_RATE_MONITOR_SPE              |
+    HAL_FPGA_DOMAPP_RATE_MONITOR_MPE              |
+    HAL_FPGA_DOMAPP_RATE_MONITOR_DEADTIME_ATWD_A  |
+    HAL_FPGA_DOMAPP_RATE_MONITOR_DEADTIME_ATWD_B;
 
-  hal_FPGA_DOMAPP_rate_monitor_enable(HAL_FPGA_DOMAPP_RATE_MONITOR_SPE|
-  				      HAL_FPGA_DOMAPP_RATE_MONITOR_MPE);
+  hal_FPGA_DOMAPP_rate_monitor_enable(masks);
 
   if(SNRequested && doStartSN(SNRequestMode, SNRequestDeadTime)) {
     mprintf("beginRun: ERROR: couldn't start requested supernova datataking.\n");
@@ -286,6 +292,7 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   }
 
   hal_FPGA_DOMAPP_enable_daq(); /* <-- Can get triggers NOW */
+  mprintf("RUN STARTED: DAQ=0x%08x LC_CONTROL=0x%08x", FPGA(DAQ), FPGA(LC_CONTROL));
 
   return TRUE;
 }
@@ -311,6 +318,14 @@ int endRun(void) { /* End either a "regular" or flasher run */
 }
 
 inline BOOLEAN runIsInProgress(void) { return DOM_state==DOM_RUN_IN_PROGRESS; }
+
+unsigned getLastHitCount(void) {
+  unsigned h = hitCounter;
+  hitCounter = 0;
+  return h;
+}
+
+unsigned getLastHitCountNoReset(void) { return hitCounter; }
 
 void initFillMsgWithData(void) { }
 
@@ -491,85 +506,42 @@ int fillMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz) {
 
   int doHdr = 1;
   unsigned short lastMsb = 0;
-
+  int ret = 0;
   while(1) {
     if(!isDataAvailable()) {
-      formatShort(NCUR(), msgBuffer);
-      return NCUR();
+      ret = NCUR();
+      break;
     }
-    if(bufsiz - NCUR() < deltaEventSize()) {
-      formatShort(NCUR(), msgBuffer);
-      return NCUR();
-    }
-    if(haveOverflow(lbmp)) {
-      lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
-      return 0; // Data is compromised -- pitch it.
+
+    if(haveOverflow(lbmp)) break; /* Break here to keep hitCounter, etc. correct */
+
+    /* Stop if not enough room for hit - if data is corrupt due 
+       to LBM overflow, the whole thing gets tossed below. */
+    unsigned short hsiz = getDeltaHitSize(lbmp);
+    if(bufsiz - NCUR() < hsiz) {
+      ret = NCUR();
+      break;
     }
     unsigned short tmsb = getDeltaHitTMSB(lbmp);
     if(doHdr) lastMsb = tmsb;
     if(lastMsb != tmsb) {
-      formatShort(NCUR(), msgBuffer);
-      return NCUR();
+      ret = NCUR();
+      break;
     }
     p += formatDomappDeltaEvent(p, lbmp, tmsb, doHdr);
     doHdr = 0;
     lbmp = nextEvent(lbmp);
     nTrigsReadOut++;
+    hitCounter++;
   }
+  /* If overflow has occurred, we can't trust the data for this cycle */
+  if(haveOverflow(lbmp)) {
+    lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
+    return 0;
+  } 
+  formatShort(NCUR(), msgBuffer);
+  return ret;
 }
-
-struct rgevt { unsigned long word0, word1, word2, word3; };
-
-int nextRGEventSize(unsigned mylbmp) {
-  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
-  return hdr->word1 & 0x7FF;
-}
-
-unsigned char * RGHitBegin(unsigned mylbmp) {
-  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
-  return (unsigned char *) &(hdr->word1);
-}
-
-int formatCmpEvent(UBYTE * msgp, unsigned mylbmp) {
-  int nbytes = nextRGEventSize(mylbmp);
-  memcpy(msgp, RGHitBegin(mylbmp), nbytes);
-  return nbytes;
-}
-
-int isCompressBitSet(unsigned mylbmp) {
-  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
-  return (hdr->word0 >> 31) & 0x01;
-}
-
-unsigned short RGTimeLSB16(unsigned mylbmp) {
-  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
-  return hdr->word0 & 0xFFFF;
-}
-
-void mShowHdr(unsigned mylbmp) {
-  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
-  mprintf("lbmp=%u C=%d siz=%d TS16=0x%04x w0=0x%08lx w1=0x%08lx w2=0x%08lx w3=0x%08lx",
-	  mylbmp, isCompressBitSet(mylbmp), nextRGEventSize(mylbmp), RGTimeLSB16(mylbmp),
-	  hdr->word0, hdr->word1, hdr->word2, hdr->word3);
-}
-
-#ifdef SNSIM
-#  warning supernova implemented via SIMULATION (hal not ready)
-#  define sn_ready sim_hal_FPGA_DOMAPP_sn_ready
-#  define sn_event sim_hal_FPGA_DOMAPP_sn_event
-
-int sim_hal_FPGA_DOMAPP_sn_ready(void) { return 1; }
-int sim_hal_FPGA_DOMAPP_sn_event(SNEvent *evt) {
-  static unsigned char icount = 0;
-  evt->ticks  = hal_FPGA_DOMAPP_get_local_clock();
-  evt->counts = icount++;
-  return 0;
-}
-
-#else
-#  define sn_ready hal_FPGA_DOMAPP_sn_ready
-#  define sn_event hal_FPGA_DOMAPP_sn_event
-#endif
 
 extern unsigned long hal_get_interrupt_enables(void);
 
@@ -611,10 +583,10 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
 # define bytelimit(counts) ((unsigned char) ((counts) > 255 ? 255 : (counts)))
 
   if(!saved_bin) {
-    if(!sn_ready()) {
+    if(!hal_FPGA_DOMAPP_sn_ready()) {
       return 0;
     }
-    if(sn_event(psn)) {
+    if(hal_FPGA_DOMAPP_sn_event(psn)) {
       mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed (HAL overflow)!");
     }
   }
@@ -630,11 +602,11 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
   *p++ = bytelimit(psn->counts);
 
   while(1) {
-    if(!sn_ready()) break;
+    if(!hal_FPGA_DOMAPP_sn_ready()) break;
     if(NCUR()+1 > bufsiz) break;
 
     /* Get next event; may have to save it for later if delta-t != STD_DT */
-    if(sn_event(psn)) {
+    if(hal_FPGA_DOMAPP_sn_event(psn)) {
       mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed (HAL overflow)!");
     }
     if(checkTime(psn->ticks, t0, &tprev, STD_DT)) {
@@ -647,66 +619,6 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
   formatShort(NCUR(), p0);
   return NCUR();
 }
-
-int fillMsgWithRgData(UBYTE *msgBuffer, int bufsiz) {
-  UBYTE *p  = msgBuffer;
-  UBYTE *p0 = msgBuffer;
-# define NCUR() ((int) (p - msgBuffer))
-
-  // Before forming block, guarantee a hit is there.
-  if(!isDataAvailable()) return 0; 
-
-  if(!isCompressBitSet(lbmp)) {
-    mprintf("WARNING: dataAccessRoutines: fillMsgWithRgData: have hit data "
-	    "but compress bit is not set!");
-    mShowHdr(lbmp);
-    return 0;
-  }
-
-  /* First 8 bytes are header */
-
-  p += 3; /* Skip length portion and spare byte, fill 2B length later */
-  *p++ = 0x90; /* 0x90 = 0b1000 0000 (compression on) + 0b0001 0000 (delta) */
-
-  unsigned short tshi = RGTimeLSB16(lbmp); 
-  formatShort(tshi, p);
-  p += 2;
-  
-  /* Pack in hit data */
-  while(1) {
-    if(RGTimeLSB16(lbmp) != tshi) break;
-
-    if(!isDataAvailable()) break;
-
-    if(!isCompressBitSet(lbmp)) {
-      mprintf("WARNING: dataAccessRoutines: fillMsgWithRgData: have hit data "
-	      "but compress bit is not set!  Skipping hit...");
-      // Skip this event
-      lbmp = nextEvent(lbmp);
-    }
-
-    if(bufsiz - NCUR() < nextRGEventSize(lbmp)) break;
-    if(haveOverflow(lbmp)) {
-      lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
-      //mprintf("Reset LBM pointer, hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
-      //        hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
-      break;
-    }
-    
-    //mShowHdr(lbmp);
-    // if we get here, we have room for the formatted engineering event
-    // and one or more hits are available
-    p += formatCmpEvent(p, lbmp);  // Fill data into user's message buffer,
-				  //   advance both message pointer...
-    lbmp = nextEvent(lbmp);       //          ... and LBM pointer
-    nTrigsReadOut++;
-  }
-
-  formatShort(NCUR(), p0); // Finally, fill length of block and return
-  //mprintf("fillMsgWithRgData: Total block length is %d", NCUR());
-  return NCUR();
-}
-
 
 int fillMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
   UBYTE *p     = msgBuffer;
@@ -727,6 +639,7 @@ int fillMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
 					 //   advance both message pointer...
     lbmp = nextEvent(lbmp);              //          ... and LBM pointer
     nTrigsReadOut++;
+    hitCounter++;
   }
 }
 
@@ -734,8 +647,6 @@ int fillMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
 int fillMsgWithData(UBYTE *msgBuffer, int bufsiz, UBYTE format, UBYTE compression) {
   if(format == FMT_ENG && compression == CMP_NONE) 
     return fillMsgWithEngData(msgBuffer, bufsiz);
-  if(format == FMT_RG  && compression == CMP_RG)
-    return fillMsgWithRgData(msgBuffer, bufsiz);
   if(format == FMT_DELTA && compression == CMP_DELTA)
     return fillMsgWithDeltaData(msgBuffer, bufsiz);
   mprintf("dataAccess: fillMsgWithData: WARNING: invalid format/compression combo!  "

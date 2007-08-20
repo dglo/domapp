@@ -57,23 +57,31 @@ UBYTE selected_mux_channel = 0;
 ULONG deadTime             = 100;
 UBYTE LCmode               = 0;
 typedef enum {
-  LC_MODE_NONE=0, 
-  LC_MODE_BOTH=1,
-  LC_MODE_UP  =2,
-  LC_MODE_DN  =3 } LC_MODE_T;
+  LC_MODE_NONE        = 0, 
+  LC_MODE_BOTH        = 1,
+  LC_MODE_UP          = 2,
+  LC_MODE_DN          = 3,
+  LC_MODE_SLC_ONLY    = 4,
+  LC_MODE_UP_AND_DOWN = 5,
+} LC_MODE_T;
+#define MAX_LC_MODE LC_MODE_UP_AND_DOWN /* Must agree with highest LC_MODE_T */
+
 typedef enum {
   LC_TYPE_NONE=0,
   LC_TYPE_SOFT=1, 
   LC_TYPE_HARD=2,
-  LC_TYPE_FLABBY=3 } LC_TYPE_T;
+  LC_TYPE_FLABBY=3 
+} LC_TYPE_T;
 typedef enum {
   LC_TX_NONE=0,
   LC_TX_UP  =1,
   LC_TX_DN  =2,
-  LC_TX_BOTH=3 } LC_TX_T;
+  LC_TX_BOTH=3 
+} LC_TX_T;
 typedef enum {
   LC_SRC_SPE = 0,
-  LC_SRC_MPE = 1 } LC_SRC_T;
+  LC_SRC_MPE = 1 
+} LC_SRC_T;
 #define MAXDISTNS 3175
 UBYTE LCtype               = LC_TYPE_HARD;
 UBYTE LCtx                 = LC_TX_BOTH;
@@ -107,6 +115,8 @@ void set_HAL_lc_mode() {
   mprintf("set_HAL_lc_mode(LCmode=%d, LCtype=%d)", LCmode, LCtype);
   if(LCmode == LC_MODE_NONE) {
     hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);
+  } else if(LCmode == LC_MODE_SLC_ONLY) {
+    hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_SOFT);
   } else {
     switch(LCtype) {
     case LC_TYPE_NONE:   hal_FPGA_DOMAPP_lc_mode(HAL_FPGA_DOMAPP_LC_MODE_OFF);    break;
@@ -137,6 +147,14 @@ void setLCmodeAndTx() {
   case LC_MODE_DN:
     rxbits = HAL_FPGA_DOMAPP_LC_ENABLE_RCV_DOWN;
     break;
+  case LC_MODE_SLC_ONLY:
+    rxbits = 0; /* SLC-only means TX LC signals but don't require them for triggers (no RX) */
+    break;
+  case LC_MODE_UP_AND_DOWN:
+    rxbits = HAL_FPGA_DOMAPP_LC_ENABLE_RCV_UP 
+      |      HAL_FPGA_DOMAPP_LC_ENABLE_RCV_DOWN
+      |      HAL_FPGA_DOMAPP_LC_ENABLE_RECV_UP_AND_DOWN;
+    break;
   default:
   case LC_MODE_BOTH:
     rxbits = HAL_FPGA_DOMAPP_LC_ENABLE_RCV_UP | HAL_FPGA_DOMAPP_LC_ENABLE_RCV_DOWN;
@@ -159,6 +177,7 @@ void setLCmodeAndTx() {
     break;
   }
 
+  mprintf("Sending 0x%08x to hal_FPGA_DOMAPP_lc_enable", txbits|rxbits);
   hal_FPGA_DOMAPP_lc_enable( txbits | rxbits );
 }
 
@@ -582,7 +601,7 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_SET_LOCAL_COIN_MODE:
-    if(data[0] > 3) {
+    if(data[0] > MAX_LC_MODE) {
       DOERROR(DSC_ILLEGAL_LC_MODE, DSC_Illegal_LC_Mode, FATAL_ERROR);
       break;
     } 
