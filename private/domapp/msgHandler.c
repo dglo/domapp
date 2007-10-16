@@ -51,6 +51,8 @@ extern ULONG tooMuchData;
 extern ULONG IDMismatch;
 extern ULONG CRCproblem;
 
+extern unsigned long msgs;
+extern unsigned long loops;
 
 /* struct that contains common service info for
 	this service. */
@@ -180,8 +182,6 @@ void msgHandler(MESSAGE_STRUCT *M) {
       Message_setStatus(M,SUCCESS);
       break;
 
-
-
       /* Message Handler specific SubTypes: */
 
     case MSGHAND_GET_DOM_VER:
@@ -239,17 +239,12 @@ void msgHandler(MESSAGE_STRUCT *M) {
       /* init a temporary buffer pointer */
       tmpPtr = data;
       /* get packet driver statistics */
-      formatLong(MSGrecv,tmpPtr);
+      formatLong(msgs, tmpPtr);
       tmpPtr += sizeof(ULONG);
-      formatLong(MSGsent,tmpPtr);
+      formatLong(loops, tmpPtr);
       tmpPtr += sizeof(ULONG);
-      formatLong(tooMuchData,tmpPtr);
-      tmpPtr += sizeof(ULONG);
-      formatLong(IDMismatch,tmpPtr);
-      tmpPtr += sizeof(ULONG);
-      formatLong(CRCproblem,tmpPtr);
-      tmpPtr += sizeof(ULONG);
-      Message_setDataLen(M,MSGHAND_GET_MSG_STATS_LEN);
+      msgs = loops = 0;
+      Message_setDataLen(M,8);
       Message_setStatus(M,SUCCESS);
       break;
     case MSGHAND_CLR_PKT_STATS:

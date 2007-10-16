@@ -2,8 +2,8 @@
   domapp - IceCube DOM Application program for use with 
            "Real"/"domapp" FPGA
            J. Jacobsen (jacobsen@npxdesigns.com), Chuck McParland
-  $Date: 2007-10-10 21:55:03 $
-  $Revision: 1.35.4.5 $
+  $Date: 2007-10-16 21:22:41 $
+  $Revision: 1.35.4.6 $
 */
 
 #include <unistd.h> /* Needed for read/write */
@@ -51,6 +51,8 @@ UBYTE monibuf[MONI_CIRCBUF_RECS * sizeof(struct moniRec)];
 
 char halmsg[MAX_TOTAL_MESSAGE];
 int  halmsg_remain = 0;
+
+unsigned long loops = 0, msgs = 0;
 
 int main(void) {
   char message[MAX_TOTAL_MESSAGE];
@@ -131,7 +133,9 @@ int main(void) {
     if(getmsg(halmsg, message)) {
       msgHandler((MESSAGE_STRUCT *) message);
       putmsg(message);
+      msgs++;
     }
+    loops++;
   } /* for(;;) */
 }
 
