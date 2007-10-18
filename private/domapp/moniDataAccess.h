@@ -3,7 +3,7 @@
  * Part of dataAccess thread
  * John Jacobsen, jacobsen@npxdesigns.com, for LBNL
  * May, 2003
- * $Id: moniDataAccess.h,v 1.7.4.7 2007-10-18 21:01:58 jacobsen Exp $
+ * $Id: moniDataAccess.h,v 1.7.4.8 2007-10-18 22:28:10 jacobsen Exp $
  */
 
 #ifndef _MONI_DATA_ACCESS_
@@ -160,6 +160,8 @@ void moniInsertGenericMessage(UBYTE *msg, unsigned long long time, int len);
 void moniInsertFlasherData(unsigned long long time);  
 /* Flasher data (specify argument type later) */
 
+void moniChargeStampHistos(unsigned short *h, unsigned entries,
+                           int ichip, int ichan, int nsamp);
 
 /* Configuration state change messages */
 void moniInsertSetDACMessage(unsigned long long time, UBYTE dacID, unsigned short dacVal);

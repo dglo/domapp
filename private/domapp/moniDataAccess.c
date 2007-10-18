@@ -3,7 +3,7 @@
  * Routines to store and fetch monitoring data from a circular buffer
  * John Jacobsen, npxdesigns.com for IceCube
  * May, 2003
- * $Id: moniDataAccess.c,v 1.14.4.3 2007-10-18 21:01:58 jacobsen Exp $
+ * $Id: moniDataAccess.c,v 1.14.4.4 2007-10-18 22:28:10 jacobsen Exp $
  */
 
 
@@ -20,6 +20,7 @@
 #include "domSControl.h"
 #include "expControl.h"
 #include "msgHandler.h"
+#include "DOMdata.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -411,11 +412,23 @@ void moniInsertLCWindowChangeMessage(unsigned long long time,
   moniInsertRec(&mr);
 }
 
-/* unsigned long long moniGetTimeAsUnsigned(void) {  */
-/*   /\* Fix signed-like peculiarity in HAL *\/ */
-/*   //return hal_FPGA_DOMAPP_get_local_clock() & 0xFFFFFFFF; */
-/*   return hal_FPGA_DOMAPP_get_local_clock(); */
-/* } */
+void moniChargeStampHistos(unsigned short *h, unsigned entries, int ichip, int ichan,
+			   int nsamp) {
+  /* Insert monitoring record for charge stamp histograms */
+  int is;
+  unsigned char histstr[MAXMONI_DATA];
+
+  unsigned char * this = histstr;
+  this += snprintf(this, MAXMONI_DATA-((int) (this-histstr)),
+		   "ATWD CS %c %d--%u entries: ", 
+		   ichip+'A', ichan, entries);
+  for(is=0; is < ATWDCHSIZ; is++) {
+    this += snprintf(this, MAXMONI_DATA-((int) (this-histstr)),
+		     " %hu", h[is]);
+    if(((int) (this-histstr)) >= MAXMONI_DATA) break; /* Should never happen */
+  }
+  mprintf(histstr);
+}
 
 void moniPuts(char *s) {
   unsigned long long time;
