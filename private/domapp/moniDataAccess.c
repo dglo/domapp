@@ -3,7 +3,7 @@
  * Routines to store and fetch monitoring data from a circular buffer
  * John Jacobsen, npxdesigns.com for IceCube
  * May, 2003
- * $Id: moniDataAccess.c,v 1.14.4.2 2007-08-08 03:04:57 jacobsen Exp $
+ * $Id: moniDataAccess.c,v 1.14.4.3 2007-10-18 21:01:58 jacobsen Exp $
  */
 
 
@@ -39,22 +39,10 @@ static int   moniCounterWraps;
 static int   moniOverruns;
 static BOOLEAN moniProvisionalRecFetch = FALSE;
 static int   moniIsInTrouble = 0;
-static unsigned long long moniHdwrIval=0, moniConfIval=0, moniFastIval=0;
-
 
 int moniGetElementLen(void)  { return sizeof(struct moniRec);  }
 void moniZeroIndices(void)   { moniReadIndex = moniWriteIndex = 0; }
 void moniIncWriteIndex(void) { moniWriteIndex++; }
-
-unsigned long long moniGetHdwrIval(void) { return moniHdwrIval; }
-unsigned long long moniGetConfIval(void) { return moniConfIval; }
-unsigned long long moniGetFastIval(void) { return moniFastIval; }
-
-void moniSetIvals(unsigned long long mhi, unsigned long long mci, unsigned long long mfi) {
-  moniHdwrIval = mhi;
-  moniConfIval = mci;
-  moniFastIval = mfi;
-}
 
 UBYTE * moniGetWriteBufferAddr(void) {
   return moniBaseAddr + (sizeof(struct moniRec) * (moniWriteIndex & moniMask));
@@ -73,9 +61,6 @@ void moniInit(UBYTE *bufBaseAddr, int mask) {
 
   moniCounterWraps = 0;
   moniOverruns     = 0;
-
-  moniSetIvals(0,0,0); /* The idea here is that no monitoring occurs 
-			  if these values aren't set to something != 0 */
 
   moniInitialized = 1;
 }

@@ -3,7 +3,7 @@
  * Part of dataAccess thread
  * John Jacobsen, jacobsen@npxdesigns.com, for LBNL
  * May, 2003
- * $Id: moniDataAccess.h,v 1.7.4.6 2007-08-08 19:19:11 jacobsen Exp $
+ * $Id: moniDataAccess.h,v 1.7.4.7 2007-10-18 21:01:58 jacobsen Exp $
  */
 
 #ifndef _MONI_DATA_ACCESS_
@@ -139,8 +139,6 @@ MONI_STATUS moniFetchRec(struct moniRec *m);  /* Consumer function
 
 void moniAcceptRec(void);	              /* accept previously fetched record */
 
-
-void moniSetIvals(unsigned long long mhi, unsigned long long mci, unsigned long long mfi);
 
 /* The following functions use moniInsertRec to insert data */
 

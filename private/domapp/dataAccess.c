@@ -93,6 +93,12 @@ void dataAccessInit(void) {
       Message_setDataLen(M,0);                                 \
    } while(0)
 
+extern unsigned long long moniHdwrIval, 
+                          moniConfIval, 
+                          moniFastIval,
+                          moniHistoIval;
+extern unsigned short     histoPrescale;
+
 /* data access  Entry Point */
 void dataAccess(MESSAGE_STRUCT *M) {
     char * idptr;
@@ -100,7 +106,6 @@ void dataAccess(MESSAGE_STRUCT *M) {
     int tmpInt;
     UBYTE *tmpPtr;
     MONI_STATUS ms;
-    unsigned long long moniHdwrIval, moniConfIval, moniFastIval;
     struct moniRec aMoniRec;
     int total_moni_len, moniBytes, len;
     int config, valid, reset; /* For hal_FB_enable */
@@ -212,18 +217,18 @@ void dataAccess(MESSAGE_STRUCT *M) {
          convert to clock ticks when needed. */
     case DATA_ACC_SET_MONI_IVAL:
       moniHdwrIval = unformatLong(Message_getData(M));
-      if(moniHdwrIval < FPGA_HAL_TICKS_PER_SEC) moniHdwrIval *= FPGA_HAL_TICKS_PER_SEC;
+      if(moniHdwrIval < FPGA_HAL_TICKS_PER_SEC) 
+	moniHdwrIval *= FPGA_HAL_TICKS_PER_SEC;
 
       moniConfIval = unformatLong(Message_getData(M)+sizeof(ULONG));
-      if(moniConfIval < FPGA_HAL_TICKS_PER_SEC) moniConfIval *= FPGA_HAL_TICKS_PER_SEC;
+      if(moniConfIval < FPGA_HAL_TICKS_PER_SEC) 
+	moniConfIval *= FPGA_HAL_TICKS_PER_SEC;
 
       if(Message_dataLen(M) >= (3 * sizeof(ULONG))) {
 	moniFastIval = unformatLong(Message_getData(M)+2*sizeof(ULONG));
-	if(moniFastIval < FPGA_HAL_TICKS_PER_SEC) moniFastIval *= FPGA_HAL_TICKS_PER_SEC;
-      } else {
-	moniFastIval = moniGetFastIval(); /* If no 3rd argument given, use current/default value */
+	if(moniFastIval < FPGA_HAL_TICKS_PER_SEC) 
+	  moniFastIval *= FPGA_HAL_TICKS_PER_SEC;
       }
-      moniSetIvals(moniHdwrIval, moniConfIval, moniFastIval);
       Message_setDataLen(M, 0);
       Message_setStatus(M, SUCCESS);
 
@@ -394,6 +399,26 @@ void dataAccess(MESSAGE_STRUCT *M) {
       Message_setStatus(M, SUCCESS);
       break;
 
+    case DATA_ACC_HISTO_CHARGE_STAMPS:
+      {
+	
+	moniHistoIval = unformatLong(Message_getData(M));
+	if(moniHistoIval < FPGA_HAL_TICKS_PER_SEC)
+	  moniHistoIval *= FPGA_HAL_TICKS_PER_SEC;
+	histoPrescale = unformatShort(Message_getData(M)+sizeof(ULONG));
+		
+	if(moniHistoIval>0) { 
+	  mprintf("Histogramming charge stamps with ival=%u, prescale=%hu",
+		  moniHistoIval, histoPrescale);
+	} else {
+	  mprintf("Histogramming DISABLED");
+	}
+	
+	Message_setDataLen(M, 0);
+	Message_setStatus(M, SUCCESS);
+      }
+      break;
+      
     default:
       datacs.msgRefused++;
       DOERROR(DAC_ERS_BAD_MSG_SUBTYPE, COMMON_Bad_Msg_Subtype, WARNING_ERROR);

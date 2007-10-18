@@ -2,13 +2,13 @@
   domapp - IceCube DOM Application program for use with 
            "Real"/"domapp" FPGA
            J. Jacobsen (jacobsen@npxdesigns.com), Chuck McParland
-  $Date: 2007-10-16 21:22:41 $
-  $Revision: 1.35.4.6 $
+  $Date: 2007-10-18 21:01:58 $
+  $Revision: 1.35.4.7 $
 */
 
 #include <unistd.h> /* Needed for read/write */
 #include <string.h>
-#include <stdio.h>  /* printf */
+#include <stdio.h>  /* printf to stdout upon ready */
 
 // DOM-related includes
 #include "hal/DOM_MB_hal.h"
@@ -54,13 +54,18 @@ int  halmsg_remain = 0;
 
 unsigned long loops = 0, msgs = 0;
 
+unsigned long long moniHdwrIval  = 0,
+                   moniConfIval  = 0,
+                   moniFastIval  = 0,
+                   moniHistoIval = 0; 
+unsigned short     histoPrescale = 1;
+
 int main(void) {
   char message[MAX_TOTAL_MESSAGE];
 
-  unsigned long long t_hw_last, t_cf_last, t_fa_last, tcur;
-  unsigned long long moni_hardware_interval, moni_config_interval, moni_fast_interval;
+  unsigned long long t_hw_last, t_cf_last, t_fa_last, t_hi_last, tcur;
 
-  t_hw_last = t_cf_last = t_fa_last = hal_FPGA_DOMAPP_get_local_clock();
+  t_hw_last = t_cf_last = t_fa_last = t_hi_last = hal_FPGA_DOMAPP_get_local_clock();
 
   /* Start up monitoring system -- do this before other *Init()'s because
      they may want to insert monitoring information */
@@ -89,19 +94,17 @@ int main(void) {
     /* Guarantee that the HW monitoring records occur no faster than at a
        rate specified by MIN_HW_IVAL -- this guarantees a unique SPE/MPE measurement
        each record: */
-    moni_config_interval = moniGetConfIval();
-    moni_fast_interval   = moniGetFastIval();
-    moni_hardware_interval = moniGetHdwrIval();
-    if(moni_hardware_interval > 0 && moni_hardware_interval < MIN_HW_IVAL) 
-      moni_hardware_interval = MIN_HW_IVAL;
+    if(moniHdwrIval > 0 && moniHdwrIval < MIN_HW_IVAL) 
+      moniHdwrIval = MIN_HW_IVAL;
 
     long long dthw = tcur-t_hw_last;    
     long long dtcf = tcur-t_cf_last;
     long long dtfa = tcur-t_fa_last;
+    long long dthi = tcur-t_hi_last;
 
     /* Hardware monitoring */
-    if(   moni_hardware_interval > 0 
-       && (dthw < 0 || dthw > moni_hardware_interval)) {
+    if(   moniHdwrIval > 0 
+       && (dthw < 0 || dthw > moniHdwrIval)) {
       /* Update temperature if it's done; start next one */
       if(halReadTempDone()) {
 	temperature = halFinishReadTemp();
@@ -114,19 +117,25 @@ int main(void) {
     }
     
     /* Software monitoring */
-    if(moni_config_interval > 0 && (dtcf < 0 || dtcf > moni_config_interval)) {
+    if(moniConfIval > 0 && (dtcf < 0 || dtcf > moniConfIval)) {
       moniInsertConfigStateMessage(tcur);
       t_cf_last = tcur;
     }
 
     /* "Fast" monitoring record */
-    if(moni_fast_interval > 0 && (dtfa < 0 || dtfa > moni_fast_interval)) {
+    if(moniFastIval > 0 && (dtfa < 0 || dtfa > moniFastIval)) {
       mprintf("F %d %d %d %d", 
 	      hal_FPGA_DOMAPP_spe_rate_immediate(),
 	      hal_FPGA_DOMAPP_mpe_rate_immediate(), 
 	      getLastHitCount(), 
 	      hal_FPGA_DOMAPP_deadtime_immediate());
       t_fa_last = tcur;
+    }
+
+    /* Histogramming */
+    if(moniHistoIval > 0 && (dthi < 0 || dthi > moniHistoIval)) {
+      mprintf("ATWD CS x x x");
+      t_hi_last = tcur;
     }
 
     /* Check for new message */

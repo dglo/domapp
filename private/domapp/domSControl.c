@@ -795,6 +795,33 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setDataLen(M,0);
     break;
 
+  case DSC_SET_CHARGE_STAMP_TYPE:
+    {
+      UBYTE mode      = data[0]; /* 0=ATWD 1=FADC */
+      if(mode != 0 && mode != 1) {
+	mprintf("ERROR: charge stamp mode is 0x%02x!", mode);
+	DOERROR("bad charge stamp mode", 0, 0);
+	break;
+      }
+      UBYTE chsel     = data[1]; /* 0=auto 1=fixed channel selection 
+				    (ATWD only; ignored for FADC)  */
+      if(chsel != 0 && chsel != 1) {
+	mprintf("ERROR: channel selection arg is 0x%02x!", chsel);
+	DOERROR("bad channel selection arg", 0, 0);
+	break;
+      }
+      UBYTE ch        = data[2]; /* If fixed channel selection, which byte?
+				    (ATWD only; ignored for FADC) */
+      /* data[3] is spare */
+      USHORT thresh   = unformatShort(&data[4]); /* Threshold for threshold-bin 
+						    selection (ATWD only) */
+      mprintf("Set charge stamp type: mode=%d chsel=%d ch=%d thresh=%d",
+	      mode, chsel, ch, thresh);
+    }
+    Message_setStatus(M,SUCCESS);
+    Message_setDataLen(M,0);
+    break;
+
   default:
     DOERROR(DSC_ERS_BAD_MSG_SUBTYPE, COMMON_Bad_Msg_Subtype, WARNING_ERROR);
     break;
