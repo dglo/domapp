@@ -95,6 +95,11 @@ UBYTE LClengthsSet         = 0;
 ULONG pre_ns               = LC_WIN_DEFAULT;
 ULONG post_ns              = LC_WIN_DEFAULT;
 
+/* Charge stamp stuff */
+extern CHARGE_STAMP_MODE_TYPE chargeStampMode;
+extern CHARGE_STAMP_SEL_TYPE  chargeStampChanSel;
+extern UBYTE                  chargeStampChannel;
+
 /* struct that contains common service info for
 	this service. */
 COMMON_SERVICE_INFO domsc;
@@ -797,26 +802,31 @@ void domSControl(MESSAGE_STRUCT *M) {
 
   case DSC_SET_CHARGE_STAMP_TYPE:
     {
-      UBYTE mode      = data[0]; /* 0=ATWD 1=FADC */
-      if(mode != 0 && mode != 1) {
-	mprintf("ERROR: charge stamp mode is 0x%02x!", mode);
+      UBYTE mode = data[0];
+      if(mode != CHARGE_STAMP_ATWD && mode != CHARGE_STAMP_FADC) {
+	mprintf("ERROR: bad charge stamp mode, 0x%02x!", mode);
 	DOERROR("bad charge stamp mode", 0, 0);
 	break;
       }
+      chargeStampMode = mode;
       UBYTE chsel     = data[1]; /* 0=auto 1=fixed channel selection 
 				    (ATWD only; ignored for FADC)  */
-      if(chsel != 0 && chsel != 1) {
-	mprintf("ERROR: channel selection arg is 0x%02x!", chsel);
+      if(chsel != CHARGE_STAMP_AUTO && chsel != CHARGE_STAMP_BY_CHAN) {
+	mprintf("ERROR: bad channel selection arg, 0x%02x!", chsel);
 	DOERROR("bad channel selection arg", 0, 0);
 	break;
       }
+      chargeStampChanSel = chsel;
       UBYTE ch        = data[2]; /* If fixed channel selection, which byte?
 				    (ATWD only; ignored for FADC) */
-      /* data[3] is spare */
-      USHORT thresh   = unformatShort(&data[4]); /* Threshold for threshold-bin 
-						    selection (ATWD only) */
-      mprintf("Set charge stamp type: mode=%d chsel=%d ch=%d thresh=%d",
-	      mode, chsel, ch, thresh);
+      if(ch != CHARGE_STAMP_AUTO && ch != CHARGE_STAMP_BY_CHAN) {
+	mprintf("ERROR: bad channel selected, %d!", ch);
+	DOERROR("bad channel selected", 0, 0);
+	break;
+      }
+      chargeStampChannel = ch;
+      mprintf("Set charge stamp type: mode=%d chsel=%d ch=%d",
+	      chargeStampMode, chargeStampChanSel, chargeStampChannel);
     }
     Message_setStatus(M,SUCCESS);
     Message_setDataLen(M,0);

@@ -61,6 +61,17 @@ unsigned long sw_lbm_mask = (1<<DEFAULT_LBM_BIT_DEPTH)-1;
 	this service. */
 COMMON_SERVICE_INFO datacs;
 
+/* Monitoring intervals */
+
+extern unsigned long long moniHdwrIval, 
+                          moniConfIval, 
+                          moniFastIval,
+                          moniHistoIval;
+extern unsigned short     histoPrescale;
+
+
+/* data access  Entry Point */
+
 void dataAccessInit(void) {
   //MESSAGE_STRUCT *m;
 
@@ -93,13 +104,6 @@ void dataAccessInit(void) {
       Message_setDataLen(M,0);                                 \
    } while(0)
 
-extern unsigned long long moniHdwrIval, 
-                          moniConfIval, 
-                          moniFastIval,
-                          moniHistoIval;
-extern unsigned short     histoPrescale;
-
-/* data access  Entry Point */
 void dataAccess(MESSAGE_STRUCT *M) {
     char * idptr;
     UBYTE *data;

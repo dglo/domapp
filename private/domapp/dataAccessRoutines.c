@@ -59,6 +59,18 @@ UBYTE *ATWDShortMove(USHORT *data, UBYTE *buffer, int count);
 UBYTE *FADCMove(USHORT *data, UBYTE *buffer, int count);
 UBYTE *TimeMove(UBYTE *buffer, unsigned long long time);
 
+/* Histogramming */
+extern unsigned long long     moniHistoIval;
+extern unsigned short         histoPrescale;
+extern CHARGE_STAMP_MODE_TYPE chargeStampMode;
+extern CHARGE_STAMP_SEL_TYPE  chargeStampChanSel;
+extern UBYTE                  chargeStampChannel;
+extern unsigned short         ATWDchargeStampHistos[2][2][ATWDCHSIZ];
+extern unsigned               ATWDchargeStampEntries[2][2];
+extern unsigned short         FADCchargeStampHistos[FADCSIZ];
+extern unsigned               FADCchargeStampEntries;
+#define doChargeStampHisto(a) (moniHistoIval > 0) /* Do histo if interval is set */
+
 /** Set by initFormatEngineeringEvent: */
 UBYTE ATWDChMask[4];
 int ATWDChLen[4];
@@ -477,6 +489,27 @@ inline unsigned char * getDeltaHitStart(unsigned lbmp) {
   return ((unsigned char *) lbmEvent(lbmp)) + 4; /* Skip WORD0 domapp header word */
 }
 
+void histoChargeStamp(unsigned char * hitbuf) {
+  if(chargeStampMode == CHARGE_STAMP_FADC && histoPrescale > 0) { /* FADC mode */
+    unsigned word3 = ((unsigned *) (hitbuf+8))[0];
+    //mprintf("histoChargeStamp: word3=0x%08x", word3);
+    unsigned isHi = (word3 & 0x800000)>>31;
+    //mprintf("histoChargeStamp: isHi: %u", isHi);
+    unsigned peakCount = (word3 >> 9) & 0x1FF;
+    //mprintf("histoChargeStamp: raw peakCount: %u", peakCount);
+    if(isHi) peakCount *= 2;
+    //mprintf("histoChargeStamp: adjusted peakCount: %u", peakCount);
+    unsigned bin = peakCount / histoPrescale;
+    if(bin > 127) bin = 127;
+    //mprintf("histoChargeStamp: bin=%u", bin);
+    FADCchargeStampHistos[bin] ++;
+    FADCchargeStampEntries++;
+  } else if(chargeStampMode == CHARGE_STAMP_ATWD) {   /* ATWD/IceTop mode */
+  } else {
+    /* Do nothing if mode is wrong (can't happen due to check in domSControl.c) */
+  }
+}
+
 int formatDomappDeltaEvent(UBYTE * msgp, unsigned lbmp, unsigned short tmsb, int doHdr) {
   unsigned char * m0 = msgp;
 
@@ -495,7 +528,7 @@ int formatDomappDeltaEvent(UBYTE * msgp, unsigned lbmp, unsigned short tmsb, int
   unsigned short hitsize = getDeltaHitSize(lbmp);
   memcpy(msgp, getDeltaHitStart(lbmp), hitsize);
   msgp += hitsize;
-  
+  if(doChargeStampHisto()) histoChargeStamp(getDeltaHitStart(lbmp));
   return msgp-m0;
 }
 

@@ -3,7 +3,7 @@
  * Routines to store and fetch monitoring data from a circular buffer
  * John Jacobsen, npxdesigns.com for IceCube
  * May, 2003
- * $Id: moniDataAccess.c,v 1.14.4.4 2007-10-18 22:28:10 jacobsen Exp $
+ * $Id: moniDataAccess.c,v 1.14.4.5 2007-10-22 23:32:50 jacobsen Exp $
  */
 
 
@@ -412,17 +412,24 @@ void moniInsertLCWindowChangeMessage(unsigned long long time,
   moniInsertRec(&mr);
 }
 
-void moniChargeStampHistos(unsigned short *h, unsigned entries, int ichip, int ichan,
-			   int nsamp) {
+void moniChargeStampHistos(unsigned short *h, unsigned entries, CHARGE_STAMP_MODE_TYPE mode, 
+			   int ichip, int ichan, int nsamp) {
   /* Insert monitoring record for charge stamp histograms */
   int is;
   unsigned char histstr[MAXMONI_DATA];
 
   unsigned char * this = histstr;
-  this += snprintf(this, MAXMONI_DATA-((int) (this-histstr)),
-		   "ATWD CS %c %d--%u entries: ", 
-		   ichip+'A', ichan, entries);
-  for(is=0; is < ATWDCHSIZ; is++) {
+  if(mode==CHARGE_STAMP_ATWD) {
+    this += snprintf(this, MAXMONI_DATA-((int) (this-histstr)),
+		     "ATWD CS %c %d--%u entries: ", 
+		     ichip+'A', ichan, entries);
+  } else if(mode==CHARGE_STAMP_FADC) {
+    this += snprintf(this, MAXMONI_DATA-((int) (this-histstr)),
+		     "FADC CS--%u entries: ", entries);
+  } else {
+    return;
+  }
+  for(is=0; is < nsamp; is++) {
     this += snprintf(this, MAXMONI_DATA-((int) (this-histstr)),
 		     " %hu", h[is]);
     if(((int) (this-histstr)) >= MAXMONI_DATA) break; /* Should never happen */

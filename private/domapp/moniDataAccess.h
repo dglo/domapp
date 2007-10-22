@@ -3,7 +3,7 @@
  * Part of dataAccess thread
  * John Jacobsen, jacobsen@npxdesigns.com, for LBNL
  * May, 2003
- * $Id: moniDataAccess.h,v 1.7.4.8 2007-10-18 22:28:10 jacobsen Exp $
+ * $Id: moniDataAccess.h,v 1.7.4.9 2007-10-22 23:32:50 jacobsen Exp $
  */
 
 #ifndef _MONI_DATA_ACCESS_
@@ -115,6 +115,16 @@ typedef enum {
   MONI_ERROR    = 6
 } MONI_STATUS;
 
+typedef enum {
+  CHARGE_STAMP_ATWD = 0,
+  CHARGE_STAMP_FADC = 1,
+} CHARGE_STAMP_MODE_TYPE;
+
+typedef enum {
+  CHARGE_STAMP_AUTO   = 0,
+  CHARGE_STAMP_BY_CHAN = 1,
+} CHARGE_STAMP_SEL_TYPE;
+
 
 /* Prototypes */
 
@@ -161,7 +171,7 @@ void moniInsertFlasherData(unsigned long long time);
 /* Flasher data (specify argument type later) */
 
 void moniChargeStampHistos(unsigned short *h, unsigned entries,
-                           int ichip, int ichan, int nsamp);
+                           CHARGE_STAMP_MODE_TYPE mode, int ichip, int ichan, int nsamp);
 
 /* Configuration state change messages */
 void moniInsertSetDACMessage(unsigned long long time, UBYTE dacID, unsigned short dacVal);
