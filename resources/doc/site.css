@@ -5,10 +5,14 @@ body {
 }
 
 
-a:link, a:visited, a:hover, a:active {
-   border-bottom: dotted 1px #8A8A41;
-   color: #2f4f4f;
+a:link, a:visited {
+   color: #333333;
+}
+
+a[href ^= "#"]:hover {
    text-decoration: none;
+   background-color: #ffe4e1;
+   color: black;
 }
 
 h1 {
@@ -70,10 +74,16 @@ div.message li {
    list-style-type: none;
    display: block;
 }
+
 ul.message {
    padding: 0 0 0 0;
    border: 1px solid #CCCCCC;
    width: 50%;
+}
+
+ul.message li {
+   padding-left: 0.5em;
+   padding-right: 1em;
 }
 
 ul.message li.id:before     { 
@@ -85,10 +95,12 @@ ul.message li.id:before     {
 ul.message li.input:before  { 
    content: "input: "; 
    font-weight: normal;
+   color: #888888;
 }
 ul.message li.output:before { 
    content: "output: ";
    font-weight: normal; 
+   color: #888888;
 }
 
 ul.message li.id {
@@ -101,7 +113,7 @@ ul.message li.name {
 }
 
 ul.message li.desc {
-   padding-left: 0.5em;
+   padding-left: 1.5em;
    padding-top: 1em;
    //font-weight: bold;
    padding-bottom: 0.75em;

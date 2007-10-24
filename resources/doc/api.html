@@ -1465,7 +1465,17 @@ Generate charge stamp histograms in monitoring stream, at &lt;interval&gt;
 clock ticks (if &ge;40,000,000) or seconds (if &lt;40,000,000).  If interval is zero 
 (default), no records will be generated.  Prescale is the divisor of each charge stamp amplitude before it is histogrammed.
 <a href="#DSC_SET_CHARGE_STAMP_TYPE">DSC_SET_CHARGE_STAMP_TYPE</a> is used to select the type of charge stamp; if FADC (default), 
-only the peak value of the charge stamp is histogrammed.  
+only the peak value of the charge stamp is histogrammed.
+<p>
+The histograms will be generated in the monitoring stream in ASCII format, as follows:
+</p>
+<p>
+ATWD CS <em>chip</em> <em>chan</em>--<em>N</em> entries: <em>samp0</em> <em>samp1</em> ... <em>samp127</em><br/>
+(four entries per interval, where <em>chip</em> is A or B and <em>chan</em> is 0 or 1)</p>
+<p>or</p>
+<p>
+FADC CS--<em>N</em> entries: <em>samp0</em> <em>samp1</em> ... <em>samp255</em>
+</p>
   </li>
 </ul>
 
