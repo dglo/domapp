@@ -11,15 +11,6 @@
 <h1>DOMApp API</h1>
 <h3>John Jacobsen, NPX Designs, Inc.</h3>
 
-<h2>Outline</h2>
-
-<ul>
-<li><a href="index.html">Code Status</a></li>
-<li>API</li>
-<li><a href="domapp_testing.html">Test SW</a></li>
-<li><a href="domapp_test_status.html">Testing Status</a></li>
-</ul>
-
 <h2>CONTENTS</h2>
 
 <ul>
@@ -49,12 +40,13 @@ interface to the production version of the IceCube DOM Application
 <h2>API OVERVIEW</h2>
 
 <p>
-The API to Domapp takes the form of fixed-format binary messages
-(described below). Messages consist of an 8 byte header with an
-additional payload of 0-4084 bytes. Messages sent by the surface
-generate reply messages from the DOMs. When Domapp is running (after
-the "DOMAPP READY" message emitted in ASCII at startup), the DOM never
-sends a message unless a request message has been sent by the surface.
+The DOMApp API takes the form of fixed-format binary messages
+described in detail in this document. Messages consist of an 8 byte
+header with an additional payload of 0-4084 bytes. Messages sent by
+the surface generate reply messages from the DOMs. When Domapp is
+running (after the "DOMAPP READY" message emitted in ASCII at
+startup), the DOM never sends a message unless a request message has
+been sent by the surface.
 </p>
 
 <a name="procedure"/>
@@ -193,7 +185,10 @@ in the <a
 href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-517">DOM
 Data Formats</a> directory on <a
 href="http://docushare.icecube.wisc.edu/docushare/dsweb/HomePage">Docushare</a>.
-Note: Triggering in the DOM is now disabled momentarily when the PMT
+</p>
+
+<p>
+<strong>Note:</strong> Triggering in the DOM is now disabled momentarily when the PMT
 High Voltage is read out.
 </p>
 
@@ -1272,6 +1267,22 @@ Disable supernova data collection.
   </li>
 </ul>
 
+<a name="DSC_SET_CHARGE_STAMP_TYPE"/>
+<ul class="message">
+  <li class="id"    >61</li>
+  <li class="name"  >DSC_SET_CHARGE_STAMP_TYPE</li>
+  <li class="input" >UB: mode (0=ATWD, 1=FADC [default]); UB: chSel (0=auto, 1=byChan); UB: chan;</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set charge stamp type for delta-compressed events.  If mode is 0 (default), the FADC will be used.
+If mode is 1, the ATWD is used.  If ATWD, chSel determines whether channel selection is auto (0), or specified 
+in the third argument (1).  Third argument must specify channel 0 or 1.<br>
+See also <a href="#DATA_ACC_HISTO_CHARGE_STAMPS">DATA_ACC_HISTO_CHARGE_STAMPS</a>
+  </li>
+</ul>
+
+
+
 
 <h1>Data Access Messages (message type 3):</h1>
 
@@ -1442,6 +1453,22 @@ Returns actual LBM size, in bytes
   </li>
 </ul>
 
+<a name="DATA_ACC_HISTO_CHARGE_STAMPS"/>
+
+<ul class="message">
+  <li class="id"    >34</li>
+  <li class="name"  >DATA_ACC_HISTO_CHARGE_STAMPS</li>
+  <li class="input" >UL: interval (ticks or seconds); US: prescale</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Generate charge stamp histograms in monitoring stream, at &lt;interval&gt; 
+clock ticks (if &ge;40,000,000) or seconds (if &lt;40,000,000).  If interval is zero 
+(default), no records will be generated.  Prescale is the divisor of each charge stamp amplitude before it is histogrammed.
+<a href="#DSC_SET_CHARGE_STAMP_TYPE">DSC_SET_CHARGE_STAMP_TYPE</a> is used to select the type of charge stamp; if FADC (default), 
+only the peak value of the charge stamp is histogrammed.  
+  </li>
+</ul>
+
 <h1>Experiment Control Messages (message type 4)</h1>
 
 <a name="EXPCONTROL_BEGIN_RUN"/>
@@ -1456,7 +1483,7 @@ Begin collecting hit data
   </li>
 </ul>
 
-<a name"EXPCONTROL_END_RUN"/>
+<a name="EXPCONTROL_END_RUN"/>
 <ul class="message">
   <li class="id"    >13</li>
   <li class="name"  >EXPCONTROL_END_RUN</li>
@@ -1474,13 +1501,13 @@ Stop data taking (one can use this message for both flasher runs and regular run
   <li class="name"  >EXPCONTROL_DO_PEDESTAL_COLLECTION</li>
   <li class="input" >UL: numATWD0; UL: numATWD1; UL: numFADC</li>
   <li class="output">-</li>
+  <li class="desc"  >
 Collects requested number of pedestal events. Failure to do this while
 HV is off will result in some level of contamination of real SPE hits
 from the PMT. Arguments are number of triggers to collect for each
 ATWD and the FADC (max: 1000 for ATWDs, 2000 for FADC). Message reply
 is sent when pedestals are collected. NOTE: numFADC must be &le; numATWD0 +
 numATWD1.
-  <li class="desc"  >
   </li>
 </ul>
 

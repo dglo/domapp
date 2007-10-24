@@ -4,6 +4,13 @@ body {
    font-size: 10pt;
 }
 
+
+a:link, a:visited, a:hover, a:active {
+   border-bottom: dotted 1px #8A8A41;
+   color: #2f4f4f;
+   text-decoration: none;
+}
+
 h1 {
    font-size: 12pt;
    font-weight: bold;
@@ -65,7 +72,7 @@ div.message li {
 }
 ul.message {
    padding: 0 0 0 0;
-   border: 1px solid gray;
+   border: 1px solid #CCCCCC;
    width: 50%;
 }
 
