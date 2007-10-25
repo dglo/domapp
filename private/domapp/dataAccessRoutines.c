@@ -65,9 +65,9 @@ extern unsigned short         histoPrescale;
 extern CHARGE_STAMP_MODE_TYPE chargeStampMode;
 extern CHARGE_STAMP_SEL_TYPE  chargeStampChanSel;
 extern UBYTE                  chargeStampChannel;
-extern unsigned short         ATWDchargeStampHistos[2][2][ATWDCHSIZ];
+extern unsigned short         ATWDchargeStampHistos[2][2][NUM_HIST_BINS];
 extern unsigned               ATWDchargeStampEntries[2][2];
-extern unsigned short         FADCchargeStampHistos[FADCSIZ];
+extern unsigned short         FADCchargeStampHistos[NUM_HIST_BINS];
 extern unsigned               FADCchargeStampEntries;
 #define doChargeStampHisto(a) (moniHistoIval > 0) /* Do histo if interval is set */
 
@@ -500,7 +500,7 @@ void histoChargeStamp(unsigned char * hitbuf) {
     if(isHi) peakCount *= 2;
     //mprintf("histoChargeStamp: adjusted peakCount: %u", peakCount);
     unsigned bin = peakCount / histoPrescale;
-    if(bin > 127) bin = 127;
+    if(bin > (NUM_HIST_BINS-1)) bin = NUM_HIST_BINS-1;
     //mprintf("histoChargeStamp: bin=%u", bin);
     FADCchargeStampHistos[bin] ++;
     FADCchargeStampEntries++;

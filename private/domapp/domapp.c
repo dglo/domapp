@@ -2,8 +2,8 @@
   domapp - IceCube DOM Application program for use with 
            "Real"/"domapp" FPGA
            J. Jacobsen (jacobsen@npxdesigns.com), Chuck McParland
-  $Date: 2007-10-22 23:32:50 $
-  $Revision: 1.35.4.9 $
+  $Date: 2007-10-25 20:58:33 $
+  $Revision: 1.35.4.10 $
 */
 
 #include <unistd.h> /* Needed for read/write */
@@ -21,7 +21,6 @@
 #include "moniDataAccess.h"
 #include "msgHandler.h"
 #include "domSControl.h"
-#include "DOMdata.h" /* for ATWDCHSIZ */
 
 #define STDIN  0
 #define STDOUT 1
@@ -59,30 +58,6 @@ unsigned long long moniHdwrIval  = 0,
                    moniConfIval  = 0,
                    moniFastIval  = 0,
                    moniHistoIval = 0; 
-unsigned short     histoPrescale = 1;
-
-unsigned short ATWDchargeStampHistos[2][2][ATWDCHSIZ];
-unsigned ATWDchargeStampEntries[2][2];
-unsigned short FADCchargeStampHistos[FADCSIZ];
-unsigned FADCchargeStampEntries;
-
-/* Charge stamp stuff */
-CHARGE_STAMP_MODE_TYPE chargeStampMode   = CHARGE_STAMP_FADC;
-CHARGE_STAMP_SEL_TYPE chargeStampChanSel = CHARGE_STAMP_BY_CHAN;
-UBYTE chargeStampChannel                 = 0;
-
-void initChargeStampHistos(void) {
-  /* Initialize histos of first two channels of both chips */
-  int i,j,s;
-  for(s=0;s<FADCSIZ;s++)
-    FADCchargeStampHistos[s] = 0;
-  FADCchargeStampEntries = 0;
-  for(i=0;i<2;i++)
-    for(j=0;j<2;j++)
-      ATWDchargeStampEntries[i][j] = 0;
-      for(s=0;s<ATWDCHSIZ;s++)
-	ATWDchargeStampHistos[i][j][s] = 0;
-}
 
 int main(void) {
   char message[MAX_TOTAL_MESSAGE];
@@ -102,7 +77,7 @@ int main(void) {
   expControlInit();
   dataAccessInit();
 
-  initChargeStampHistos();
+  moniZeroAllChargeStampHistos();
 
   halDisableAnalogMux(); /* John Kelley suggests explicitly disabling this by default */
   
@@ -160,15 +135,7 @@ int main(void) {
 
     /* Histogramming */
     if(moniHistoIval > 0 && (dthi < 0 || dthi > moniHistoIval)) {
-      if(chargeStampMode == CHARGE_STAMP_ATWD) {
-	int ichip, ichan;
-	for(ichip=0;ichip<2;ichip++)
-	  for(ichan=0;ichan<2;ichan++)
-	    moniChargeStampHistos(ATWDchargeStampHistos[ichip][ichan], 
-				  ATWDchargeStampEntries[ichip][ichan], chargeStampMode, ichip, ichan, ATWDCHSIZ);
-      } else if(chargeStampMode == CHARGE_STAMP_FADC) {
-	moniChargeStampHistos(FADCchargeStampHistos, FADCchargeStampEntries, chargeStampMode, 0, 0, FADCSIZ);
-      }
+      moniDoChargeStampHistos();
       t_hi_last = tcur;
     }
 

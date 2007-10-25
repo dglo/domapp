@@ -3,7 +3,7 @@
  * Part of dataAccess thread
  * John Jacobsen, jacobsen@npxdesigns.com, for LBNL
  * May, 2003
- * $Id: moniDataAccess.h,v 1.7.4.9 2007-10-22 23:32:50 jacobsen Exp $
+ * $Id: moniDataAccess.h,v 1.7.4.10 2007-10-25 20:58:33 jacobsen Exp $
  */
 
 #ifndef _MONI_DATA_ACCESS_
@@ -170,8 +170,16 @@ void moniInsertGenericMessage(UBYTE *msg, unsigned long long time, int len);
 void moniInsertFlasherData(unsigned long long time);  
 /* Flasher data (specify argument type later) */
 
-void moniChargeStampHistos(unsigned short *h, unsigned entries,
-                           CHARGE_STAMP_MODE_TYPE mode, int ichip, int ichan, int nsamp);
+#define NUM_HIST_BINS 128 /* Cannot exceed (MAXMONI_RECSIZE-20)/N where N is the max. number of ASCII
+			     characters needed to represent 10 bits per bin, e.g. "1023 " requires 5 
+			     chars, so 128 is fine */
+
+void moniZeroAllChargeStampHistos(void);
+
+void moniZeroChargeStampHisto(unsigned short *h, unsigned *entries, int nsamp);
+
+void moniInsertChargeStampHistos(unsigned short *h, unsigned entries,
+				 CHARGE_STAMP_MODE_TYPE mode, int ichip, int ichan, int nsamp);
 
 /* Configuration state change messages */
 void moniInsertSetDACMessage(unsigned long long time, UBYTE dacID, unsigned short dacVal);

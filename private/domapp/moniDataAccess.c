@@ -3,7 +3,7 @@
  * Routines to store and fetch monitoring data from a circular buffer
  * John Jacobsen, npxdesigns.com for IceCube
  * May, 2003
- * $Id: moniDataAccess.c,v 1.14.4.5 2007-10-22 23:32:50 jacobsen Exp $
+ * $Id: moniDataAccess.c,v 1.14.4.6 2007-10-25 20:58:33 jacobsen Exp $
  */
 
 
@@ -32,14 +32,25 @@
 #define TRUE 1
 #endif
 
-static UBYTE *moniBaseAddr;
-static int   moniMask;
-static int   moniInitialized = 0;
-static ULONG moniReadIndex, moniWriteIndex;
-static int   moniCounterWraps;
-static int   moniOverruns;
+static UBYTE  *moniBaseAddr;
+static int     moniMask;
+static int     moniInitialized = 0;
+static ULONG   moniReadIndex, moniWriteIndex;
+static int     moniCounterWraps;
+static int     moniOverruns;
 static BOOLEAN moniProvisionalRecFetch = FALSE;
-static int   moniIsInTrouble = 0;
+static int     moniIsInTrouble = 0;
+
+unsigned short ATWDchargeStampHistos[2][2][NUM_HIST_BINS];
+unsigned       ATWDchargeStampEntries[2][2];
+unsigned short FADCchargeStampHistos[NUM_HIST_BINS];
+unsigned       FADCchargeStampEntries;
+unsigned short histoPrescale = 1;
+
+/* Charge stamp stuff */
+CHARGE_STAMP_MODE_TYPE chargeStampMode   = CHARGE_STAMP_FADC;
+CHARGE_STAMP_SEL_TYPE chargeStampChanSel = CHARGE_STAMP_BY_CHAN;
+UBYTE chargeStampChannel                 = 0;
 
 int moniGetElementLen(void)  { return sizeof(struct moniRec);  }
 void moniZeroIndices(void)   { moniReadIndex = moniWriteIndex = 0; }
@@ -382,8 +393,6 @@ void moniInsertDisablePMT_HV_Message(unsigned long long time) {
   moniInsertRec(&mr);
 }
 
-
-
 void moniInsertLCModeChangeMessage(unsigned long long time, UBYTE mode) {
   struct moniRec mr;
   mr.dataLen = 3;
@@ -412,8 +421,31 @@ void moniInsertLCWindowChangeMessage(unsigned long long time,
   moniInsertRec(&mr);
 }
 
-void moniChargeStampHistos(unsigned short *h, unsigned entries, CHARGE_STAMP_MODE_TYPE mode, 
-			   int ichip, int ichan, int nsamp) {
+void moniZeroAllChargeStampHistos(void) {
+  /* Zero out ALL charge stamp histograms */
+  int i,j;
+  for(i=0;i<2;i++) {
+    for(j=0;j<2;j++) {
+      moniZeroChargeStampHisto(ATWDchargeStampHistos[i][j], 
+			       &(ATWDchargeStampEntries[i][j]), 
+			       NUM_HIST_BINS);
+    }
+  }
+  moniZeroChargeStampHisto(FADCchargeStampHistos, 
+			   &FADCchargeStampEntries, 
+			   NUM_HIST_BINS);
+}
+
+void moniZeroChargeStampHisto(unsigned short *h, unsigned  *entries, int nsamp) {
+  *entries = 0;
+  int s;
+  for(s=0;s<nsamp;s++) {
+    h[s] = 0;
+  }
+}
+
+void moniInsertChargeStampHisto(unsigned short *h, unsigned entries, CHARGE_STAMP_MODE_TYPE mode, 
+				int ichip, int ichan, int nsamp) {
   /* Insert monitoring record for charge stamp histograms */
   int is;
   unsigned char histstr[MAXMONI_DATA];
@@ -435,6 +467,30 @@ void moniChargeStampHistos(unsigned short *h, unsigned entries, CHARGE_STAMP_MOD
     if(((int) (this-histstr)) >= MAXMONI_DATA) break; /* Should never happen */
   }
   mprintf(histstr);
+}
+
+void moniDoChargeStampHistos(void) {
+  /* Generate & insert, and then zero, required histograms */
+  if(chargeStampMode == CHARGE_STAMP_ATWD) {
+    int ichip, ichan;
+    for(ichip=0;ichip<2;ichip++) {
+      for(ichan=0;ichan<2;ichan++) {
+	moniInsertChargeStampHisto(ATWDchargeStampHistos[ichip][ichan], 
+				    ATWDchargeStampEntries[ichip][ichan], 
+				    chargeStampMode, ichip, ichan, NUM_HIST_BINS);
+	moniZeroChargeStampHisto(ATWDchargeStampHistos[ichip][ichan], 
+				 &(ATWDchargeStampEntries[ichip][ichan]), 
+				 NUM_HIST_BINS);
+      }
+    }
+  } else if(chargeStampMode == CHARGE_STAMP_FADC) {
+    moniInsertChargeStampHisto(FADCchargeStampHistos, 
+				FADCchargeStampEntries, 
+				chargeStampMode, 0, 0, NUM_HIST_BINS);
+    moniZeroChargeStampHisto(FADCchargeStampHistos, 
+			     &FADCchargeStampEntries, 
+			     NUM_HIST_BINS);
+  }
 }
 
 void moniPuts(char *s) {
