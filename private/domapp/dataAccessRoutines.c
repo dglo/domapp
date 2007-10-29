@@ -282,7 +282,8 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
     hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_BEACON);
     hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_ON);
     hal_FPGA_DOMAPP_set_delta_compression_all_avail();
-    mprintf("beginRun: COMP_CONTROL=0x%08x DAQ=0x%08x", FPGA(COMP_CONTROL), FPGA(DAQ)); 
+    mprintf("beginRun: COMP_CONTROL=0x%08x DAQ=0x%08x ICETOP_CONTROL=0x%08x", 
+	    FPGA(COMP_CONTROL), FPGA(DAQ), FPGA(ICETOP_CONTROL)); 
     break;
   default:
     mprintf("beginRun: ERROR: invalid compression mode given (%d)", (int) compressionMode);
@@ -490,6 +491,7 @@ inline unsigned char * getDeltaHitStart(unsigned lbmp) {
 }
 
 void histoChargeStamp(unsigned char * hitbuf) {
+  static int didWarn = 0;
   if(chargeStampMode == CHARGE_STAMP_FADC && histoPrescale > 0) { /* FADC mode */
     unsigned word3 = ((unsigned *) (hitbuf+8))[0];
     //mprintf("histoChargeStamp: word3=0x%08x", word3);
@@ -505,6 +507,21 @@ void histoChargeStamp(unsigned char * hitbuf) {
     FADCchargeStampHistos[bin] ++;
     FADCchargeStampEntries++;
   } else if(chargeStampMode == CHARGE_STAMP_ATWD) {   /* ATWD/IceTop mode */
+    unsigned word1  = ((unsigned *) hitbuf)[0];
+    unsigned word3  = ((unsigned *) (hitbuf+8))[0];
+    unsigned charge = word3 & 0x00001FFFF;
+    unsigned bin    = charge / histoPrescale;
+    if(bin > (NUM_HIST_BINS-1)) bin = NUM_HIST_BINS-1;
+    int chan        = (int) ((word3 >> 17) & 0x3);
+    int aorb        = (word1 >> 11) & 0x1;
+    if(chan > 1) {
+      if(didWarn) return;
+      didWarn = 1;
+      mprintf("histoChargeStamp: WARNING: NOT HISTOGRAMMING CHANNEL > 1!!! (%d)", chan);
+      return;
+    }
+    ATWDchargeStampHistos[aorb][chan][bin] ++;
+    ATWDchargeStampEntries[aorb][chan]++;
   } else {
     /* Do nothing if mode is wrong (can't happen due to check in domSControl.c) */
   }

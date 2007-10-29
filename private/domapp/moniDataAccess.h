@@ -3,7 +3,7 @@
  * Part of dataAccess thread
  * John Jacobsen, jacobsen@npxdesigns.com, for LBNL
  * May, 2003
- * $Id: moniDataAccess.h,v 1.7.4.10 2007-10-25 20:58:33 jacobsen Exp $
+ * $Id: moniDataAccess.h,v 1.7.4.11 2007-10-29 21:59:50 jacobsen Exp $
  */
 
 #ifndef _MONI_DATA_ACCESS_
@@ -121,7 +121,7 @@ typedef enum {
 } CHARGE_STAMP_MODE_TYPE;
 
 typedef enum {
-  CHARGE_STAMP_AUTO   = 0,
+  CHARGE_STAMP_AUTO    = 0,
   CHARGE_STAMP_BY_CHAN = 1,
 } CHARGE_STAMP_SEL_TYPE;
 
@@ -180,6 +180,8 @@ void moniZeroChargeStampHisto(unsigned short *h, unsigned *entries, int nsamp);
 
 void moniInsertChargeStampHistos(unsigned short *h, unsigned entries,
 				 CHARGE_STAMP_MODE_TYPE mode, int ichip, int ichan, int nsamp);
+
+void moniDoChargeStampHistos(void);
 
 /* Configuration state change messages */
 void moniInsertSetDACMessage(unsigned long long time, UBYTE dacID, unsigned short dacVal);

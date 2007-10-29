@@ -802,13 +802,14 @@ void domSControl(MESSAGE_STRUCT *M) {
 
   case DSC_SET_CHARGE_STAMP_TYPE:
     {
+
+      /* Validate inputs */
       UBYTE mode = data[0];
       if(mode != CHARGE_STAMP_ATWD && mode != CHARGE_STAMP_FADC) {
 	mprintf("ERROR: bad charge stamp mode, 0x%02x!", mode);
 	DOERROR("bad charge stamp mode", 0, 0);
 	break;
       }
-      chargeStampMode = mode;
       UBYTE chsel     = data[1]; /* 0=auto 1=fixed channel selection 
 				    (ATWD only; ignored for FADC)  */
       if(chsel != CHARGE_STAMP_AUTO && chsel != CHARGE_STAMP_BY_CHAN) {
@@ -816,17 +817,36 @@ void domSControl(MESSAGE_STRUCT *M) {
 	DOERROR("bad channel selection arg", 0, 0);
 	break;
       }
-      chargeStampChanSel = chsel;
       UBYTE ch        = data[2]; /* If fixed channel selection, which byte?
 				    (ATWD only; ignored for FADC) */
-      if(ch != CHARGE_STAMP_AUTO && ch != CHARGE_STAMP_BY_CHAN) {
+      if(ch > 3) {
 	mprintf("ERROR: bad channel selected, %d!", ch);
 	DOERROR("bad channel selected", 0, 0);
 	break;
       }
+
+      /* Save new state */
+      chargeStampMode = mode;
+      chargeStampChanSel = chsel;
       chargeStampChannel = ch;
       mprintf("Set charge stamp type: mode=%d chsel=%d ch=%d",
 	      chargeStampMode, chargeStampChanSel, chargeStampChannel);
+
+      /* Do HAL configuration */
+      hal_FPGA_DOMAPP_disable_icetop_chargestamp();
+
+      if(chargeStampMode == CHARGE_STAMP_ATWD) {
+
+	if(chargeStampChanSel == CHARGE_STAMP_AUTO) {
+	  mprintf("Using AUTO charge stamp channel selector");
+	  hal_FPGA_DOMAPP_set_icetop_chargestamp_mode(HAL_FPGA_DOMAPP_ICETOP_MODE_AUTO, 
+						      chargeStampChannel);
+	} else if(chargeStampChanSel == CHARGE_STAMP_BY_CHAN) {
+	  mprintf("Using channel %d for charge stamps", chargeStampChannel);
+	  hal_FPGA_DOMAPP_set_icetop_chargestamp_mode(HAL_FPGA_DOMAPP_ICETOP_MODE_CHAN,
+						      chargeStampChannel);
+	}
+      }
     }
     Message_setStatus(M,SUCCESS);
     Message_setDataLen(M,0);
