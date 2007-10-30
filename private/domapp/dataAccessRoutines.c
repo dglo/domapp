@@ -491,7 +491,6 @@ inline unsigned char * getDeltaHitStart(unsigned lbmp) {
 }
 
 void histoChargeStamp(unsigned char * hitbuf) {
-  static int didWarn = 0;
   if(chargeStampMode == CHARGE_STAMP_FADC && histoPrescale > 0) { /* FADC mode */
     unsigned word3 = ((unsigned *) (hitbuf+8))[0];
     //mprintf("histoChargeStamp: word3=0x%08x", word3);
@@ -514,11 +513,9 @@ void histoChargeStamp(unsigned char * hitbuf) {
     if(bin > (NUM_HIST_BINS-1)) bin = NUM_HIST_BINS-1;
     int chan        = (int) ((word3 >> 17) & 0x3);
     int aorb        = (word1 >> 11) & 0x1;
-    if(chan > 1) {
-      if(didWarn) return;
-      didWarn = 1;
-      mprintf("histoChargeStamp: WARNING: NOT HISTOGRAMMING CHANNEL > 1!!! (%d)", chan);
-      return;
+    if(chan > 1) { /* Deal w/ overflows per Paul Sullivan */
+      chan = 1;
+      bin  = NUM_HIST_BINS-1;
     }
     ATWDchargeStampHistos[aorb][chan][bin] ++;
     ATWDchargeStampEntries[aorb][chan]++;
