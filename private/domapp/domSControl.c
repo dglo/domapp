@@ -846,6 +846,7 @@ void domSControl(MESSAGE_STRUCT *M) {
 	  hal_FPGA_DOMAPP_set_icetop_chargestamp_mode(HAL_FPGA_DOMAPP_ICETOP_MODE_CHAN,
 						      chargeStampChannel);
 	}
+	hal_FPGA_DOMAPP_enable_icetop_chargestamp();
       }
     }
     Message_setStatus(M,SUCCESS);
