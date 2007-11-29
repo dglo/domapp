@@ -2,8 +2,8 @@
   domapp - IceCube DOM Application program for use with 
            "Real"/"domapp" FPGA
            J. Jacobsen (jacobsen@npxdesigns.com), Chuck McParland
-  $Date: 2007-10-25 20:58:33 $
-  $Revision: 1.35.4.10 $
+  $Date: 2007-11-29 18:15:25 $
+  $Revision: 1.35.4.11 $
 */
 
 #include <unistd.h> /* Needed for read/write */
@@ -103,6 +103,9 @@ int main(void) {
     long long dtfa = tcur-t_fa_last;
     long long dthi = tcur-t_hi_last;
 
+    unsigned spe = hal_FPGA_DOMAPP_spe_rate_immediate();
+    unsigned mpe = hal_FPGA_DOMAPP_mpe_rate_immediate();
+
     /* Hardware monitoring */
     if(   moniHdwrIval > 0 
        && (dthw < 0 || dthw > moniHdwrIval)) {
@@ -111,9 +114,7 @@ int main(void) {
 	temperature = halFinishReadTemp();
 	halStartReadTemp();
       }
-      moniInsertHdwrStateMessage(tcur, temperature, 
-				 hal_FPGA_DOMAPP_spe_rate_immediate(),
-				 hal_FPGA_DOMAPP_mpe_rate_immediate());
+      moniInsertHdwrStateMessage(tcur, temperature, spe, mpe);
       t_hw_last = tcur;
     }
     
@@ -125,9 +126,7 @@ int main(void) {
 
     /* "Fast" monitoring record */
     if(moniFastIval > 0 && (dtfa < 0 || dtfa > moniFastIval)) {
-      mprintf("F %d %d %d %d", 
-	      hal_FPGA_DOMAPP_spe_rate_immediate(),
-	      hal_FPGA_DOMAPP_mpe_rate_immediate(), 
+      mprintf("F %d %d %d %d", spe, mpe,
 	      getLastHitCount(), 
 	      hal_FPGA_DOMAPP_deadtime_immediate());
       t_fa_last = tcur;
