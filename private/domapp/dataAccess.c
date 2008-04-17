@@ -50,6 +50,7 @@ int FPGA_ATWD_select    = 0;
 int SW_compression      = 0;
 int SW_compression_fmt  = 0;
 int numOverflows        = 0;
+int atwdSelect          = HAL_FPGA_DOMAPP_ATWD_A|HAL_FPGA_DOMAPP_ATWD_B;
 unsigned long sw_lbm_mask = (1<<DEFAULT_LBM_BIT_DEPTH)-1;
 
 /* Format masks: default, and configured by request */
@@ -418,6 +419,29 @@ void dataAccess(MESSAGE_STRUCT *M) {
 	  mprintf("Histogramming DISABLED");
 	}
 	
+	Message_setDataLen(M, 0);
+	Message_setStatus(M, SUCCESS);
+      }
+      break;
+
+    case DATA_ACC_SELECT_ATWD:
+      {
+	int mode = (int) data[0];
+
+	if(mode == 0) {
+	  atwdSelect = HAL_FPGA_DOMAPP_ATWD_A;
+	} else if(mode == 1) {
+	  atwdSelect = HAL_FPGA_DOMAPP_ATWD_B;
+	} else if(mode == 2) {
+	  atwdSelect = HAL_FPGA_DOMAPP_ATWD_A|HAL_FPGA_DOMAPP_ATWD_B;
+	} else {
+	  DOERROR(DAC_ERS_BAD_ARGUMENT, DAC_Bad_Argument, SEVERE_ERROR);
+	  break;
+	}
+	mprintf("ATWD chips to enable: A=%s B=%s", 
+		(atwdSelect&HAL_FPGA_DOMAPP_ATWD_A)?"YES":"no",
+		(atwdSelect&HAL_FPGA_DOMAPP_ATWD_B)?"YES":"no");
+
 	Message_setDataLen(M, 0);
 	Message_setStatus(M, SUCCESS);
       }

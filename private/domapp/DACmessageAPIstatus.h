@@ -53,6 +53,7 @@
 #define DATA_ACC_SET_LBM_BIT_DEPTH   32
 #define DATA_ACC_GET_LBM_SIZE        33
 #define DATA_ACC_HISTO_CHARGE_STAMPS 34
+#define DATA_ACC_SELECT_ATWD         35
 
 // define service specific error values
 #define DAC_Data_Overrun        4
