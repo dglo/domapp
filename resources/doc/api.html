@@ -101,6 +101,8 @@ compression mode and data format type (<a
 href="api.html#DATA_ACC_SET_DATA_FORMAT">DATA_ACC_SET_DATA_FORMAT</a>
 and <a
 href="api.html#DATA_ACC_SET_COMP_MODE">DATA_ACC_SET_COMP_MODE</a>).
+You can also selectively enable ATWD chips (A or B) with <a 
+href="api.html#DATA_ACC_SELECT_ATWD">DATA_ACC_SELECT_ATWD</a>.
 </p>
 </li>
 
@@ -1476,6 +1478,19 @@ ATWD CS <em>chip</em> <em>chan</em>--<em>N</em> entries: <em>bin0</em> <em>bin1<
 <p>
 FADC CS--<em>N</em> entries: <em>bin0</em> <em>bin1</em> ... <em>bin127</em>
 </p>
+  </li>
+</ul>
+
+<a name="DATA_ACC_SELECT_ATWD"/>
+
+<ul class="message">
+  <li class="id"    >35</li>
+  <li class="name"  >DATA_ACC_SELECT_ATWD</li>
+  <li class="input" >UB: chip select</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Chip select=0: ATWD A; 1: ATWD B; 2: both (<strong>default</strong>).  This enables either one 
+or both ATWDs (the latter case selects ping-pong mode).
   </li>
 </ul>
 
