@@ -102,7 +102,8 @@ href="api.html#DATA_ACC_SET_DATA_FORMAT">DATA_ACC_SET_DATA_FORMAT</a>
 and <a
 href="api.html#DATA_ACC_SET_COMP_MODE">DATA_ACC_SET_COMP_MODE</a>).
 You can also selectively enable ATWD chips (A or B) with <a 
-href="api.html#DATA_ACC_SELECT_ATWD">DATA_ACC_SELECT_ATWD</a>.
+href="api.html#DATA_ACC_SELECT_ATWD">DATA_ACC_SELECT_ATWD</a>, or enable IceTop 'minbias' mode with
+<a href="api.html#DSC_SELECT_MINBIAS">DSC_SELECT_MINBIAS</a>.
 </p>
 </li>
 
@@ -1283,7 +1284,17 @@ See also <a href="#DATA_ACC_HISTO_CHARGE_STAMPS">DATA_ACC_HISTO_CHARGE_STAMPS</a
   </li>
 </ul>
 
-
+<a name="DSC_SELECT_MINBIAS"/>
+<ul class="message">
+  <li class="id"    >62</li>
+  <li class="name"  >DSC_SELECT_MINBIAS</li>
+  <li class="input" >UB: mode (0=disable; 1=enable)</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Enable or disable IceTop minbias hits (1/8192 of non-LC, non-beacon hits will be recorded
+with the corresponding trigger word bit set: WORD1 bit 30 for compressed data).
+</li>
+</ul>
 
 
 <h1>Data Access Messages (message type 3):</h1>

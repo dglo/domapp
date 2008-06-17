@@ -800,6 +800,21 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setDataLen(M,0);
     break;
 
+  case DSC_SELECT_MINBIAS:
+    {
+      UBYTE enable = data[0];
+      if(enable) {
+	mprintf("Enabling minbias (non-LC) hit data");
+	hal_FPGA_DOMAPP_enable_minbias();
+      } else {
+	mprintf("Disabling minbias (non-LC) hit data");
+	hal_FPGA_DOMAPP_disable_minbias();
+      }
+      Message_setStatus(M,SUCCESS);
+      Message_setDataLen(M,0);
+      break;
+    }
+
   case DSC_SET_CHARGE_STAMP_TYPE:
     {
 

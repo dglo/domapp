@@ -63,6 +63,7 @@
 #define DSC_ENABLE_SN             59
 #define DSC_DISABLE_SN            60
 #define DSC_SET_CHARGE_STAMP_TYPE 61
+#define DSC_SELECT_MINBIAS        62
 
 /* Slow Control specific Last error ID values */
 #define DSC_Failed_Challenge 4
