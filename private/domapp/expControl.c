@@ -447,6 +447,7 @@ void expControl(MESSAGE_STRUCT *M) {
       
       /* begin run */ 
     case EXPCONTROL_BEGIN_RUN:
+      turnOffFlashers();
       if (!beginRun(compMode, DOM_RUN_IN_PROGRESS)) {
 	DOERROR(EXP_CANNOT_BEGIN_RUN, EXP_Cannot_Begin_Run, SEVERE_ERROR);
 	break;

@@ -311,6 +311,11 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   return TRUE;
 }
 
+void turnOffFlashers(void) {
+  hal_FB_set_brightness(0);
+  hal_FB_disable();
+}
+
 int endFBRun(void) { return endRun(); }
 
 int endRun(void) { /* End either a "regular" or flasher run */
@@ -324,8 +329,7 @@ int endRun(void) { /* End either a "regular" or flasher run */
   hal_FPGA_DOMAPP_disable_daq();
   hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_OFF);
   doStopSN();
-  hal_FB_set_brightness(0);
-  hal_FB_disable();
+  turnOffFlashers();
   mprintf("Ended run (run type=%s)", DOM_state==DOM_FB_RUN_IN_PROGRESS?"flasher":"normal");
   DOM_state=DOM_IDLE;
   return TRUE;
