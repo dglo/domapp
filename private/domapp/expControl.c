@@ -61,6 +61,8 @@ USHORT fadcdata[FADCSIZ];
 #define ATWD_TIMEOUT_COUNT 4000
 #define ATWD_TIMEOUT_USEC 5
 
+#define MAXPEDGOAL 1000 /* MAX # of ATWD triggers (FADCs are twice this) */
+
 void zeroPedestals(void) {
   memset((void *) fadcpedsum, 0, FADCSIZ * sizeof(ULONG));
   memset((void *) fadcpedavg, 0, FADCSIZ * sizeof(USHORT));
@@ -534,33 +536,34 @@ void expControl(MESSAGE_STRUCT *M) {
       Message_setDataLen(M,strlen(DOM_errorString)+8);
       break;
       
-    case EXPCONTROL_DO_PEDESTAL_COLLECTION:
-#define MAXPEDGOAL 1000 /* MAX # of ATWD triggers (FADCs are twice this) */
-      ULONG ped0goal   = unformatLong(&data[0]);
-      ULONG ped1goal   = unformatLong(&data[4]);
-      ULONG pedadcgoal = unformatLong(&data[8]);
-      zeroPedestals();
-      if(ped0goal   > MAXPEDGOAL ||
-	 ped1goal   > MAXPEDGOAL ||
-	 pedadcgoal > ped0goal + ped1goal) {
-	DOERROR(EXP_TOO_MANY_PEDS, EXP_Too_Many_Peds, SEVERE_ERROR);
-	break;
-      }
-      if(pedestalRun(ped0goal, ped1goal, pedadcgoal)) {
-	DOERROR(EXP_PEDESTAL_RUN_FAILED, EXP_Pedestal_Run_Failed, SEVERE_ERROR);
-	break;
-      }
+    case EXPCONTROL_DO_PEDESTAL_COLLECTION: 
+      {
+	ULONG ped0goal   = unformatLong(&data[0]);
+	ULONG ped1goal   = unformatLong(&data[4]);
+	ULONG pedadcgoal = unformatLong(&data[8]);
+	zeroPedestals();
+	if(ped0goal   > MAXPEDGOAL ||
+	   ped1goal   > MAXPEDGOAL ||
+	   pedadcgoal > ped0goal + ped1goal) {
+	  DOERROR(EXP_TOO_MANY_PEDS, EXP_Too_Many_Peds, SEVERE_ERROR);
+	  break;
+	}
+	if(pedestalRun(ped0goal, ped1goal, pedadcgoal)) {
+	  DOERROR(EXP_PEDESTAL_RUN_FAILED, EXP_Pedestal_Run_Failed, SEVERE_ERROR);
+	  break;
+	}
 #ifdef  DEBUGLBM
 #warning DEBUGLBM set!
-      if(pedestalRun(ped0goal, ped1goal, pedadcgoal)) {
-        DOERROR(EXP_PEDESTAL_RUN_FAILED, EXP_Pedestal_Run_Failed, SEVERE_ERROR);
-        break;
-      }
+	if(pedestalRun(ped0goal, ped1goal, pedadcgoal)) {
+	  DOERROR(EXP_PEDESTAL_RUN_FAILED, EXP_Pedestal_Run_Failed, SEVERE_ERROR);
+	  break;
+	}
 #endif
 
-      Message_setDataLen(M,0);
-      Message_setStatus(M,SUCCESS);
-      break;
+	Message_setDataLen(M,0);
+	Message_setStatus(M,SUCCESS);
+	break;
+      }
 
     case EXPCONTROL_GET_NUM_PEDESTALS:
       formatLong(npeds0, &data[0]);

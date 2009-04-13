@@ -148,6 +148,8 @@ int fbSetup(USHORT bright, USHORT window, short delay, USHORT mask, USHORT rate)
   return 0;
 }
 
+inline BOOLEAN FBRunIsInProgress(void) { return DOM_state==DOM_FB_RUN_IN_PROGRESS; }
+
 int changeFBsettings(USHORT bright, USHORT window,
 		     short delay, USHORT mask, USHORT rate) {
   /* Change flasher-board settings 'on-the-fly' so FB doesn't have to
@@ -203,7 +205,6 @@ int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window,
   return 1;
 }
 
-inline BOOLEAN FBRunIsInProgress(void) { return DOM_state==DOM_FB_RUN_IN_PROGRESS; }
 
 void updateTriggerModes(void) {
   if(pulser_running) {
