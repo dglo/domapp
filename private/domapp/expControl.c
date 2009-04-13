@@ -460,7 +460,6 @@ void expControl(MESSAGE_STRUCT *M) {
       {
 	USHORT bright=0, window=0, mask=0, rate=0;
 	short delay=0;
-	tmpPtr = data;
 	bright = unformatShort(&data[0]);
 	window = unformatShort(&data[2]);
 	delay  = unformatShort(&data[4]);
@@ -480,6 +479,31 @@ void expControl(MESSAGE_STRUCT *M) {
 	break;
       }
       /* end run */ 
+
+    case EXPCONTROL_CHANGE_FB_SETTINGS: 
+      {
+	USHORT bright=0, window=0, mask=0, rate=0;
+	short delay=0;
+	bright = unformatShort(&data[0]);
+	window = unformatShort(&data[2]);
+	delay  = unformatShort(&data[4]);
+	if(delay < -200 || delay > 175) {
+	  DOERROR("EXPCONTROL_CHANGE_FB_SETTINGS: Flasher delay must be -200 to 175!",
+		  EXP_Bad_FB_Delay, SEVERE_ERROR);
+	  break;
+	}
+	mask   = unformatShort(&data[6]);
+	rate   = unformatShort(&data[8]);
+	if (!changeFBsettings(bright, window, delay, mask, rate)) {
+	  DOERROR("EXPCONTROL_CHANGE_FB_SETTINGS: Could not change flasherboard settings",
+		  EXP_Cannot_Change_FB_Settings, SEVERE_ERROR);
+	  break;
+	}
+	Message_setStatus(M,SUCCESS);
+	Message_setDataLen(M,0);
+	break;
+      }
+
     case EXPCONTROL_END_RUN:
       if (!endRun()) {
 	DOERROR(EXP_CANNOT_END_RUN, EXP_Cannot_End_Run, SEVERE_ERROR);
@@ -498,7 +522,7 @@ void expControl(MESSAGE_STRUCT *M) {
       Message_setDataLen(M,0);
       break;
       
-      /* get run state */
+    /* get run state */
     case EXPCONTROL_GET_DOM_STATE:
       data[0]=DOM_state;
       data[1]=DOM_config_access;
@@ -511,7 +535,6 @@ void expControl(MESSAGE_STRUCT *M) {
       break;
       
     case EXPCONTROL_DO_PEDESTAL_COLLECTION:
-      tmpPtr = data;
 #define MAXPEDGOAL 1000 /* MAX # of ATWD triggers (FADCs are twice this) */
       ULONG ped0goal   = unformatLong(&data[0]);
       ULONG ped1goal   = unformatLong(&data[4]);

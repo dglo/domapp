@@ -44,6 +44,8 @@ void initFormatEngineeringEvent(UBYTE, UBYTE, UBYTE);
 int  beginRun(UBYTE compressionMode, UBYTE newRunState);
 int  beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window, 
 		short delay, USHORT mask, USHORT rate);
+int  changeFBsettings(USHORT bright, USHORT window, 
+		      short delay, USHORT mask, USHORT rate);
 void turnOffFlashers(void);
 int  endRun(void);
 int  endFBRun(void);

@@ -148,6 +148,28 @@ int fbSetup(USHORT bright, USHORT window, short delay, USHORT mask, USHORT rate)
   return 0;
 }
 
+int changeFBsettings(USHORT bright, USHORT window,
+		     short delay, USHORT mask, USHORT rate) {
+  /* Change flasher-board settings 'on-the-fly' so FB doesn't have to
+     be turned off (danger of large, extended afterbursts) */
+  if(!FBRunIsInProgress()) { 
+    mprintf("changeFBsettings: Flasher board run not in progress!");
+    return 0;
+  }
+
+  if(fbSetup(bright, window, delay, mask, rate)) {
+    mprintf("changeFBsettings: ERROR: fbSetup failed!");
+    return 0;
+  }
+
+  hal_FPGA_DOMAPP_cal_atwd_offset(delay);
+  double realRate = hal_FPGA_DOMAPP_FB_set_rate((double) rate);
+  mprintf("Changed flasher board settings!!! bright=%hu window=%hu delay=%d "
+          "mask=%hu rateRequest=%hu realRate=%d",
+          bright, window, (int) delay, mask, rate, (int) realRate);
+  return 1;
+}
+
 int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window, 
 	       short delay, USHORT mask, USHORT rate) {
 
@@ -313,6 +335,8 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
 
 void turnOffFlashers(void) {
   hal_FB_set_brightness(0);
+  hal_FB_enable_LEDs(0);
+  halUSleep(100*1000); /* 100 msec */
   hal_FB_disable();
 }
 
