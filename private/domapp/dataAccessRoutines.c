@@ -4,7 +4,7 @@
     Modifications by John Jacobsen 2004 
                   to implement configurable engineering events
     Modifications by Jacobsen 2005 to support production (domapp) FPGA
-    Modifications by Jacobsen 2006 to implement delta-compression and many other features.
+    Modifications by Jacobsen 2006 to implement delta-compression and many other features
 */
 
 #include <stddef.h>
