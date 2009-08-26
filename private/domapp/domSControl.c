@@ -48,6 +48,7 @@ extern UBYTE DOM_config_access;
 /* global storage */
 extern UBYTE FPGA_trigger_mode;
 extern int FPGA_ATWD_select;
+extern UBYTE dataFormat; /* From dataAccess.c */
 
 /* local functions, data */
 USHORT PMT_HV_max          = PMT_HV_DEFAULT_MAX;
@@ -650,6 +651,11 @@ void domSControl(MESSAGE_STRUCT *M) {
       UBYTE lct = data[0];
       if(lct != LC_TYPE_SOFT && lct != LC_TYPE_HARD && lct != LC_TYPE_FLABBY) {
 	DOERROR("Invalid local coincidence type", DSC_LC_Bad_Type, FATAL_ERROR);
+      } else if((lct == LC_TYPE_SOFT || lct == LC_TYPE_FLABBY) &&
+		dataFormat == FMT_ENG) {
+	DOERROR("Invalid LC type, only HLC or no LC are allowed"
+		" when engineering format is set!", 
+		DSC_LC_Bad_Type, FATAL_ERROR);
       } else {
 	LCtype = lct;
 	set_HAL_lc_mode();
