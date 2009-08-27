@@ -57,33 +57,6 @@ USHORT pulser_rate         = 1; /* By default, now take forced triggers at 1 Hz 
 UBYTE selected_mux_channel = 0;
 ULONG deadTime             = 100;
 UBYTE LCmode               = 0;
-typedef enum {
-  LC_MODE_NONE        = 0, 
-  LC_MODE_BOTH        = 1,
-  LC_MODE_UP          = 2,
-  LC_MODE_DN          = 3,
-  LC_MODE_UP_AND_DOWN = 4,
-  LC_MODE_SLC_ONLY    = 5,
-} LC_MODE_T;
-#define MAX_LC_MODE LC_MODE_SLC_ONLY /* Must agree with highest LC_MODE_T */
-
-typedef enum {
-  LC_TYPE_NONE=0,
-  LC_TYPE_SOFT=1, 
-  LC_TYPE_HARD=2,
-  LC_TYPE_FLABBY=3 
-} LC_TYPE_T;
-typedef enum {
-  LC_TX_NONE=0,
-  LC_TX_UP  =1,
-  LC_TX_DN  =2,
-  LC_TX_BOTH=3 
-} LC_TX_T;
-typedef enum {
-  LC_SRC_SPE = 0,
-  LC_SRC_MPE = 1 
-} LC_SRC_T;
-#define MAXDISTNS 3175
 UBYTE LCtype               = LC_TYPE_HARD;
 UBYTE LCtx                 = LC_TX_BOTH;
 UBYTE LCsrc                = 0;
@@ -95,6 +68,7 @@ UBYTE LClengthsSet         = 0;
 #define LC_WIN_DEFAULT 200
 ULONG pre_ns               = LC_WIN_DEFAULT;
 ULONG post_ns              = LC_WIN_DEFAULT;
+#define MAXDISTNS 3175
 
 /* Charge stamp stuff */
 extern CHARGE_STAMP_MODE_TYPE chargeStampMode;

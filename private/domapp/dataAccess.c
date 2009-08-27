@@ -40,6 +40,7 @@ Modification: 5/10/04 Jacobsen :-- put more than one monitoring rec. per request
 
 extern void formatLong(ULONG value, UBYTE *buf);
 extern UBYTE DOM_state;
+extern UBYTE LCtype, LCmode; /* domSControl.c */
 extern USHORT pulser_rate;
 USHORT atwdRGthresh[2][4], fadcRGthresh;
 
@@ -320,6 +321,12 @@ void dataAccess(MESSAGE_STRUCT *M) {
 	break;
       }
       dataFormat = data[0];
+      /* Reset LC if engineering format given, since eng. fmt. restricts the 
+	 possible LC choices */
+      if(dataFormat == FMT_ENG) {
+	LCtype = LC_TYPE_NONE;
+	LCmode = LC_MODE_NONE;
+      }
       mprintf("Set data format to %d", dataFormat);
 
       Message_setDataLen(M, 0);
