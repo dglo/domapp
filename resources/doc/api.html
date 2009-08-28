@@ -33,7 +33,12 @@
 <p>
 This document describes the messaging
 interface to the production version of the IceCube DOM Application
-(domapp), which uses the DOMApp FPGA design.
+(domapp), which uses the DOMApp FPGA design.  
+</p>
+
+<p>The original message interface 
+was designed by Chuck McParland at LBNL for use with the Testdomapp
+application, and was adapted for DOMApp by John Jacobsen.
 </p>
 
 <a name="overview"/>
@@ -79,20 +84,6 @@ voltage is set).
 
 <li>
 <p>
-If desired, turn on local coincidence with <a
-href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a> (1) and <a
-href="#DSC_SET_LOCAL_COIN_WINDOW">DSC_SET_LOCAL_COIN_WINDOW</a>.
-Optionally, for new DOMAPP FPGA functions, do any of <a
-href="#DSC_SET_LC_TYPE">DSC_SET_LC_TYPE</a>, <a
-href="#DSC_SET_LC_TX">DSC_SET_LC_TX</a>, <a
-href="#DSC_SET_LC_SRC">DSC_SET_LC_SRC</a>, <a
-href="#DSC_SET_LC_SPAN">DSC_SET_LC_SPAN</a>, and <a
-href="#DSC_SET_LC_CABLE_LEN">DSC_SET_LC_CABLE_LEN</a>.
-</p>
-</li>
-
-<li>
-<p>
 Set the triggering mode (<a
 href="api.html#DSC_SET_TRIG_MODE">DSC_SET_TRIG_MODE</a>) to trigger
 type 2 (discriminator trigger), for both regular PMT triggers and also
@@ -104,6 +95,22 @@ href="api.html#DATA_ACC_SET_COMP_MODE">DATA_ACC_SET_COMP_MODE</a>).
 You can also selectively enable ATWD chips (A or B) with <a 
 href="api.html#DATA_ACC_SELECT_ATWD">DATA_ACC_SELECT_ATWD</a>, or enable IceTop 'minbias' mode with
 <a href="api.html#DSC_SELECT_MINBIAS">DSC_SELECT_MINBIAS</a>.
+</p>
+</li>
+
+<li>
+<p>
+If desired, turn on local coincidence with <a
+href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a> (1) and <a
+href="#DSC_SET_LOCAL_COIN_WINDOW">DSC_SET_LOCAL_COIN_WINDOW</a>.
+Optionally, for new DOMAPP FPGA functions, do any of <a
+href="#DSC_SET_LC_TYPE">DSC_SET_LC_TYPE</a>, <a
+href="#DSC_SET_LC_TX">DSC_SET_LC_TX</a>, <a
+href="#DSC_SET_LC_SRC">DSC_SET_LC_SRC</a>, <a
+href="#DSC_SET_LC_SPAN">DSC_SET_LC_SPAN</a>, and <a
+href="#DSC_SET_LC_CABLE_LEN">DSC_SET_LC_CABLE_LEN</a>.
+<strong>Note:</strong> as of DOM-MB-438, you should set the data format BEFORE turning on Local Coincidence.
+Soft local coincidence mode can only be run when the delta-compressed data format is used.
 </p>
 </li>
 
@@ -578,6 +585,11 @@ DOM Data Formats directory</a> on Docushare.  Variable/truncated
 engineering records are still supported via the DATA_ACC_SET_ENG_FMT
 message.
 </p>
+
+<p>It should be noted that the engineering format
+is <strong>not</strong> compatible with soft local coincidence.  You
+must use the delta-compression format described below when using
+SLC.  </p>
 
 <h2>Compressed Data Format</h2>
 
@@ -1358,7 +1370,8 @@ Get flasher board ID string (currently 27 bytes, but check message data length)
   <li class="output">-</li>
   <li class="desc"  >
       Set data format (see table in "<a href="#dataformats">DATA
-FORMATS</a>", above).
+FORMATS</a>", above).  When setting engineering format (mode 0), 
+<strong>LC settings are reset (mode 0, type 0).</strong>
   </li>
 </ul>
       
