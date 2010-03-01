@@ -35,8 +35,8 @@ extern int SNRequested;
 extern int numOverflows;
 extern unsigned long sw_lbm_mask;
 
-/* LC mode, defined via slow control */
-extern UBYTE LCmode;
+extern UBYTE LCmode; /* From domSControl.c */
+extern UBYTE fMoniRateType; /* From dataAccess.c */
 
 /* define size of data buffer in message */
 #define DATA_BUFFER_LEN MAXDATA_VALUE
@@ -554,7 +554,8 @@ void histoChargeStamp(unsigned char * hitbuf) {
   }
 }
 
-int formatDomappDeltaEvent(UBYTE * msgp, unsigned lbmp, unsigned short tmsb, int doHdr) {
+static int formatDomappDeltaEvent(UBYTE * msgp, unsigned lbmp, unsigned short tmsb, 
+				  int doHdr, int* isHeaderOnly) {
   unsigned char * m0 = msgp;
 
   if(doHdr) {
@@ -570,6 +571,7 @@ int formatDomappDeltaEvent(UBYTE * msgp, unsigned lbmp, unsigned short tmsb, int
   }
 
   unsigned short hitsize = getDeltaHitSize(lbmp);
+  *isHeaderOnly = (hitsize == 12);
   memcpy(msgp, getDeltaHitStart(lbmp), hitsize);
   msgp += hitsize;
   if(doChargeStampHisto()) histoChargeStamp(getDeltaHitStart(lbmp));
@@ -584,6 +586,7 @@ int fillMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz) {
   int doHdr = 1;
   unsigned short lastMsb = 0;
   int ret = 0;
+  int isHeaderOnly = 0;
   while(1) {
     if(!isDataAvailable()) {
       ret = NCUR();
@@ -605,11 +608,13 @@ int fillMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz) {
       ret = NCUR();
       break;
     }
-    p += formatDomappDeltaEvent(p, lbmp, tmsb, doHdr);
+    p += formatDomappDeltaEvent(p, lbmp, tmsb, doHdr, &isHeaderOnly);
     doHdr = 0;
     lbmp = nextEvent(lbmp);
     nTrigsReadOut++;
-    hitCounter++;
+    /* Count the hit only if we're recording all SLC, or if we're recording
+       HLC and the hit is not an SLC hit */
+    if(fMoniRateType == F_MONI_RATE_SLC || !isHeaderOnly) hitCounter++;
   }
   /* If overflow has occurred, we can't trust the data for this cycle */
   if(haveOverflow(lbmp)) {

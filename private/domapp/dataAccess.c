@@ -44,6 +44,7 @@ extern UBYTE LCtype, LCmode; /* domSControl.c */
 extern USHORT pulser_rate;
 USHORT atwdRGthresh[2][4], fadcRGthresh;
 
+UBYTE fMoniRateType     = F_MONI_RATE_HLC;
 UBYTE FPGA_trigger_mode = CPU_TRIG_MODE;
 UBYTE dataFormat        = FMT_ENG;
 UBYTE compMode          = CMP_NONE;
@@ -454,6 +455,25 @@ void dataAccess(MESSAGE_STRUCT *M) {
       }
       break;
       
+    case DATA_ACC_GET_F_MONI_RATE_TYPE:
+      Message_setDataLen(M, 1);
+      Message_setStatus(M, SUCCESS);
+      data[0] = fMoniRateType;
+      break;
+
+    case DATA_ACC_SET_F_MONI_RATE_TYPE:
+      {
+	UBYTE t = data[0];
+	if(t != F_MONI_RATE_HLC && t != F_MONI_RATE_SLC) {
+	  DOERROR(DAC_ERS_BAD_ARGUMENT, DAC_Bad_Argument, SEVERE_ERROR);
+	  break;
+	}
+	fMoniRateType = t;
+	Message_setDataLen(M, 0);
+	Message_setStatus(M, SUCCESS);
+      }
+      break;
+
     default:
       datacs.msgRefused++;
       DOERROR(DAC_ERS_BAD_MSG_SUBTYPE, COMMON_Bad_Msg_Subtype, WARNING_ERROR);

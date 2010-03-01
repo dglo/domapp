@@ -1106,7 +1106,7 @@ Modes: see
   <li class="output">-</li>
   <li class="desc"  >
 Set local
-coincidence windows. Units are nsec. Must be between 100 and 6200 nsec
+coincidence windows. Units are nsec. Must be between 100 and 1600 nsec
 inclusive.  Default is 200 nsec on each
 side.   Pre- and
 post- refer to
@@ -1516,6 +1516,33 @@ FADC CS--<em>N</em> entries: <em>bin0</em> <em>bin1</em> ... <em>bin127</em>
   <li class="desc"  >
 Chip select=0: ATWD A; 1: ATWD B; 2: both (<strong>default</strong>).  This enables either one 
 or both ATWDs (the latter case selects ping-pong mode).
+  </li>
+</ul>
+
+<a name="DATA_ACC_GET_F_MONI_RATE_TYPE"/>
+
+<ul class="message">
+  <li class="id"    >36</li>
+  <li class="name"  >DATA_ACC_GET_F_MONI_RATE_TYPE</li>
+  <li class="input" >-</li>
+  <li class="output">UB: type of rate reported in 'F' monitoring records</li>
+  <li class="desc"  >
+Returns 0 (HLC) or 1 (SLC) depending on which type of hits are
+reported in the ASCII 'F' monitoring records.  Note that this is
+actually the number of hits <strong>read out</strong> to the surface
+as opposed to the number actually triggered by the FPGA.
+  </li>
+</ul>
+
+<a name="DATA_ACC_SET_F_MONI_RATE_TYPE"/>
+
+<ul class="message">
+  <li class="id"    >37</li>
+  <li class="name"  >DATA_ACC_SET_F_MONI_RATE_TYPE</li>
+  <li class="input" >UB: type of rate to be reported in 'F' monitoring records</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+See DATA_ACC_GET_F_MONI_RATE_TYPE.
   </li>
 </ul>
 

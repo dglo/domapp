@@ -20,6 +20,11 @@ enum {
   FMT_DELTA = 2
 };
 
+enum {
+  F_MONI_RATE_HLC = 0,
+  F_MONI_RATE_SLC = 1
+};
+
 /* LBM stuff */
 #define FPGA_DOMAPP_LBM_BLOCKSIZE 2048 /* BYTES not words */
 #define FPGA_DOMAPP_LBM_BLOCKMASK (FPGA_DOMAPP_LBM_BLOCKSIZE-1)
