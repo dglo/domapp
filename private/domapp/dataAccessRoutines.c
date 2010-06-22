@@ -26,6 +26,7 @@
 #include "DSCmessageAPIstatus.h"
 #include "domSControl.h"
 #include "expControl.h"
+#include "unitTests.h"
 
 extern USHORT pulser_rate;
 extern int pulser_running;
@@ -390,9 +391,15 @@ inline static unsigned nextValidBlock(unsigned ptr) {
   return ((ptr) & ~FPGA_DOMAPP_LBM_BLOCKMASK);
 }
 
+static int lbmPointerOverflow(unsigned wrptr, unsigned rdptr, unsigned mask) {
+  return ((wrptr-rdptr) & LBM_WRITE_POINTER_MASK) > mask;
+}
+
 static int haveOverflow(unsigned lbmp) {
   //if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > WHOLE_LBM_MASK ) {
-  if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > sw_lbm_mask) {
+  //if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > sw_lbm_mask) {
+  if(lbmPointerOverflow(hal_FPGA_DOMAPP_lbm_pointer(),
+			     lbmp, sw_lbm_mask)) {
     mprintf("LBM OVERFLOW!!! hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
 	    hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
     numOverflows++;
@@ -883,7 +890,60 @@ void initFormatEngineeringEvent(UBYTE fadc_samp_cnt_arg,
   FlashADCData = FADCData;
 }
 
+int lbm_pointer_test(void) {
+  /* Tests for https://bugs.icecube.wisc.edu/view.php?id=4062 */
+  int failures = 0;
+  unsigned max_hal_ptr = LBM_WRITE_POINTER_MASK;
+  /* unsigned and unsigned long are intermingled above - make sure that's ok */
+  if(sizeof(unsigned long) != sizeof(unsigned)) {
+    mprintf("LBM test 0 failed");
+    failures++;
+  }
+  /* No data - overflow condition is false: */
+  if(lbmPointerOverflow(0, 0, sw_lbm_mask)) {
+    mprintf("LBM test 1 failed");
+    failures++;
+  } 
+  /* If read pointer ahead of write pointer, fail... */
+  if(! lbmPointerOverflow(0, 1, sw_lbm_mask)) {
+    mprintf("LBM test 2 failed");
+    failures++;
+  } 
+  /* Make sure a wrapping (FPGA) write pointer doesn't confuse us */
+  unsigned wrptr = 0;
+  unsigned rdptr = max_hal_ptr;
+  if(lbmPointerOverflow(wrptr, rdptr, sw_lbm_mask)) {
+    mprintf("LBM test 3 failed");
+    failures++;
+  }
+  /* Try the same test, moving the pointers way up into the middle of the address space */
+  wrptr += max_hal_ptr/2;
+  rdptr += max_hal_ptr/2;
+  if(lbmPointerOverflow(wrptr, rdptr, sw_lbm_mask)) {
+    mprintf("LBM test 4 failed");
+    failures++;
+  }
+  /* Test more basic edge conditions */
+  wrptr = sw_lbm_mask;
+  rdptr = 0;
+  if(lbmPointerOverflow(wrptr, rdptr, sw_lbm_mask)) {
+    mprintf("LBM test 5 failed");
+    failures++;
+  }
+  wrptr++;
+  if(! lbmPointerOverflow(wrptr, rdptr, sw_lbm_mask)) {
+    mprintf("LBM test 6 failed");
+    failures++;
+  }
+  return failures ? 0 : 1;
+}
+
 int data_access_unit_tests(void) {
-  return 1;
+  /* Unit tests for DATA_ACCESS logic */
+  int failures = 0;
+  if(!lbm_pointer_test()) {
+    failures++;
+  }
+  return failures ? 0 : 1;
 }
 

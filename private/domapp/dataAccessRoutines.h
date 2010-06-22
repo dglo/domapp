@@ -33,6 +33,12 @@ enum {
 #define ACTUAL_LBM_BIT_DEPTH  24       /* Size is 2**24-1 = 16MB */
 #define WHOLE_LBM_MASK ((1<<ACTUAL_LBM_BIT_DEPTH)-1)
 
+#define FPGA_LBM_WRITE_BIT_DEPTH 28
+/* FPGA write address space is 28 bits, i.e. the write counter wraps
+   at 1<<28.  Note that this is larger than the available physical
+   address space. */
+#define LBM_WRITE_POINTER_MASK ((1<<FPGA_LBM_WRITE_BIT_DEPTH)-1)
+
 struct tstevt {
   unsigned short tlo;
   unsigned short one;

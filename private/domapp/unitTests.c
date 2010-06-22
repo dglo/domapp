@@ -6,10 +6,15 @@
 
 int unit_tests(void) {
   /* Add 'subsystem' unit tests here... */
+  int failures = 0;
   if(!data_access_unit_tests()) {
-    return 0;
+    failures++;
   }
 
-  mprintf("DOMApp unit tests passed");
-  return 1;
+  if(failures) {
+    mprintf("DOMApp unit tests failed");
+  } else {
+    mprintf("DOMApp unit tests passed");
+  }
+  return failures ? 0 : 1;
 }
