@@ -404,6 +404,7 @@ void dataAccess(MESSAGE_STRUCT *M) {
 	}
 	sw_lbm_mask = (1<<bits)-1;
       }
+      Message_setStatus(M, SUCCESS);
       break;
 
     case DATA_ACC_GET_LBM_SIZE:
