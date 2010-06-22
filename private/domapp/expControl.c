@@ -27,6 +27,7 @@
 #include "moniDataAccess.h"
 #include "dataAccessRoutines.h"
 #include "domSControl.h"
+#include "unitTests.h"
 
 #include <stdio.h>
 
@@ -593,6 +594,14 @@ void expControl(MESSAGE_STRUCT *M) {
       }
       Message_setDataLen(M,of);
       Message_setStatus(M,SUCCESS);
+      break;
+
+    case EXPCONTROL_RUN_UNIT_TESTS:
+      if(unit_tests()) {
+	Message_setStatus(M,SUCCESS);
+      } else {
+	DOERROR("Unit test failure", EXP_Unit_Test_Failure, WARNING_ERROR);
+      }
       break;
 
     default:

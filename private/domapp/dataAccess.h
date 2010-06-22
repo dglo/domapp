@@ -55,4 +55,6 @@
 void dataAccessInit(void);
 void dataAccess(MESSAGE_STRUCT *M);
 
+int data_access_unit_tests(void);
+
 #endif

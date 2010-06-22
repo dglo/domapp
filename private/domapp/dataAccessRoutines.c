@@ -883,4 +883,7 @@ void initFormatEngineeringEvent(UBYTE fadc_samp_cnt_arg,
   FlashADCData = FADCData;
 }
 
+int data_access_unit_tests(void) {
+  return 1;
+}
 

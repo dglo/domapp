@@ -58,6 +58,14 @@ been sent by the surface.
 <h2>OUTLINE OF PROCEDURE FOR TAKING DATA</h2>
 
 <ol>
+
+<li>
+<p>
+Optionally, run onboard unit tests (<a
+href="#EXPCONTROL_RUN_UNIT_TESTS">EXPCONTROL_RUN_UNIT_TESTS</a>).
+</p>
+</li>
+
 <li> 
 <p>
 Optionally, reset monitoring buffer to eliminate messages from
@@ -1656,6 +1664,21 @@ flashing rate in Hz, max. value 610.
   <li class="desc"  >
 Stop flasher board run. Equivalent to <a
 href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>
+  </li>
+</ul>
+
+
+<a name="EXPCONTROL_RUN_UNIT_TESTS"/>
+
+<ul class="message">
+  <li class="id"    >30</li>
+  <li class="name"  >EXPCONTROL_RUN_UNIT_TESTS</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Run on-board DOMApp unit tests.  Message success indicates all tests
+passed.  In case of failure, inspect ASCII monitoring records for
+details.
   </li>
 </ul>
 
