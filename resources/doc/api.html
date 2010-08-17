@@ -1554,6 +1554,21 @@ See DATA_ACC_GET_F_MONI_RATE_TYPE.
   </li>
 </ul>
 
+
+<a name="DATA_ACC_GET_LBM_PTRS"/>
+
+<ul class="message">
+  <li class="id"    >38</li>
+  <li class="name"  >DATA_ACC_GET_LBM_PTRS</li>
+  <li class="input" >-</li>
+  <li class="output">UL: write_ptr; UL: read_ptr</li>
+  <li class="desc"  >
+Return current read (FPGA) and write (software) pointers from DOM Look Back Memory.
+Does not include hardware offset of LBM.
+  </li>
+</ul>
+
+
 <h1>Experiment Control Messages (message type 4)</h1>
 
 <a name="EXPCONTROL_BEGIN_RUN"/>

@@ -72,6 +72,7 @@ extern unsigned long long moniHdwrIval,
                           moniHistoIval;
 extern unsigned short     histoPrescale;
 
+extern unsigned lbmp; /* dataAccessRoutines.c */
 
 /* data access  Entry Point */
 
@@ -207,7 +208,8 @@ void dataAccess(MESSAGE_STRUCT *M) {
       
       /*  check for available data */ 
     case DATA_ACC_DATA_AVAIL:
-      data[0] = isDataAvailable();
+      data[0] = isDataAvailable(hal_FPGA_DOMAPP_lbm_pointer(),
+				lbmp, FPGA_DOMAPP_LBM_BLOCKMASK);
       Message_setStatus(M, SUCCESS);
       Message_setDataLen(M, DAC_ACC_DATA_AVAIL_LEN);
       break;
@@ -410,6 +412,13 @@ void dataAccess(MESSAGE_STRUCT *M) {
     case DATA_ACC_GET_LBM_SIZE:
       formatLong(sw_lbm_mask+1, data);
       Message_setDataLen(M, 4);
+      Message_setStatus(M, SUCCESS);
+      break;
+
+    case DATA_ACC_GET_LBM_PTRS:
+      formatLong(hal_FPGA_DOMAPP_lbm_pointer(), data);
+      formatLong(lbmp, data+4);
+      Message_setDataLen(M, 8);
       Message_setStatus(M, SUCCESS);
       break;
 

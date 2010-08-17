@@ -48,7 +48,7 @@ struct tstevt {
 };
 
 void initFillMsgWithData(void);
-int isDataAvailable(void);
+int isDataAvailable(unsigned, unsigned, unsigned);
 int fillMsgWithData(UBYTE *msgBuffer, int bsize, UBYTE format, UBYTE compression);
 int fillMsgWithSNData(UBYTE *msgBuffer, int bsize);
 void initFormatEngineeringEvent(UBYTE, UBYTE, UBYTE);

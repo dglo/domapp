@@ -56,6 +56,7 @@
 #define DATA_ACC_SELECT_ATWD          35
 #define DATA_ACC_GET_F_MONI_RATE_TYPE 36
 #define DATA_ACC_SET_F_MONI_RATE_TYPE 37
+#define DATA_ACC_GET_LBM_PTRS         38
 
 // define service specific error values
 #define DAC_Data_Overrun        4

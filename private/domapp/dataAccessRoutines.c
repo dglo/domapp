@@ -373,8 +373,8 @@ unsigned getLastHitCountNoReset(void) { return hitCounter; }
 
 void initFillMsgWithData(void) { }
 
-int isDataAvailable() {
-  return ( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) & ~FPGA_DOMAPP_LBM_BLOCKMASK );
+int isDataAvailable(unsigned wrptr, unsigned rdptr, unsigned eventmask) {
+  return ( (wrptr-rdptr) & ~eventmask );
 }
 
 /* Access lookback event at idx, but changed to byte sense */
@@ -384,7 +384,7 @@ inline unsigned char *lbmEvent(unsigned idx) {
 }
 
 inline unsigned nextEvent(unsigned idx) {
-  return idx + HAL_FPGA_DOMAPP_LBM_EVENT_SIZE;
+  return (idx + HAL_FPGA_DOMAPP_LBM_EVENT_SIZE) & LBM_WRITE_POINTER_MASK;
 }
 
 inline static unsigned nextValidBlock(unsigned ptr) {
@@ -595,7 +595,8 @@ int fillMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz) {
   int ret = 0;
   int isHeaderOnly = 0;
   while(1) {
-    if(!isDataAvailable()) {
+    if(!isDataAvailable(hal_FPGA_DOMAPP_lbm_pointer(),
+			lbmp, FPGA_DOMAPP_LBM_BLOCKMASK)) {
       ret = NCUR();
       break;
     }
@@ -713,7 +714,10 @@ int fillMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
   UBYTE *p     = msgBuffer;
 # define NCUR() ((int) (p - msgBuffer))
   while(1) {
-    if(!isDataAvailable()) return NCUR();
+    if(!isDataAvailable(hal_FPGA_DOMAPP_lbm_pointer(), lbmp,
+			FPGA_DOMAPP_LBM_BLOCKMASK)) {
+      return NCUR();
+    }
     if(bufsiz - NCUR() < engEventSize()) return NCUR(); 
     if(haveOverflow(lbmp)) {
       lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
@@ -933,6 +937,20 @@ int lbm_pointer_test(void) {
   wrptr++;
   if(! lbmPointerOverflow(wrptr, rdptr, sw_lbm_mask)) {
     mprintf("LBM test 6 failed");
+    failures++;
+  }
+
+  /* Test wrapping at end of hardware buffer (nextEvent and detection of an entire
+     event in the buffer) */
+  rdptr = wrptr = LBM_WRITE_POINTER_MASK; /* Set at the end of the buffer */
+  wrptr += HAL_FPGA_DOMAPP_LBM_EVENT_SIZE; /* Wrap, emulating FPGA */
+  wrptr &= LBM_WRITE_POINTER_MASK;
+  rdptr = nextEvent(rdptr);
+  if(isDataAvailable(wrptr, rdptr, FPGA_DOMAPP_LBM_BLOCKMASK)) {
+    mprintf("LBM WARNING: "
+	    "wrptr=0x%08lx rdptr=0x%08lx %d", wrptr, rdptr,
+	    lbmPointerOverflow(wrptr, rdptr, sw_lbm_mask));
+    mprintf("LBM test 7 failed");
     failures++;
   }
   return failures ? 0 : 1;
