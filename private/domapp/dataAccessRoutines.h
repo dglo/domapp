@@ -29,8 +29,8 @@ enum {
 #define FPGA_DOMAPP_LBM_BLOCKSIZE 2048 /* BYTES not words */
 #define FPGA_DOMAPP_LBM_BLOCKMASK (FPGA_DOMAPP_LBM_BLOCKSIZE-1)
 #define MIN_LBM_BIT_DEPTH     8        /* This is somewhat arbitrary */
-#define DEFAULT_LBM_BIT_DEPTH 21       /* 2MB */
 #define ACTUAL_LBM_BIT_DEPTH  24       /* Size is 2**24-1 = 16MB */
+#define DEFAULT_LBM_BIT_DEPTH ACTUAL_LBM_BIT_DEPTH /* Used to be 2**21-1 = 2 MB */
 #define WHOLE_LBM_MASK ((1<<ACTUAL_LBM_BIT_DEPTH)-1)
 
 #define FPGA_LBM_WRITE_BIT_DEPTH 28
