@@ -1599,15 +1599,24 @@ Stop data taking (one can use this message for both flasher runs and regular run
 <ul class="message">
   <li class="id"    >16</li>
   <li class="name"  >EXPCONTROL_DO_PEDESTAL_COLLECTION</li>
-  <li class="input" >UL: numATWD0; UL: numATWD1; UL: numFADC</li>
+  <li class="input" >UL: numATWD0; UL: numATWD1; UL: numFADC<br/>
+                     Optional: US*6: atwd0ch0bias, atwd0ch1bias ... atwd1ch2bias</li>
   <li class="output">-</li>
   <li class="desc"  >
 Collects requested number of pedestal events. Failure to do this while
 HV is off will result in some level of contamination of real SPE hits
 from the PMT. Arguments are number of triggers to collect for each
 ATWD and the FADC (max: 1000 for ATWDs, 2000 for FADC). Message reply
-is sent when pedestals are collected. NOTE: numFADC must be &le; numATWD0 +
-numATWD1.
+is sent when pedestals are collected. NOTE: numFADC must be &le;
+numATWD0 + numATWD1.  OPTIONALLY, if six extra short unsigned integers
+are supplied, they are used as the fixed bias/offset values for the
+ATWD pedestal subtraction in channels 0-2 for both ATWDs.  [Channel
+3's bias is NOT programmable.]  These values are subtracted from the
+average ATWD pedestal patterns before programming into the DOMApp
+FPGA.  If these six values are omitted, the average channel value is
+calculated and subtracted instead.  In any case, the resulting
+pedestal pattern, programmed into the FPGA, is then subtracted from
+every hit before storage in LBM.
   </li>
 </ul>
 

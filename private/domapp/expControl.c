@@ -141,8 +141,11 @@ void moniATWDPeds(int iatwd, int ich, int ntrials, int pavg, USHORT * avgs) {
   mprintf(pedstr);
 }
 
-int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
-  /* return 0 if pedestal run succeeds, else error */
+int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal,
+		BOOLEAN setbias, USHORT *biases) {
+  /* return 0 if pedestal run succeeds, else error.  If setbias is TRUE,
+     program in the given bias offsets to the baselines; otherwise, dynamically
+     determine the correct offset. */
 
   mprintf("Starting pedestal run...");
 
@@ -293,11 +296,17 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal) {
        * concerned about lingering constant biases (actually we
        * need this bias to keep the output from underflowing and
        * clipping.).
+       * JEJ 6/3/2011: allow programmable average/bias to be set from surface
        */
       int i, pavg = 0;
-      for (i = 0; i < ATWDCHSIZ; i++) pavg += atwdpedavg[iatwd][ich][i];
-      pavg /= ATWDCHSIZ;
+      if(setbias && ich<3) {
+	pavg = biases[iatwd*3+ich];
+      } else { /* Channel 3 (clock/mux) bias not programmable */
+	for (i = 0; i < ATWDCHSIZ; i++) pavg += atwdpedavg[iatwd][ich][i];
+	pavg /= ATWDCHSIZ;
+      }
       for (i = 0; i < ATWDCHSIZ; i++) atwdpedavg[iatwd][ich][i] -= pavg;
+
       /* Program ATWD pedestal pattern into FPGA */
       hal_FPGA_DOMAPP_pedestal(iatwd, ich, atwdpedavg[iatwd][ich]);
       moniATWDPeds(iatwd, ich, npeds, pavg, atwdpedavg[iatwd][ich]);
@@ -542,6 +551,14 @@ void expControl(MESSAGE_STRUCT *M) {
 	ULONG ped0goal   = unformatLong(&data[0]);
 	ULONG ped1goal   = unformatLong(&data[4]);
 	ULONG pedadcgoal = unformatLong(&data[8]);
+	BOOLEAN setbias = FALSE;
+	USHORT biases[6];
+	if(Message_dataLen(M) > 12) {
+	  setbias = TRUE;
+	  int i; for(i=0; i<6; i++) {
+	    biases[i] = unformatShort(&data[i*2+12]);
+	  }
+	}
 	zeroPedestals();
 	if(ped0goal   > MAXPEDGOAL ||
 	   ped1goal   > MAXPEDGOAL ||
@@ -549,13 +566,13 @@ void expControl(MESSAGE_STRUCT *M) {
 	  DOERROR(EXP_TOO_MANY_PEDS, EXP_Too_Many_Peds, SEVERE_ERROR);
 	  break;
 	}
-	if(pedestalRun(ped0goal, ped1goal, pedadcgoal)) {
+	if(pedestalRun(ped0goal, ped1goal, pedadcgoal, setbias, biases)) {
 	  DOERROR(EXP_PEDESTAL_RUN_FAILED, EXP_Pedestal_Run_Failed, SEVERE_ERROR);
 	  break;
 	}
 #ifdef  DEBUGLBM
 #warning DEBUGLBM set!
-	if(pedestalRun(ped0goal, ped1goal, pedadcgoal)) {
+	if(pedestalRun(ped0goal, ped1goal, pedadcgoal, setbias, biases)) {
 	  DOERROR(EXP_PEDESTAL_RUN_FAILED, EXP_Pedestal_Run_Failed, SEVERE_ERROR);
 	  break;
 	}
