@@ -37,10 +37,14 @@ Modification: 5/10/04 Jacobsen :-- put more than one monitoring rec. per request
 #include "domSControl.h"
 #include "DOMstateInfo.h"
 #include "DSCmessageAPIstatus.h"
+#include "interval.h"
+
 
 extern void formatLong(ULONG value, UBYTE *buf);
 extern UBYTE DOM_state;
 extern UBYTE LCtype, LCmode; /* domSControl.c */
+// has supernova data been requested?
+extern int SNRequested;
 extern USHORT pulser_rate;
 USHORT atwdRGthresh[2][4], fadcRGthresh;
 
@@ -74,6 +78,82 @@ extern unsigned short     histoPrescale;
 
 extern unsigned lbmp; /* dataAccessRoutines.c */
 
+#define DOERROR(errstr, errnum, errtype)                       \
+   do {                                                        \
+      datacs.msgProcessingErr++;                               \
+      strcpy(datacs.lastErrorStr,(errstr));                    \
+      datacs.lastErrorID=(errnum);                             \
+      datacs.lastErrorSeverity=errtype;                        \
+      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|errtype);     \
+      Message_setDataLen(M,0);                                 \
+   } while(0)
+
+// utility function
+int fillMsgWithMoniData(MESSAGE_STRUCT *M) {
+  int moniBytes = 0;
+  int total_moni_len;
+  int len;
+  UBYTE *data;
+  MONI_STATUS ms;
+
+  int done  = 0;
+  struct moniRec aMoniRec;
+
+  data = Message_getData(M);
+
+  while(!done) {
+    ms = moniFetchRec(&aMoniRec);
+
+    if(moniBytes + aMoniRec.dataLen + 10 > MAXDATA_VALUE) {
+      /* Can't fit any more data */
+      Message_setDataLen(M, moniBytes);
+      Message_setStatus(M, SUCCESS);
+      break;
+    }
+
+    switch(ms) {
+    case MONI_NOTINITIALIZED:
+      DOERROR(DAC_MONI_NOT_INIT, DAC_Moni_Not_Init, SEVERE_ERROR);
+      done = 1;
+      break;
+    case MONI_WRAPPED:
+    case MONI_OVERFLOW:
+      DOERROR(DAC_MONI_OVERFLOW, DAC_Moni_Overrun, WARNING_ERROR);
+      done = 1;
+      break;
+    case MONI_NODATA:
+      Message_setDataLen(M, moniBytes);
+      Message_setStatus(M, SUCCESS);
+      done = 1;
+      break;
+    case MONI_OK:
+      /* Not done.  Add record and iterate */
+      moniAcceptRec();
+      total_moni_len = aMoniRec.dataLen + 10; /* Total rec length */
+      /* Format header */
+      formatShort(total_moni_len, data);
+      unsigned short mt = aMoniRec.moniEvtType;
+      formatShort(mt, data+2);
+      formatTime(aMoniRec.time, data+4);
+      /* Copy payload */
+      len = (aMoniRec.dataLen > MAXMONI_DATA) ? MAXMONI_DATA : aMoniRec.dataLen;
+      memcpy(data+10, aMoniRec.data, len);
+
+      moniBytes += total_moni_len;
+      data += total_moni_len;
+      break;
+    default:
+      DOERROR(DAC_MONI_BADSTAT, DAC_Moni_Badstat, SEVERE_ERROR);
+      done = 1;
+      break;
+    } /* inner switch */
+  }   /* while(!done) */
+
+  return 0;
+}
+
+
+
 /* data access  Entry Point */
 
 void dataAccessInit(void) {
@@ -97,16 +177,6 @@ void dataAccessInit(void) {
     /* Even though pulser isn't running, set rate appropriately for heartbeat events */
     hal_FPGA_DOMAPP_cal_pulser_rate((double) pulser_rate);
 }
-
-#define DOERROR(errstr, errnum, errtype)                       \
-   do {                                                        \
-      datacs.msgProcessingErr++;                               \
-      strcpy(datacs.lastErrorStr,(errstr));                    \
-      datacs.lastErrorID=(errnum);                             \
-      datacs.lastErrorSeverity=errtype;                        \
-      Message_setStatus(M,SERVICE_SPECIFIC_ERROR|errtype);     \
-      Message_setDataLen(M,0);                                 \
-   } while(0)
 
 void dataAccess(MESSAGE_STRUCT *M) {
     char * idptr;
@@ -213,9 +283,23 @@ void dataAccess(MESSAGE_STRUCT *M) {
       Message_setStatus(M, SUCCESS);
       Message_setDataLen(M, DAC_ACC_DATA_AVAIL_LEN);
       break;
-      
-      /*  check for available data */ 
+
+    case DATA_ACC_GET_INTERVAL:
+      // initialize an interval (ie read out all data for 1 second)
+      if(!SNRequested) {
+	// intervals are supposed to end with a supernova
+	// packet, return an error if you have not
+	// requested supernova data
+	DOERROR(DAC_SN_NOT_INIT,DAC_SN_Not_Init, SEVERE_ERROR);
+	break;
+      }	
+      interval_start();
+      Message_setStatus(M, SUCCESS);
+      Message_setDataLen(M, 0);
+      break;
+
     case DATA_ACC_GET_DATA:
+      /*  check for available data */ 
       // try to fill in message buffer with waveform data
       tmpInt = fillMsgWithData(data, MAXDATA_VALUE, dataFormat, compMode);
       Message_setDataLen(M, tmpInt);

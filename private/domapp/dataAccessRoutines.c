@@ -22,6 +22,9 @@
 #include "DOMdata.h"
 #include "DOMstateInfo.h"
 #include "message.h"
+#include "DACmessageAPIstatus.h"
+#include "messageAPIstatus.h"
+#include "dataAccess.h"
 #include "dataAccessRoutines.h"
 #include "DSCmessageAPIstatus.h"
 #include "domSControl.h"
@@ -103,6 +106,7 @@ static bench_rec_t bformat, breadout, bbuffer, bcompress;
 # define TEND(b)
 # define TSHOW(a,b)
 #endif
+
 
 int hvOffCheckFails(void) {
 #define MAXHVOFFADC 5

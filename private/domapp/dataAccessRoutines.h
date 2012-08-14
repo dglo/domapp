@@ -51,6 +51,7 @@ void initFillMsgWithData(void);
 int isDataAvailable(unsigned, unsigned, unsigned);
 int fillMsgWithData(UBYTE *msgBuffer, int bsize, UBYTE format, UBYTE compression);
 int fillMsgWithSNData(UBYTE *msgBuffer, int bsize);
+int fillMsgWithMoniData(MESSAGE_STRUCT *M);
 void initFormatEngineeringEvent(UBYTE, UBYTE, UBYTE);
 int  beginRun(UBYTE compressionMode, UBYTE newRunState);
 int  beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window, 
@@ -62,7 +63,6 @@ int  endRun(void);
 int  endFBRun(void);
 unsigned getLastHitCount(void);
 unsigned getLastHitCountNoReset(void);
-
 USHORT domappReadBaseADC(void);
 unsigned long long domappHVSerialRaw(void);
 unsigned char *lbmEvent(unsigned idx);

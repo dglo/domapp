@@ -21,7 +21,8 @@ OBJS =  commonServices.o     domSControlRoutines.o \
         dataAccess.o         expControl.o          \
         moniDataAccess.o     message.o             \
         domSControl.o        msgHandler.o          \
-        dataAccessRoutines.o unitTests.o
+        dataAccessRoutines.o unitTests.o	   \
+	interval.o
 
 ../bin/domapp: $(OBJS)
 	gcc -o domapp  $(LIBHAL) $(OBJS) -lm

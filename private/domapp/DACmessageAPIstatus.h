@@ -57,6 +57,8 @@
 #define DATA_ACC_GET_F_MONI_RATE_TYPE 36
 #define DATA_ACC_SET_F_MONI_RATE_TYPE 37
 #define DATA_ACC_GET_LBM_PTRS         38
+#define DATA_ACC_GET_INTERVAL         39
+
 
 // define service specific error values
 #define DAC_Data_Overrun        4
@@ -69,6 +71,7 @@
 #define DAC_Cant_Enable_FB     11
 #define DAC_SN_Not_Running     12
 #define DAC_Bad_Lbm_Depth      13
+#define DAC_SN_Not_Init        14
 
 #define	DAC_ACC_DATA_AVAIL_LEN 1
 

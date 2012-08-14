@@ -21,6 +21,7 @@
 #include "moniDataAccess.h"
 #include "msgHandler.h"
 #include "domSControl.h"
+#include "interval.h"
 
 #define STDIN  0
 #define STDOUT 1
@@ -76,6 +77,7 @@ int main(void) {
   domSControlInit();
   expControlInit();
   dataAccessInit();
+  interval_init();
 
   moniZeroAllChargeStampHistos();
 
@@ -136,6 +138,11 @@ int main(void) {
     if(moniHistoIval > 0 && (dthi < 0 || dthi > moniHistoIval)) {
       moniDoChargeStampHistos();
       t_hi_last = tcur;
+    }
+
+    // service an interval request if it's active                                                             
+    if(interval_service((MESSAGE_STRUCT *) message)) {
+      putmsg(message);
     }
 
     /* Check for new message */

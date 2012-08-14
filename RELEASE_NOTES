@@ -1,5 +1,8 @@
 Release notes for production domapp -- jacobsen@npxdesigns.com
 
+Latest:
+- Issue 5065 - implement 'push' architecture for sending of hits from domapp into stringhub
+
 domapp V00-03-05  6/1/2006 CDT
         For release as part of DOM-MB 415
 
