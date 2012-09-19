@@ -140,17 +140,24 @@ int main(void) {
       t_hi_last = tcur;
     }
 
-    // service an interval request if it's active                                                             
+    /* Check for new message */
+    if(getmsg(halmsg, message)) {
+      // if we get here then someone has sent a message to the
+      // dom.  we want to exit the interval OR datasend service
+      // if that's the case
+      interval_force_stop();
+
+      if(msgHandler((MESSAGE_STRUCT *) message)) {
+	putmsg(message);
+      }
+      msgs++;
+    }
+
+    // service an interval request if its active
     if(interval_service((MESSAGE_STRUCT *) message)) {
       putmsg(message);
     }
 
-    /* Check for new message */
-    if(getmsg(halmsg, message)) {
-      msgHandler((MESSAGE_STRUCT *) message);
-      putmsg(message);
-      msgs++;
-    }
     loops++;
   } /* for(;;) */
 }

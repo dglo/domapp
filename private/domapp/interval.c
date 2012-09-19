@@ -22,6 +22,7 @@ UBYTE interval_state;
 unsigned long long interval_starttime;
 
 #define INTERVAL (FPGA_HAL_TICKS_PER_SEC)
+#define DATA_SEND 0
 #define SN_SEND 1
 #define MONI_SEND 2
 
@@ -29,13 +30,13 @@ unsigned long long interval_starttime;
 void interval_init() {
   interval_initialized = FALSE;
   interval_starttime = 0;
-  interval_state = MONI_SEND;
+  interval_state = DATA_SEND;
 }
 
 void interval_start() {
   interval_initialized = TRUE;
   interval_starttime = hal_FPGA_DOMAPP_get_local_clock();
-  interval_state = MONI_SEND;
+  interval_state = DATA_SEND;
 }
 
 
@@ -53,20 +54,37 @@ int interval_service(MESSAGE_STRUCT *M) {
     data = Message_getData(M);
     
     if((cur_time - interval_starttime) < INTERVAL) {
-      // if there is data send that..
-      if( (tmpInt = fillMsgWithData(data, MAXDATA_VALUE, dataFormat, compMode))) {
-        Message_setType(M, DATA_ACCESS);
-        Message_setSubtype(M, DATA_ACC_GET_DATA);
-        Message_setDataLen(M, tmpInt);
-        Message_setStatus(M, SUCCESS);
+      // if there is enough data to send a full message
+      // then send that
+      tmpInt = countMsgWithData(data, MAXDATA_VALUE, dataFormat, compMode);
+      if(tmpInt>0) {
+	Message_setType(M, DATA_ACCESS);
+	Message_setSubtype(M, DATA_ACC_GET_DATA);
+	Message_setDataLen(M, tmpInt);
+	Message_setStatus(M, SUCCESS);
 	
-        return 1;
+	return 1;
       }
     } else {
       // time is up for the interval.
+      // as we wait for full buffers of data, we could have piled up some
+      // data from the timed interval above.  At this point send whatever 
+      // we've got
+      if(interval_state == DATA_SEND) {
+	interval_state = MONI_SEND;
+	tmpInt = fillMsgWithData(data, MAXDATA_VALUE, dataFormat, compMode);
+	if(tmpInt>0) {
+	  Message_setType(M, DATA_ACCESS);
+	  Message_setSubtype(M, DATA_ACC_GET_DATA);
+	  Message_setDataLen(M, tmpInt);
+	  Message_setStatus(M, SUCCESS);
+	  return 1;
+	}
+      }
+	
       // we have to send monitoring data
       // and supernova data
-      if(interval_state == MONI_SEND) {
+      else if(interval_state == MONI_SEND) {
         // send a moni message
         // sets the length and status
         Message_setType(M, DATA_ACCESS);
@@ -93,7 +111,7 @@ int interval_service(MESSAGE_STRUCT *M) {
           Message_setStatus(M, SUCCESS);
           
           interval_initialized=FALSE;
-          interval_state = MONI_SEND;
+          interval_state = DATA_SEND;
           interval_starttime = 0;
           return 1;
         } 

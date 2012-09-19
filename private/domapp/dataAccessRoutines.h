@@ -66,4 +66,7 @@ unsigned getLastHitCountNoReset(void);
 USHORT domappReadBaseADC(void);
 unsigned long long domappHVSerialRaw(void);
 unsigned char *lbmEvent(unsigned idx);
+int countMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz);
+int countMsgWithEngData(UBYTE *msgBuffer, int bufsiz);
+int countMsgWithData(UBYTE *msgBuffer, int bufsiz, UBYTE format, UBYTE compression);
 #endif

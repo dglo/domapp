@@ -589,6 +589,74 @@ static int formatDomappDeltaEvent(UBYTE * msgp, unsigned lbmp, unsigned short tm
   return msgp-m0;
 }
 
+// figure out if we have a full message worth of data to send
+// to the stringhub, return 0 for no and 1 for yes
+int countMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz) {
+  /* Fill until MSBs of time stamp change; add header if needed */
+  UBYTE *p     = msgBuffer;
+# define NCUR() ((int) (p - msgBuffer))
+  // we aren't going to do anything with the data, so
+  // keep actual data pointer around
+  unsigned tmp_lbmp = lbmp;
+  int doHdr = 1;
+  unsigned short lastMsb = 0;
+  int ret = 0;
+  int isHeaderOnly = 0;
+  int tmpTrigsReadOut = 0;
+  int tmpHitCounter = 0;
+
+  while(1) {
+    if(!isDataAvailable(hal_FPGA_DOMAPP_lbm_pointer(),
+			tmp_lbmp, FPGA_DOMAPP_LBM_BLOCKMASK)) {
+      // if we get here then NO there is not enough data to fill a message
+      return 0;
+    }
+
+    if(haveOverflow(tmp_lbmp)) {
+      // on an overflow we will return a 0 length message
+      // perhaps in the future try some number of times 
+      // before returning data
+      lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
+      return 0;
+    }
+
+    /* Stop if not enough room for hit - if data is corrupt due 
+       to LBM overflow, the whole thing gets tossed below. */
+    unsigned short hsiz = getDeltaHitSize(tmp_lbmp);
+    if(bufsiz - NCUR() < hsiz) {
+      // THIS means we have enough data for a full message
+      break;
+    }
+    unsigned short tmsb = getDeltaHitTMSB(tmp_lbmp);
+    if(doHdr) lastMsb = tmsb;
+    if(lastMsb != tmsb) {
+      // THIS ALSO means we have enough data for a full message
+      break;
+    }
+    p += formatDomappDeltaEvent(p, tmp_lbmp, tmsb, doHdr, &isHeaderOnly);
+    doHdr = 0;
+
+    // note this does not appear to do anything with size effects, just some
+    // pointer arithmetic
+    // advance our temporary pointer
+    tmp_lbmp = nextEvent(tmp_lbmp);
+    tmpTrigsReadOut++;
+    /* Count the hit only if we're recording all SLC, or if we're recording
+       HLC and the hit is not an SLC hit */
+    if(fMoniRateType == F_MONI_RATE_SLC || !isHeaderOnly) tmpHitCounter++;
+  }
+
+  ret = NCUR();
+  lbmp = tmp_lbmp;
+  // put the message length in the data
+  formatShort(NCUR(), msgBuffer);
+  hitCounter+=tmpHitCounter;
+  nTrigsReadOut+=tmpTrigsReadOut;
+
+  return ret;
+
+}
+
 int fillMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz) {
   /* Fill until MSBs of time stamp change; add header if needed */
   UBYTE *p     = msgBuffer;
@@ -714,6 +782,52 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
   return NCUR();
 }
 
+int countMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
+  UBYTE *p     = msgBuffer;
+  unsigned tmp_lbmp = lbmp;
+  int tmpNTrigsReadout = 0;
+  int tmpHitCounter = 0;
+  int ret;
+# define NCUR() ((int) (p - msgBuffer))
+  while(1) {
+    if(!isDataAvailable(hal_FPGA_DOMAPP_lbm_pointer(), tmp_lbmp,
+			FPGA_DOMAPP_LBM_BLOCKMASK)) {
+      // once we get here then there is NOT enough
+      // data to fill a buffer
+      return 0;
+    }
+    if(bufsiz - NCUR() < engEventSize()) {
+      // we have enough data to fill a message
+      break;
+    }
+
+    if(haveOverflow(tmp_lbmp)) {
+      // actually move the REAL lbm pointer
+      // as we want to move PAST the overflow
+      lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
+
+      return 0; // Data is compromised -- kill it
+    }
+    
+    // if we get here, we have room for the formatted engineering event
+    // and one or more hits are available
+    p += formatDomappEngEvent(p, tmp_lbmp);  // Fill data into user's message buffer,
+                                         //   advance both message pointer...
+    tmp_lbmp = nextEvent(tmp_lbmp);              //          ... and LBM pointer
+
+    // trigs and hitcount increment
+    tmpNTrigsReadout++;
+    tmpHitCounter++;;
+  }
+
+  nTrigsReadOut+=tmpNTrigsReadout;
+  hitCounter+=tmpHitCounter;
+
+  ret = NCUR();
+  lbmp = tmp_lbmp;
+  return ret;
+}
+
 int fillMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
   UBYTE *p     = msgBuffer;
 # define NCUR() ((int) (p - msgBuffer))
@@ -738,6 +852,19 @@ int fillMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
     nTrigsReadOut++;
     hitCounter++;
   }
+}
+
+
+// figure out if we have enough data to fill an entire 4KB message buffer
+// return 0 if no, and 1 if yes
+int countMsgWithData(UBYTE *msgBuffer, int bufsiz, UBYTE format, UBYTE compression) {
+  if(format == FMT_ENG && compression == CMP_NONE) 
+    return countMsgWithEngData(msgBuffer, bufsiz);
+  if(format == FMT_DELTA && compression == CMP_DELTA)
+    return countMsgWithDeltaData(msgBuffer, bufsiz);
+  mprintf("dataAccess: countMsgWithData: WARNING: invalid format/compression combo!  "
+	  "format=%d compression=%d", (int) format, (int) compression);
+  return 0;
 }
 
 

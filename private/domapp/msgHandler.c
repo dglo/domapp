@@ -70,7 +70,9 @@ void msgHandlerInit(void) {
   msgHand.msgProcessingErr = 0;
 } 
 
-void msgHandler(MESSAGE_STRUCT *M) {
+// return 0 if you do not want to send
+// a response to the stringhub, 1 otherwise
+int msgHandler(MESSAGE_STRUCT *M) {
   UBYTE *data, *tmpPtr;
   
   switch ( Message_getType(M) ) {
@@ -80,8 +82,9 @@ void msgHandler(MESSAGE_STRUCT *M) {
     break;
     
   case DATA_ACCESS: 
-    dataAccess(M);
-    break;
+    // data access has the option of 
+    // not sending a response to the stringhub immediately
+    return dataAccess(M);
     
   case EXPERIMENT_CONTROL:
     expControl(M);
@@ -323,4 +326,5 @@ void msgHandler(MESSAGE_STRUCT *M) {
 		      UNKNOWN_SERVER|WARNING_ERROR);
     break;
   }
+  return 1;
 }

@@ -22,7 +22,7 @@ OBJS =  commonServices.o     domSControlRoutines.o \
         moniDataAccess.o     message.o             \
         domSControl.o        msgHandler.o          \
         dataAccessRoutines.o unitTests.o	   \
-	interval.o
+	interval.o	
 
 ../bin/domapp: $(OBJS)
 	gcc -o domapp  $(LIBHAL) $(OBJS) -lm

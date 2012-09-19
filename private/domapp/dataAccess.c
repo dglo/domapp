@@ -178,7 +178,9 @@ void dataAccessInit(void) {
     hal_FPGA_DOMAPP_cal_pulser_rate((double) pulser_rate);
 }
 
-void dataAccess(MESSAGE_STRUCT *M) {
+// return 0 if no response is to be sent to the stringhub
+// 1 otherwise
+int dataAccess(MESSAGE_STRUCT *M) {
     char * idptr;
     UBYTE *data;
     int tmpInt;
@@ -299,13 +301,14 @@ void dataAccess(MESSAGE_STRUCT *M) {
       break;
 
     case DATA_ACC_GET_DATA:
-      /*  check for available data */ 
       // try to fill in message buffer with waveform data
+      /*  check for available data */ 
+      // try to fill in message buffer with waveform data                                                                         
       tmpInt = fillMsgWithData(data, MAXDATA_VALUE, dataFormat, compMode);
       Message_setDataLen(M, tmpInt);
       Message_setStatus(M, SUCCESS);
       break;
-      
+
       /* Deal with configurable intervals for monitoring events; pick up "fast" rate if available;
          convert to clock ticks when needed. */
     case DATA_ACC_SET_MONI_IVAL:
@@ -572,7 +575,8 @@ void dataAccess(MESSAGE_STRUCT *M) {
       datacs.msgRefused++;
       DOERROR(DAC_ERS_BAD_MSG_SUBTYPE, COMMON_Bad_Msg_Subtype, WARNING_ERROR);
       break;
-      
     } /* Switch message subtype */
+
+    return 1;
 } /* dataAccess subroutine */
 

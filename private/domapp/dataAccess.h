@@ -54,7 +54,7 @@
 
 /* data access entry point */
 void dataAccessInit(void);
-void dataAccess(MESSAGE_STRUCT *M);
+int dataAccess(MESSAGE_STRUCT *M);
 
 int data_access_unit_tests(void);
 int fillMsgWithMoniData(MESSAGE_STRUCT *M);
