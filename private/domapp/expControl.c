@@ -8,6 +8,7 @@
 */
 
 #include <string.h>
+#include <math.h>
 
 /* DOM-related includes */
 #include "hal/DOM_MB_types.h"
@@ -144,12 +145,13 @@ void moniATWDPeds(int iatwd, int ich, int ntrials, int pavg, USHORT * avgs) {
 
 int isContaminated(USHORT *p1, USHORT *p2){
     /* Compare two averaged waveforms, p1 and p2, to assess whether one or both are 
-       light-contaminated */
+       light-contaminated.  Also check for baseline shift. */
 
-    /* Autocorrelation parameters */
-    const int lag=1;
-    const float max_c0_cl_ratio = 3.0; 
-    const float min_c0 = 10.0;
+    /* Autocorrelation and baseline shift parameters */
+    const int LAG=1;
+    const float MAX_C0_CL_RATIO = 3.0; 
+    const float MIN_C0 = 10.0;
+    const float MAX_BL_SIGMA = 4.0;
 
     int i,sum=0;
     int a=0, b=0, c=0, d=0;
@@ -166,42 +168,61 @@ int isContaminated(USHORT *p1, USHORT *p2){
        it will be large at non-zero lags when the difference of waveforms 
        deviates from the baseline in a correlated way from bin to bin, such as 
        having a pulse */
-    for(i=0; i<lag; i++){
+    for(i=0; i<LAG; i++){
         int w=(int)p2[i]-(int)p1[i];
         sum+=w;
         a+=w*w;
         b+=2*w;
     }
-    for(i=lag; i<ATWDCHSIZ; i++){
+    for(i=LAG; i<ATWDCHSIZ; i++){
         int w=(int)p2[i]-(int)p1[i];
         sum+=w;
         a+=w*w;
         b+=2*w;
-        c+=w*((int)p2[i-lag] - (int)p1[i-lag]);
-        d+=w+((int)p2[i-lag] - (int)p1[i-lag]);
+        c+=w*((int)p2[i-LAG] - (int)p1[i-LAG]);
+        d+=w+((int)p2[i-LAG] - (int)p1[i-LAG]);
     }
     float avg=sum/(float)ATWDCHSIZ;
     /* autocorrelation at the non-zero lag */
-    float autoCL = c - (d*avg) + (ATWDCHSIZ-lag)*avg*avg;
+    float autoCL = c - (d*avg) + (ATWDCHSIZ-LAG)*avg*avg;
     /* autocorrelation at lag 0 */
     float autoC0 = a - (b*avg) + ATWDCHSIZ*avg*avg;
 
-    /* if there was no correlation at the non-zero lag, 
-       the autocorrelation length is short and we assume everything is fine */
-    if(autoCL==0.0) {
-        contaminated = 0;
-    }
-    else{
-        /* the autocorrelation at lag 0 is always non-negative, 
-           but at other lags it may be negative */
-        if(autoCL<0.0)
-            autoCL=-autoCL;
-        /* if the autocorrelation at lag L is too large realtive to the 
-           autocorrelation at lag 0 there is probably a substantial departure
-           from baseline */
-        contaminated = ((autoC0/autoCL) < max_c0_cl_ratio) && (autoC0 > min_c0);
-    }
+    /* standard deviation of difference */
+    float stddev = sqrt(autoC0/ATWDCHSIZ);
 
+    /* significance of non-zero baseline shift */
+    float blShift = 0;
+    if (stddev > 0)
+        blShift = fabs(avg/stddev);
+
+    /* there is a large shift in the average baselines */
+    float c0_cl_ratio;
+    if (blShift >= MAX_BL_SIGMA) {
+        mprintf("isContaminated: baseline shift of %.1f counts is %.1f sigma from zero", 
+                avg, blShift); 
+        contaminated = 1;
+    }
+    else {
+        /* if there was no correlation at the non-zero lag, 
+           the autocorrelation length is short and we assume everything is fine */
+        if (autoCL==0.0) {
+            contaminated = 0;
+        }
+        else{            
+            /* the autocorrelation at lag 0 is always non-negative, 
+               but at other lags it may be negative */
+            if(autoCL<0.0)
+                autoCL=-autoCL;
+            /* if the autocorrelation at lag L is too large relative to the 
+               autocorrelation at lag 0 there is probably a substantial departure
+               from baseline */
+            c0_cl_ratio = autoC0/autoCL;
+            contaminated = (c0_cl_ratio < MAX_C0_CL_RATIO) && (autoC0 > MIN_C0);
+            if (contaminated)
+                mprintf("isContaminated: pulse detected in baseline (autoCL %.2f autoC0 %.2f ratio %.2f)", autoCL, autoC0, c0_cl_ratio);
+        }
+    }
     return contaminated;
 }
 
@@ -305,8 +326,9 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal,
     npeds0 = npeds1 = npedsadc = 0;            
     pedestalsAvail             = 0;
 
-    /* Last channel 0 pedestal averages for light-contamination check */
-    USHORT lastPedestalCh0[2][ATWDCHSIZ];
+    /* Last pedestal averages for light-contamination / consistency check */
+    USHORT lastPedestal[2][4][ATWDCHSIZ];
+
     int maxcontaminated = 10; /* Maximum trials to get a non-light-contaminated average */
 
     int avgtrial=0;
@@ -399,18 +421,31 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal,
             }
         } /* ATWD Loop */
 
-        /* Now check both channel 0 waveforms for light contamination */
+        /* Now check waveforms for light contamination and baseline consistency */
         if (avgtrial > 0) {
-            avgdone = (((npeds0 == 0) || (!isContaminated(atwdpedavg[0][0], lastPedestalCh0[0]))) &&
-                       ((npeds1 == 0) || (!isContaminated(atwdpedavg[1][0], lastPedestalCh0[1]))));
-            if (!avgdone)
+            int contaminated = 0;
+            if ((npeds0 != 0) && (npeds1 != 0)) {
+                for (iatwd=0; iatwd<2; iatwd++) {                
+                    /* Check channels 0, 1, and 2 */
+                    for (ich=0; ich<3; ich++) {
+                        contaminated = contaminated || 
+                            isContaminated(atwdpedavg[iatwd][ich], lastPedestal[iatwd][ich]);
+                    }
+                }
+                avgdone = !contaminated;
+            }
+            
+            if (!avgdone) {
                 mprintf("pedestalRun: WARNING: pedestal average contaminated; trying again (trial %d)", avgtrial);
+                halUSleep(1000); /* settle down a bit */
+            }
         }
 
-        /* Save ch0 for contamination comparison */
+        /* Save averages for contamination / consistency check */
         for (iatwd=0; iatwd<2; iatwd++) 
-            for(isamp=0; isamp<ATWDCHSIZ; isamp++)
-                lastPedestalCh0[iatwd][isamp] = atwdpedavg[iatwd][0][isamp];
+            for (ich=0; ich<4; ich++)
+                for(isamp=0; isamp<ATWDCHSIZ; isamp++)
+                    lastPedestal[iatwd][ich][isamp] = atwdpedavg[iatwd][ich][isamp];
 
     } /* Light contamination loop */
 
