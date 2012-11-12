@@ -151,7 +151,7 @@ int isContaminated(USHORT *p1, USHORT *p2){
     const int LAG=1;
     const float MAX_C0_CL_RATIO = 3.0; 
     const float MIN_C0 = 10.0;
-    const float MAX_BL_SIGMA = 4.0;
+    const float MAX_BL_SIGMA = 6.0;
 
     int i,sum=0;
     int a=0, b=0, c=0, d=0;
@@ -188,18 +188,18 @@ int isContaminated(USHORT *p1, USHORT *p2){
     /* autocorrelation at lag 0 */
     float autoC0 = a - (b*avg) + ATWDCHSIZ*avg*avg;
 
-    /* standard deviation of difference */
+    /* standard deviation of pedestal difference samples */
     float stddev = sqrt(autoC0/ATWDCHSIZ);
 
-    /* significance of non-zero baseline shift */
+    /* significance of non-zero baseline shift on mean */
     float blShift = 0;
     if (stddev > 0)
-        blShift = fabs(avg/stddev);
+        blShift = fabs(sqrt(ATWDCHSIZ)*avg/stddev);
 
     /* there is a large shift in the average baselines */
     float c0_cl_ratio;
     if (blShift >= MAX_BL_SIGMA) {
-        mprintf("isContaminated: baseline shift of %.1f counts is %.1f sigma from zero", 
+        mprintf("isContaminated: baseline shift of %.2f counts is %.2f sigma from zero", 
                 avg, blShift); 
         contaminated = 1;
     }
@@ -220,7 +220,8 @@ int isContaminated(USHORT *p1, USHORT *p2){
             c0_cl_ratio = autoC0/autoCL;
             contaminated = (c0_cl_ratio < MAX_C0_CL_RATIO) && (autoC0 > MIN_C0);
             if (contaminated)
-                mprintf("isContaminated: pulse detected in baseline (autoCL %.2f autoC0 %.2f ratio %.2f)", autoCL, autoC0, c0_cl_ratio);
+                mprintf("isContaminated: pulse detected in baseline (autoCL %.2f autoC0 %.2f ratio %.2f)", 
+                        autoCL, autoC0, c0_cl_ratio);
         }
     }
     return contaminated;
