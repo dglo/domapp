@@ -1,0 +1,728 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <style type="">
+    <!--
+      body {
+        background-color: #F5F5CF;
+        font-family: serif;
+        font-size: 12pt;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 20pt;
+        font-weight: normal;
+        background-color: #FFFFFF;
+        border-style: ridge none none none;
+        border-width: thin 0 0 0;
+        padding: .2em 0 0 0;
+      }
+
+      h2 {
+        font-size: 12pt;
+        background-color: #FFFFFF;
+        border-style: ridge none none none;
+        border-width: thin 0 0 0;
+        padding: .2em;
+      }
+
+      h3 {
+        font-size: 12pt;
+      }
+
+ .terminal {
+font: 10pt monospace;
+background-color: #FFFFFF;
+border-style: dashed;
+border-width: thin;
+padding: .2em .2em .2em 1em;
+margin: 0 5% 0 2%;
+}
+
+ .terminalOld {
+font: 10pt monospace;
+background-color: #FFFFFF;
+border-style: dashed;
+border-width: thin;
+padding: .2em .2em .2em 1em;
+white-space: pre;
+margin: 0 5% 0 2%;
+}
+
+      font.todo {
+        color: red;
+      }
+
+      .footer {
+        font: 10pt monospace;
+        text-align: right;
+      }
+
+    -->
+  </style>
+  <title>Testing DOMApp</title>
+</head>
+<body>
+<table style="text-align: left;" border="0" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"> <big><big><span
+ style="font-style: italic;">DMT:</span> Testing
+DOMApp&nbsp;&nbsp;&nbsp;&nbsp; </big></big><br>
+      </td>
+      <td style="vertical-align: top;">John Jacobsen <span
+ style="font-family: monospace;"></span><br>
+Last revision 8/11/2005<br>
+      <span style="font-family: monospace;">$Id: domapp_testing.html,v
+1.2 2005/06/10 15:59:06 jacobsen Exp $</span><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<a href="index.html">Code Status</a> | <a href="api.html">API</a> |
+Test SW | <a href="domapp_test_status.html">Testing Status</a><br>
+<br>
+<h2><big style="font-weight: bold;">CONTENTS</big></h2>
+<big>
+</big>
+<ol>
+  <li><a href="#release">Release Status</a><br>
+  </li>
+  <li><big><small><a href="#intro">Introduction</a></small></big></li>
+  <li><big><small><a href="#install">Test Software Installation</a></small></big></li>
+  <li><big><small><a href="#running">Running DMT</a></small></big></li>
+  <li><big><small><a href="#options">Program Options</a></small></big></li>
+  <li><big><small><a href="#output">Test Output</a><br>
+    </small></big></li>
+  <li><big><small><a href="#tests">List of Tests</a></small></big></li>
+  <li><big><small><a href="#passfail">Pass/Fail Criteria</a></small></big></li>
+  <li><big> <a href="#releases"><small>Release Qualification</small></a></big></li>
+  <li><big><small><a href="#ack">Acknowledgements</a></small></big></li>
+</ol>
+<big>
+</big>
+<h2><span style="font-weight: bold;"><a name="release"></a>RELEASE
+STATUS<br>
+</span></h2>
+The current release is V00-00-07.<br>
+<br>
+<big>
+</big>
+<h2><a name="intro"></a><span style="font-weight: bold;">INTRODUCTION</span></h2>
+The DOMApp tests are done with a framework called "DMT" (Domapp Multi
+Test).&nbsp; DMT lives in the domapp-tools project
+(domapp-tools/domapp_multitest.pl, alias 'dmt').&nbsp; domapp-tools is
+available as an RPM from the <a
+ href="http://glacier.lbl.gov/icecube_release.html">Glacier release page</a>.<br>
+<br>
+DMT shares certain characteristics with <a
+ href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-9377/driver_and_firmware_test_procedure_1_4.pdf">MOAT</a>:<br>
+<ol>
+  <li>Multiple DOMs are tested in parallel;</li>
+  <li>The test runs in the background, creating a time-stamped
+subdirectory for each test session;</li>
+  <li>The test cycles through tests at random (<span
+ style="font-style: italic;">a la</span> MJB) to look for interactions
+between tests (sensitivity to DOM state);</li>
+  <li>The test framework consists of a Perl wrapper script (<span
+ style="font-family: monospace;">dmt</span>) which exercises a C
+program (<span style="font-family: monospace;">domapptest</span>) to
+communicate with the DOMs.</li>
+</ol>
+While MOAT provides a thorough test of DOM-DOR communications, DMT
+tests the domapp software and firmware (FPGA design).&nbsp; Functions
+such as PMT hit data collection, pulser operation, supernova rate
+monitor operation, flasher board triggering and LED current readout,
+and many others are exercised by the tests.<br>
+<br>
+<big><big><big><span style="font-style: italic; font-weight: bold;">!</span></big></big></big>
+This document is in a state of flux while the tests continue to be
+implemented and finalized.<br>
+<br>
+<h2><big><span style="font-weight: bold;"><a name="install"></a><small>TEST
+SOFTWARE INSTALLATION</small></span></big></h2>
+<big><small>
+To install DMT with revision tag <span style="font-style: italic;">rev</span>,<br>
+<br>
+</small></big>
+<div style="" class="terminal">$ cvs co -r <span
+ style="font-style: italic;">rev </span>domhub-tools/domapp<br>
+$ cd domhub-tools/domapp<br>
+$ make<br>
+$ su<br>
+$ make install</div>
+<br>
+You should also prepare the set of DOMs to be tested by loading the
+appropriate DOM-MB software release on the DOMs, using the ldall
+command provided with the <span style="font-family: monospace;">domhub-tools</span>
+project.<br>
+<br>
+<h2><span style="font-weight: bold;"><a name="running"></a>RUNNING DMT</span></h2>
+To run DMT, power on the DOMs, put them in iceboot (use your own
+script, or <span style="font-family: monospace;">domterm</span>, or <span
+ style="font-family: monospace;">se.pl</span>, or <span
+ style="font-family: monospace;">iceboot</span>), and type "<span
+ style="font-family: monospace;">dmt</span>" (with options if
+desired).&nbsp; E.g., <br>
+<br>
+<div style="" class="terminal">$ <span style="font-weight: bold;">on
+all</span><br>
+Driver V02-06-01h (dh.c $Revision: 1.11 $)<br>
+/proc/driver/domhub/card0 -- PCI=0, FW=010w, DOR=0<br>
+/proc/driver/domhub/card1 -- PCI=0, FW=010w, DOR=0<br>
+/proc/driver/domhub/card2 -- PCI=0, FW=010w, DOR=0<br>
+/proc/driver/domhub/card3 -- PCI=0, FW=010w, DOR=0<br>
+/proc/driver/domhub/card4 -- PCI=0, FW=010w, DOR=0<br>
+/proc/driver/domhub/card5 -- PCI=0, FW=010w, DOR=0<br>
+/proc/driver/domhub/card6 -- PCI=0, FW=010w, DOR=0<br>
+/proc/driver/domhub/card7 -- PCI=0, FW=010w, DOR=0<br>
+0 0 A: NOT communicating<br>
+0 0 B: NOT communicating<br>
+0 1 A: communicating<br>
+0 1 B: NOT communicating<br>
+1 0 A: NOT communicating<br>
+1 0 B: NOT communicating<br>
+1 1 A: NOT communicating<br>
+1 1 B: communicating<br>
+$ <span style="font-weight: bold;">se.pl all r r</span><br>
+\r\nconfigboot v2.71\r\n /dev/dhc0w1dA: OK<br>
+\r\nconfigboot v2.71\r\n /dev/dhc1w1dB: OK<br>
+SUCCESS.<br>
+$ <span style="font-weight: bold;">dmt</span><br>
+Available DOMs: 01a 11b<br>
+Log for 01a is domapp01a.log<br>
+Log for 11b is domapp11b.log<br>
+Creating DMT__2005-06-08__17:10:12... OK.<br>
+Creating symlink latest_dmt to DMT__2005-06-08__17:10:12...<br>
+Results to appear in directory DMT__2005-06-08__17:10:12<br>
+$ <br>
+</div>
+<big><small><br>
+The timestamped results directory can be accessed conveniently by <span
+ style="font-family: monospace;">cd</span>'ing to <span
+ style="font-family: monospace;">latest_dmt</span>; when a new test is
+run, <span style="font-family: monospace;">latest_dmt</span> is
+updated to point to the new directory.<br>
+</small></big>
+<h2><big><small><span style="font-weight: bold;"><a name="options"></a>PROGRAM
+OPTIONS</span></small></big></h2>
+<big><small>
+Without any command-line options, DMT will run through the default
+selection of DOM tests once (on all DOMs, in parallel), and quit.&nbsp;
+It will not run any tests which require the flashers, PMT high voltage
+or local coincidence wiring to be operational.<br>
+<br>
+The most important command line option is -h, for help:<br>
+<br>
+</small></big>
+<div class="terminal">$ <span style="font-weight: bold;">dmt -h</span><br>
+Usage: dmt [options] &lt;dom0&gt; &lt;dom1&gt; ...<br>
+<br>
+&nbsp;&nbsp;&nbsp; DOMs can be "all" or, e.g., "01a, 10b, 31a"<br>
+&nbsp;&nbsp;&nbsp; Must power on and be in iceboot first.<br>
+<br>
+Options:<br>
+&nbsp;&nbsp;&nbsp;&nbsp; -u &lt;image&gt;:&nbsp; Upload &lt;image&gt;
+rather testing flash image<br>
+&nbsp;&nbsp;&nbsp;&nbsp;
+-s:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Show commands
+issued to domapptest<br>
+&nbsp;&nbsp;&nbsp;&nbsp;
+-d:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Detailed
+report about what worked, instead<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+of just what didn't work.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;
+-F:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Run flasher
+tests (SEALED, DARK DOMs ONLY)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;
+-V:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Run tests
+requiring HV (SEALED, DARK DOMs ONLY)<br>
+&nbsp;&nbsp;&nbsp;&nbsp; -A &lt;prog&gt;:&nbsp;&nbsp; Use &lt;prog&gt;
+rather than /usr/local/bin/domapptest<br>
+&nbsp;&nbsp;&nbsp;&nbsp; -l &lt;name&gt;:&nbsp;&nbsp; Load FPGA image
+&lt;name&gt; from flash before test<br>
+&nbsp;&nbsp;&nbsp;&nbsp; -t &lt;sec&gt;:&nbsp;&nbsp;&nbsp; Run for
+&lt;sec&gt; seconds (min/default: run all tests<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+sequentially, once)<br>
+&nbsp;&nbsp;&nbsp;&nbsp; -x &lt;sec&gt;:&nbsp;&nbsp;&nbsp; Default
+duration for each data-taking run<br>
+&nbsp;&nbsp;&nbsp;&nbsp;
+-o:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Perform long
+duration tests (normally skipped)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;
+-C:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Test only
+compressed data (pedestal collection, ...)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;
+-R:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Randomize
+tests after first sequential set is complete<br>
+&nbsp;&nbsp;&nbsp;&nbsp; -sn n:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Test supernova data collection:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0 = skip all supernova tests<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1 = test SN scaler collection only<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2 = test scaler collection + hit data only<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+3 = test modes 1 (counts only) and 2 (counts+hits) only<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(no other tests)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+4 = (default) allow SN tests and other tests as well<br>
+<br>
+If -V or -F options are not given, only tests appropriate for a<br>
+bare DOM mainboard are given.<br>
+<br>
+</div>
+<big><small><br>
+<br>
+By default, DMT runs once through the default tests.&nbsp; Additional
+tests can be selected with the above options (see test matrix, below).<br>
+<br>
+</small></big>
+<h2><big><small><a name="output"></a>TEST OUTPUT</small></big></h2>
+<big><small>The output directory (e.g, latest_dmt -&gt; "</small></big>DMT__2005-06-08__17:10:12")
+contains a number of output files.&nbsp; The most important file is
+DMT.out, which displays the parameters of the run, as well as whether
+the tests passed or not.&nbsp; For example,<big><small><br>
+<br>
+</small></big>
+<div style="" class="terminal">Test sequence DMT__2005-06-10__14:38:39<br>
+<br>
+Parameters:<br>
+DoLong&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = false<br>
+FPGA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+domapp.sbi<br>
+Test Pgm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = /usr/local/bin/domapptest<br>
+Total duration = 10 sec.<br>
+Test durations = 4 sec.<br>
+DoRandomize&nbsp;&nbsp;&nbsp; = false<br>
+DoHV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = false<br>
+DoFlasher&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = false<br>
+Compr. only&nbsp;&nbsp;&nbsp; = false<br>
+SN mode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = 4<br>
+Tests running in background.... come back in 10 seconds!<br>
+01a (domapp01a.log): 1118439612 (Fri Jun 10 14:40:12 2005) ending
+tests, 19 total, 0 failures.<br>
+11b (domapp11b.log): 1118439612 (Fri Jun 10 14:40:12 2005) ending
+tests, 19 total, 0 failures.<br>
+dmt: SUCCESS.<br>
+</div>
+<br>
+Each DOM produces a log file with a list of the tests which were
+run.&nbsp; For example, domapp01a.log from the above run contains:<br>
+<big><small><br>
+</small></big>
+<div style="" class="terminal">1118439520 (Fri Jun 10 14:38:40 2005)
+softboot<br>
+1118439521 (Fri Jun 10 14:38:41 2005) FPGA load domapp.sbi<br>
+1118439528 (Fri Jun 10 14:38:48 2005) upload domapp.bin.gz<br>
+1118439529 (Fri Jun 10 14:38:49 2005) version 'V00-00-04'<br>
+1118439530 (Fri Jun 10 14:38:50 2005) DOM ID ('3eb23fb17d5f')<br>
+1118439536 (Fri Jun 10 14:38:56 2005) echo<br>
+1118439539 (Fri Jun 10 14:38:59 2005) CF monitoring<br>
+1118439542 (Fri Jun 10 14:39:02 2005) HW monitoring<br>
+1118439547 (Fri Jun 10 14:39:07 2005) sn-counts-only<br>
+1118439552 (Fri Jun 10 14:39:12 2005) hits SNTrigger trig=2 nhits=215
+snbins=2204 sntot=1101<br>
+1118439557 (Fri Jun 10 14:39:17 2005) hits SNTriggerNoReadHits trig=2
+nhits=0 snbins=1848 sntot=923<br>
+1118439562 (Fri Jun 10 14:39:22 2005) hits pulserTrigger trig=2
+nhits=34 snbins=0 sntot=0<br>
+1118439569 (Fri Jun 10 14:39:29 2005) hits cpuTrigger trig=1 nhits=3
+snbins=0 sntot=0<br>
+1118439577 (Fri Jun 10 14:39:37 2005) hits comprForced trig=2
+nhits=1107 snbins=0 sntot=0<br>
+1118439585 (Fri Jun 10 14:39:45 2005) hits comprPulsr trig=2 nhits=817
+snbins=0 sntot=0<br>
+1118439590 (Fri Jun 10 14:39:50 2005) hits discTrigger trig=2 nhits=2
+snbins=0 sntot=0<br>
+1118439592 (Fri Jun 10 14:39:52 2005) moni state chg. (1)<br>
+1118439594 (Fri Jun 10 14:39:54 2005) moni state chg. (2)<br>
+1118439596 (Fri Jun 10 14:39:56 2005) moni state chg. (3)<br>
+1118439601 (Fri Jun 10 14:40:01 2005) hits heartbeat_10Hz trig=2
+nhits=34 snbins=0 sntot=0<br>
+1118439607 (Fri Jun 10 14:40:07 2005) hits heartbeat_100Hz trig=2
+nhits=218 snbins=0 sntot=0<br>
+1118439612 (Fri Jun 10 14:40:12 2005) hits heartbeat_1Hz trig=2 nhits=2
+snbins=0 sntot=0<br>
+1118439612 (Fri Jun 10 14:40:12 2005) ending tests, 19 total, 0
+failures.<br>
+</div>
+<br>
+Other files in the directory contains the actual monitoring, hit, and
+supernova data collected during the most recent invocation of each
+test.&nbsp; In the example run given above, the following files are
+present:<br>
+<br>
+<big><small><br>
+</small></big>
+<div style="" class="terminal">$ ls latest_dmt/<br>
+CF_01a.moni&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_comprPulsr_11b.moni&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_heartbeat_1Hz_11b.moni<br>
+CF_11b.moni&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_cpuTrigger_01a.hits&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_pulserTrigger_01a.hits<br>
+DMT.out&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_cpuTrigger_01a.moni&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_pulserTrigger_01a.moni<br>
+domapp01a.log&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_cpuTrigger_11b.hits&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_pulserTrigger_11b.hits<br>
+domapp11b.log&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_cpuTrigger_11b.moni&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_pulserTrigger_11b.moni<br>
+HW_01a.moni&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_discTrigger_01a.hits&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_SNTrigger_01a.hits<br>
+HW_11b.moni&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_discTrigger_01a.moni&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_SNTrigger_01a.moni<br>
+lc_state_chg_mode1_01a.moni&nbsp;
+short_discTrigger_11b.hits&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_SNTrigger_01a.sn<br>
+lc_state_chg_mode1_11b.moni&nbsp;
+short_discTrigger_11b.moni&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+short_SNTrigger_11b.hits<br>
+lc_state_chg_mode2_01a.moni&nbsp; short_heartbeat_100Hz_01a.hits&nbsp;
+short_SNTrigger_11b.moni<br>
+lc_state_chg_mode2_11b.moni&nbsp; short_heartbeat_100Hz_01a.moni&nbsp;
+short_SNTrigger_11b.sn<br>
+lc_state_chg_mode3_01a.moni&nbsp; short_heartbeat_100Hz_11b.hits&nbsp;
+short_SNTriggerNoReadHits_01a.hits<br>
+lc_state_chg_mode3_11b.moni&nbsp; short_heartbeat_100Hz_11b.moni&nbsp;
+short_SNTriggerNoReadHits_01a.moni<br>
+short_comprForced_01a.hits&nbsp;&nbsp;
+short_heartbeat_10Hz_01a.hits&nbsp;&nbsp;
+short_SNTriggerNoReadHits_01a.sn<br>
+short_comprForced_01a.moni&nbsp;&nbsp;
+short_heartbeat_10Hz_01a.moni&nbsp;&nbsp;
+short_SNTriggerNoReadHits_11b.hits<br>
+short_comprForced_11b.hits&nbsp;&nbsp;
+short_heartbeat_10Hz_11b.hits&nbsp;&nbsp;
+short_SNTriggerNoReadHits_11b.moni<br>
+short_comprForced_11b.moni&nbsp;&nbsp;
+short_heartbeat_10Hz_11b.moni&nbsp;&nbsp;
+short_SNTriggerNoReadHits_11b.sn<br>
+short_comprPulsr_01a.hits&nbsp;&nbsp;&nbsp;
+short_heartbeat_1Hz_01a.hits&nbsp;&nbsp;&nbsp; SNCounts_01a.sn<br>
+short_comprPulsr_01a.moni&nbsp;&nbsp;&nbsp;
+short_heartbeat_1Hz_01a.moni&nbsp;&nbsp;&nbsp; SNCounts_11b.sn<br>
+short_comprPulsr_11b.hits&nbsp;&nbsp;&nbsp;
+short_heartbeat_1Hz_11b.hits&nbsp;&nbsp;&nbsp; SUCCESS<br>
+$<br>
+</div>
+<br>
+The last file, SUCCESS (or its cousin, FAIL) provides a quick way to
+tell if a particular DMT test session passed or failed.<br>
+<br>
+<h2><big><small><span style="font-weight: bold;"><a name="tests"></a>LIST
+OF TESTS</span></small></big></h2>
+<big><small>Test results appear in the test directory in files named
+domappCWD.log, where CWD are card, wire pair and A/B designators (e.g.,
+01a or 11B).<br>
+<br>
+</small></big>
+<table style="text-align: left;" border="1" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">Test
+Name</span><br>
+      </td>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">Category</span><br>
+      </td>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">Requirement</span><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">version<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Successful fetch of DOMApp
+software release version from DOM<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">DOM ID<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Successful fetch of DOM MB
+(flash) ID from DOM<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">multi
+pedestal fetch<br>
+      </td>
+      <td style="vertical-align: top;">long<br>
+      </td>
+      <td style="vertical-align: top;">Successful pedestal collection:
+100 sessions, collecting 1000 patterns from ATWD A, 1000 from B, and
+2000 from the FADC.&nbsp; Every forced trigger was satisfied by the
+ATWD.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">flasher
+board ID<br>
+      </td>
+      <td style="vertical-align: top;">flasher<br>
+      </td>
+      <td style="vertical-align: top;">Request for flasher board ID
+gives nonempty character string.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hv<br>
+      </td>
+      <td style="vertical-align: top;">high voltage<br>
+      </td>
+      <td style="vertical-align: top;">HV can be set to 500 V; read
+back HV == set HV +/- 50 V<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">echo<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Get response to every echo
+packet <span style="color: rgb(255, 0, 0);">[should check contents <span
+ style="font-style: italic;">a la</span> MOAT]</span><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">CF
+monitoring<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Request software configuration
+records at 1 second intervals; records are generated in the monitoring
+stream<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">HW
+monitoring<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Request hardware status records
+at 1 second intervals; records are generated in the monitoring stream</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">sn-counts-only<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Activate and read out supernova
+data collection (only -- no digitized hit data).&nbsp; Verify DOM
+doesn't crash during this operation <span
+ style="color: rgb(255, 0, 0);">[currently doesn't examine SN data
+stream]</span><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hits
+Flasher</td>
+      <td style="vertical-align: top;">flasher</td>
+      <td style="vertical-align: top;">Activate flasher with a rate of
+100 Hz and take data; monitoring data is created and read out
+successfully and is nonempty; forced-trigger hits with flasher current
+are read out; make sure hit stream is nonempty<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hits
+SNTrigger<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Take supernova data and SPE
+hits; check hit and monitoring streams </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hits
+pulserTrigger<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Take pulser data; check hit and
+monitoring streams; make sure SPE pulser rate is not substantially
+lower than pulser rate;<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hits
+cpuTrigger<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Take forced trigger data; check
+hit and monitoring streams</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hits
+comprForced<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Look for beacon "forced"
+triggers at 2000 Hz.&nbsp; Make sure hits are present, compressed bit
+is set; check encapsulation of compressed data for errors using
+"decomp" program.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hits
+comprPulser<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Look for pulser-generated SPE
+triggers at 2000 Hz.&nbsp; Make sure hits are
+present, compressed bit is set, and check encapsulation of compressed
+data for errors using "decomp" program.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hits
+discTrigger<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">HV off, look for beacon "forced"
+triggers at 1 Hz<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-family: monospace;">hits HVSPE</span><br>
+      </td>
+      <td style="vertical-align: top;">high voltage<br>
+      </td>
+      <td style="vertical-align: top;">Dark noise test: set high
+voltage to 1311, default DACs, look for SPE triggers.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-family: monospace;">hits HVSPECompr</span></td>
+      <td style="vertical-align: top;">high voltage</td>
+      <td style="vertical-align: top;">Same as <span
+ style="font-family: monospace;">HVSPE </span>but use compressed
+format <span style="color: rgb(255, 0, 0);">[currently does not check
+for correct trigger type within compressed stream]</span>; check
+encapsulation of compressed data for errors using
+"decomp" program. </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">moni
+state chg. (1)<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(255, 0, 0);"><span style="color: rgb(0, 0, 0);">Set
+LC mode to 1, make sure monitoring stream reflects this.</span><br>
+      </span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">moni
+state chg. (2)</td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(255, 0, 0);"><span style="color: rgb(0, 0, 0);">Set
+LC mode to 2, make sure monitoring stream reflects this.</span></span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">moni
+state chg. (3)</td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(255, 0, 0);"><span style="color: rgb(0, 0, 0);">Set
+LC mode to 3, make sure monitoring stream reflects this.</span></span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hits
+heartbeat_10Hz<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Take heartbeat/beacon data at 10
+Hz, check trigger rate<span style="color: rgb(255, 0, 0);"><span
+ style="color: rgb(0, 0, 0);"></span></span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hits
+heartbeat _100Hz<br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Take heartbeat/beacon data at
+100 Hz, check trigger rate</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; font-family: monospace;">hits
+heartbeat_1Hz <br>
+      </td>
+      <td style="vertical-align: top;">default<br>
+      </td>
+      <td style="vertical-align: top;">Take heartbeat/beacon data at 1
+Hz, check trigger rate</td>
+    </tr>
+  </tbody>
+</table>
+<big><small><br>
+Tests in the "default" category are carried out in general; when the
+"-o" option is given, tests in the "long" category are added; when the
+"-V" option is given, tests in the "high voltage" category are added;
+when the "-F" option is given, tests in the "flasher" category are
+added.&nbsp; [There will also be a "LC" category at some point.]<br>
+<br>
+</small></big>
+<h2><big><small><span style="font-weight: bold;"><a name="passfail"></a>PASS/FAIL
+CRITERIA</span></small></big></h2>
+<big><small>
+Each test has its own pass/fail criterion.&nbsp; The entire run of
+tests is considered successful if and only if all tests performed
+complete
+successfully on all DOMs.<br>
+<br>
+</small></big>
+<h2><big><small><span style="font-weight: bold;"><a name="releases"></a>RELEASE
+QUALIFICATION</span></small></big></h2>
+<big><small>
+The final DMT requirement for DOM-MB release qualification still needs
+to be determined.&nbsp; Need input on:<br>
+</small></big>
+<ol>
+  <li><big><small>Number of DOMs</small></big></li>
+  <li><big><small>Temperature (cold/warm)</small></big></li>
+  <li><big><small>Integrated DOMs vs. bare DOM MBs</small></big></li>
+  <li><big><small>Flasher, HV, LC functionality</small></big></li>
+  <li><big><small>Duration of tests</small></big></li>
+  <br>
+</ol>
+<h2><a name="ack"></a>ACKNOWLEDGEMENTS</h2>
+Some of the ideas used in the MJB communications tests, written by
+Arthur Jones, were used in DMT.<br>
+<br>
+Thanks to Keith Beattie for the stylesheet markup which I shamelessly
+stole.<br>
+<div style="text-align: right;"><br>
+</div>
+</body>
+</html>

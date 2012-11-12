@@ -1,0 +1,325 @@
+Release notes for production domapp -- jacobsen@npxdesigns.com
+
+Latest:
+- Issue 5065 - implement 'push' architecture for sending of hits from domapp into stringhub
+
+domapp V00-03-05  6/1/2006 CDT
+        For release as part of DOM-MB 415
+
+Upgrades/bug fixes:
+- Fix missing comment delim. in messageAPIstatus.h and goofy return error masks
+- Issue 443 - don't fail out of SN event loop when HAL indicates overflow
+- Issue 442 - add message to indicate number of LBM overflows
+
+=========================================================
+
+
+domapp V00-03-04  2/4/2006 NZT
+        Requires DOM-MB version 405
+        Requires domapp.sbi tag build340
+
+Upgrades/bug fixes:
+- Tighten up look back memory to treat "memory avalanch" problem
+  seen in surface DAQ
+
+=========================================================
+
+domapp V00-03-03  2/2/2006 NZT
+        Requires DOM-MB version 405
+        Requires domapp.sbi tag build340
+
+Upgrades/bug fixes:
+- Added more ASCII monitoring output during LC configuration
+- Upgrade to DOM-MB 405
+
+=========================================================
+
+domapp V00-03-02  1/24/2006 CST
+        Requires DOM-MB version 404
+        Requires domapp.sbi tag build340
+
+Upgrades/bug fixes:
+- Software same as V00-03-01
+- New FPGA fixes LC problem with 5.1 boards
+
+=========================================================
+
+domapp V00-03-01  1/14/2006 CST
+	Requires DOM-MB version 404
+	Requires domapp.sbi tag build329
+
+Upgrades/bug fixes:
+- Use new domapp FPGA which fixes LC/heartbeat interaction.
+- Fix bug with extra bits contaminating FADC/ATWD data 
+  (keep only 10 bits)
+- Fix DSC_QUERY_PMT_HV and documentation to return only 
+  2 shorts: ADC and DAC HV settings
+- Rearrange engineering format code slightly to allow for
+  the possibility of e.g. forced+SPE trig in the same time
+  slice - in which case SPE takes precedence in format.
+  I.e., if Thorsten says:        I say:
+            FORCED+SPE           type 2
+            FLASHER+FORCED       type 3
+            FLASHER+SPE          type 3
+            FLASHER+FORCED+SPE   type 3
+
+=========================================================
+
+domapp V00-03-00  12/23/2005
+        Requires DOM-MB version 404
+
+Upgrades/bug fixes:
+- Change message recv'd code to deal w/ partial domapp
+  messages being sent to DOM
+- Slight refactoring of supernova code; DSC_ENABLE_SN
+  message MUST occur before data taking run is started.
+
+=========================================================
+
+domapp V00-02-04  12/16/2005
+        Requires DOM-MB version 404
+
+Upgrades/bug fixes:
+- Workaround for unexpected comms. behavior from HAL/comm.
+  FPGA to deal w/ "deferred DOM response" problem
+
+=========================================================
+
+domapp V00-02-02  12/15/2005
+        Requires DOM-MB version 404
+
+Upgrades/bug fixes:
+- Add monitoring debug message to report pulser settings when
+  changed
+- Use only low 8 bits to determine trigger type in events during
+  formatting
+
+=========================================================
+
+domapp V00-02-01  11/23/2005
+	Requires DOM-MB version 403
+
+Upgrades/bug fixes:
+- update compressed data format per documentation & phone
+  call discussions
+- Add format ID to supernova data to make consistent with
+  monitoring stream.
+
+=========================================================
+
+domapp V00-02-00  11/10/2005
+	Requires DOM-MB version 400
+
+Upgrades/bug fixes:
+- minor cleanup of pong debugging cruft.
+- This version links against DOM-MB rel-400
+
+=========================================================
+domapp V00-01-00  10/17/2005
+       Requires domapp.sbi: 281, DOM-MB packages domapp-101
+
+Upgrades/bug fixes: None.  This version just links against the 
+"official" domapp branch of DOM-MB.
+
+=========================================================
+domapp V00-00-12  8/31/2005
+       Requires domapp.sbi: 264, DOM-MB packages domapp-V00-00-12
+
+Upgrades/bug fixes
+* Fix flasher run startup
+
+=========================================================
+domapp V00-00-11  8/29/2005
+       Requires domapp.sbi: 264, DOM-MB packages domapp-V00-00-11
+       Test with domapp-tools (DMT) V00-00-08
+
+Upgrades/bug fixes
+* Lookback memory non-cached, prevents races with FPGA when 
+  writing/clearing LBM ("missing hit" problem fixed).
+* In pedestal collection code, remove extra launch added in 
+  domapp V00-00-10.
+
+=========================================================
+domapp V00-00-10  8/16/2005
+       Requires domapp.sbi: 264, DOM-MB packages domapp-V00-00-10
+       Test with domapp-tools (DMT) V00-00-07
+
+Upgrades/bug fixes
+* When collecting SPE data, perform extra launch and wait for 
+  TWO events in lookback memory before proceeding
+
+=========================================================
+domapp V00-00-09  8/11/2005
+       Requires domapp.sbi: 264, DOM-MB packages domapp-V00-00-09
+       Test with domapp-tools (DMT) V00-00-07
+
+Upgrades/bug fixes
+* New FPGA design, per Thorsten:
+   - Charge stamp generation fix
+   - Self local coincidence added
+   - New LC option to require up AND down
+   - Fixes problem which occurs when hammering ATWDs at 80kHz
+
+Outstanding issues: see previous release.
+
+=========================================================
+domapp V00-00-08  7/5/2005
+       Requires domapp.sbi: 245, DOM-MB packages domapp-V00-00-08
+       Test with domapp-tools (DMT) V00-00-07
+
+Upgrades/bug fixes
+* Cleaned up pedestal collection to avoid races with FPGA when
+  collecting trigger data ("missing pedestal event" problem)
+
+Outstanding issues known in this release, or not yet addressed from
+previous releases:
+* Occasionally uncompressed data sneak into compressed data when
+  real SPE/PMT triggers are collected (HV is on)
+* DOMs have been seen to crash during very long (36 hr) tests
+* Occasionally get forced triggers when pulser is active (should
+  be disallowed)
+* Occasionally rate drops too low during 1Hz heartbeat test
+
+=========================================================
+domapp V00-00-07  6/30/2005
+       Requires domapp.sbi: 245, DOM-MB packages domapp-V00-00-07
+       Test with domapp-tools (DMT) V00-00-07
+
+Upgrades/bug fixes
+* New FPGA design disables Rx of LC unless LC enabled explicitly
+* "             " fixes bug in interface to flasher board
+* HV SPEs is tested and works with the caveat below
+
+Outstanding issues known in this release:
+* Occasionally uncompressed data sneak into compressed data when
+  real SPE/PMT triggers are collected (HV is on)
+
+Older issues seen in previous release, not yet seen in V00-00-07, but
+probably still there:
+* Occasionally 1 pedestal trigger out of 1000 goes missing in
+  pedestal collection
+* DOMs have been seen to crash during very long (36 hr) tests
+* Occasionally get forced triggers when pulser is active (should
+  be disallowed)
+* Occasionally rate drops too low during 1Hz heartbeat test
+
+=========================================================
+domapp V00-00-06  6/23/2005
+       Requires domapp.sbi: 235, DOM-MB packages domapp-V00-00-06
+       Test with domapp-tools (DMT) V00-00-06
+
+Upgrades/bug fixes
+* HAL tagged with domapp-V00-00-06 fixes SN bug
+* Added DATA_ACC_MONI_AVAIL message
+* Added PONG FPGA register writes for debugging w/ logic analyzer
+* Updated docs
+
+Outstanding issues: 
+* Occasionally 1 pedestal trigger out of 1000 goes missing in
+  pedestal collection
+* Many things are not thoroughly tested yet, notably LC
+  functionality, flashers, and programmable dead time.
+  Compressed data has not been thoroughly examined.
+* Should implement raw data format so that compressed data
+  can be compared with uncompressed in a one-to-one format.
+
+=========================================================
+domapp V00-00-05  6/14/2005
+       Requires domapp.sbi: 235, DOM-MB packages domapp-V00-00-05
+       Test with domhub-tools/domapp V00-00-04
+
+Upgrades/bug fixes
+* Lots of clean up
+* FPGA bug fix in pedestal collection
+* DATA_ACC_RESET_MONI_BUF message added
+* Updated docs
+
+Outstanding Issues:
+* Many things are not thoroughly tested yet, notably LC
+  functionality, flashers, and programmable dead time.
+  Compressed data has not been thoroughly examined.
+* DOM becomes unresponsive after many short tests
+  where supernova data are read out.  Currently
+  under investigation.
+* Should implement raw data format so that compressed data
+  can be compared with uncompressed in a one-to-one format.
+
+=========================================================
+domapp V00-00-04  5/31/2005  First beta release
+       Requires domapp.sbi: 226, DOM-MB packages domapp-V00-00-04
+       Test with domhub-tools: V00-00-03
+
+Upgrades/bug fixes
+* Flasher, supernova, LC implemented
+* All planned major features now implemented (see 
+  resources/doc/index.html)
+
+Major known issues (from resources/doc/index.html):
+    * Many things are not thoroughly tested yet, notably LC 
+      functionality, flashers, and programmable dead time.  
+      Compressed data has not been thoroughly examined.
+    * DOM becomes unresponsive after many short tests 
+      where supernova data are read out.  Currently 
+      under investigation.
+
+Minor Outstanding Issues:
+    * A possible firmware issue exists where pedestal collection 
+      ("forced triggers") fail to arrive in time (200 usec).  
+      Currently under investigation.
+    * Should implement raw data format so that compressed data 
+      can be compared with uncompressed in a one-to-one format.
+
+=========================================================
+
+domapp V00-00-03  5/20/2005  NOT A PRODUCTION RELEASE
+       Requires domapp.sbi: (not yet tagged in CVS)
+       Test with domhub-tools: V00-00-02
+
+Known issues:
+- Flasher stuff still not implemented/tested
+- Supernova stuff not implemented/tested
+- LC not tested
+
+Upgrades/bug fixes:
+- LC added per documentation; not tested extensively yet
+- Fixed bug with pedestal collection
+- Most real FPGA stuff supported now
+
+=========================================================
+
+domapp V00-00-02  5/19/2005  NOT A PRODUCTION RELEASE
+       Requires domapp.sbi: (not yet tagged in CVS)
+       Test with domhub-tools: V00-00-01
+
+Known issues:
+- Flasher stuff still not implemented/tested
+- Supernova stuff not implemented/tested
+- During data compression, uncompressed pedestal hits often go
+  missing or show up as compressed data
+- Programming of roadgrader thresholds not implemented in HAL
+
+Upgrades/bug fixes:
+- Most real FPGA stuff supported now
+
+=========================================================
+
+domapp V00-00-01  5/10/2005  NOT A PRODUCTION RELEASE
+       Requires domapp.sbi: (not yet tagged in CVS)
+       Test with domhub-tools: V00-00-00
+
+Known issues:
+- Flasher stuff still not implemented/tested
+- Supernova stuff not implemented/tested
+- Data compression not implemented/tested
+
+Upgrades/bug fixes:
+- Buffered pedestal data now supported (REAL/DOMAPP FPGA!!!)
+
+=========================================================
+
+domapp V00-00-00
+
+- First version of "real" domapp -- still uses test FPGA/HAL
+- Refactored, cleaned up and simplified from testdomapp
+
+=========================================================

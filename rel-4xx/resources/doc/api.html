@@ -1,0 +1,1772 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+  <title>DOMApp API</title>
+  <link rel='stylesheet' type='text/css' href='site.css'> 
+</head>
+
+
+<body>
+
+<h1>DOMApp API</h1>
+<h3>John Jacobsen, NPX Designs, Inc.</h3>
+
+<h2>CONTENTS</h2>
+
+<ul>
+ <li><a href="#intro">Introduction</a></li>
+ <li><a href="#overview">API Overview</a></li>
+<li><a href="#procedure">Outline of Procedure for Taking Data</a></li>
+<li><a href="#monitoring">Monitoring</a></li>
+<li><a href="#triggering">SPE and Calibration Triggers</a></li>
+<li><a href="#messaging">Messaging Specification</a></li>
+<li><a href="#dataformats">Data Formats</a></li>
+<li><a href="#supernova">Supernova Data</a></li>
+<li><a href="#flasher">Run Modes and Flasher Functionality</a></li>
+<li><a href="#messagesdescribedindetail">Messages Described in Detail</a></li>
+<li><a href="#differences">Differences Between Testdomapp and Domapp</a></li>
+</ul>
+
+<a name="intro"/>
+<h2>INTRODUCTION</h2>
+
+<p>
+This document describes the messaging
+interface to the production version of the IceCube DOM Application
+(domapp), which uses the DOMApp FPGA design.  
+</p>
+
+<p>The original message interface 
+was designed by Chuck McParland at LBNL for use with the Testdomapp
+application, and was adapted for DOMApp by John Jacobsen.
+</p>
+
+<a name="overview"/>
+<h2>API OVERVIEW</h2>
+
+<p>
+The DOMApp API takes the form of fixed-format binary messages
+described in detail in this document. Messages consist of an 8 byte
+header with an additional payload of 0-4084 bytes. Messages sent by
+the surface generate reply messages from the DOMs. When Domapp is
+running (after the "DOMAPP READY" message emitted in ASCII at
+startup), the DOM never sends a message unless a request message has
+been sent by the surface.
+</p>
+
+<a name="procedure"/>
+<h2>OUTLINE OF PROCEDURE FOR TAKING DATA</h2>
+
+<ol>
+
+<li>
+<p>
+Optionally, run onboard unit tests (<a
+href="#EXPCONTROL_RUN_UNIT_TESTS">EXPCONTROL_RUN_UNIT_TESTS</a>).
+</p>
+</li>
+
+<li> 
+<p>
+Optionally, reset monitoring buffer to eliminate messages from
+the previous run (<a
+href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a>).
+</p>
+</li>
+
+<li>
+Set DACs (except high voltage). <strong>Flasher Board runs require
+special DAC settings.</strong>
+</li>
+
+<li>
+<p>
+Set DOM high voltage, <strong>unless doing Flasher Board
+run</strong>. Required messages: <a
+href="#DSC_ENABLE_PMT_HV">DSC_ENABLE_PMT_HV</a>, <a
+href="#DSC_SET_PMT_HV">DSC_SET_PMT_HV</a>, <a
+href="#DSC_QUERY_PMT_HV">DSC_QUERY_PMT_HV</a> (to check that the
+voltage is set).
+</p>
+</li>
+
+<li>
+<p>
+Set the triggering mode (<a
+href="api.html#DSC_SET_TRIG_MODE">DSC_SET_TRIG_MODE</a>) to trigger
+type 2 (discriminator trigger), for both regular PMT triggers and also
+for digitizing LED currents in flasher board data.  Set data
+compression mode and data format type (<a
+href="api.html#DATA_ACC_SET_DATA_FORMAT">DATA_ACC_SET_DATA_FORMAT</a>
+and <a
+href="api.html#DATA_ACC_SET_COMP_MODE">DATA_ACC_SET_COMP_MODE</a>).
+You can also selectively enable ATWD chips (A or B) with <a 
+href="api.html#DATA_ACC_SELECT_ATWD">DATA_ACC_SELECT_ATWD</a>, or enable IceTop 'minbias' mode with
+<a href="api.html#DSC_SELECT_MINBIAS">DSC_SELECT_MINBIAS</a>.
+</p>
+</li>
+
+<li>
+<p>
+If desired, turn on local coincidence with <a
+href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a> (1) and <a
+href="#DSC_SET_LOCAL_COIN_WINDOW">DSC_SET_LOCAL_COIN_WINDOW</a>.
+Optionally, for new DOMAPP FPGA functions, do any of <a
+href="#DSC_SET_LC_TYPE">DSC_SET_LC_TYPE</a>, <a
+href="#DSC_SET_LC_TX">DSC_SET_LC_TX</a>, <a
+href="#DSC_SET_LC_SRC">DSC_SET_LC_SRC</a>, <a
+href="#DSC_SET_LC_SPAN">DSC_SET_LC_SPAN</a>, and <a
+href="#DSC_SET_LC_CABLE_LEN">DSC_SET_LC_CABLE_LEN</a>.
+<strong>Note:</strong> as of DOM-MB-438, you should set the data format BEFORE turning on Local Coincidence.
+Soft local coincidence mode can only be run when the delta-compressed data format is used.
+</p>
+</li>
+
+<li>
+<p>
+If desired, enable supernova data collection with <a href="#DSC_ENABLE_SN">DSC_ENABLE_SN</a>.
+</p>
+</li>
+
+<li>
+<p>
+Start collecting data: <a
+href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a> (normal
+run) or <a
+href="api.html#EXPCONTROL_BEGIN_FB_RUN">EXPCONTROL_BEGIN_FB_RUN</a>(...)
+(flasher board run) 
+</p>
+</li>
+
+<li>
+<p>
+Wait
+for data to get
+collected; read out periodically using <a href="#DATA_ACC_GET_DATA">DATA_ACC_GET_DATA</a>. 
+Also, fetch monitoring records with <a href="#DATA_ACC_GET_NEXT_MONI_REC">DATA_ACC_GET_NEXT_MONI_REC</a>. 
+And, if desired, fetch supernova data with <a href="#DATA_ACC_GET_SN_DATA">DATA_ACC_GET_SN_DATA</a>.
+</p>
+</li>
+
+<li>
+<p>
+Stop collecting data: <a
+href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a> or <a
+href="#EXPCONTROL_END_FB_RUN">EXPCONTROL_END_FB_RUN</a></p>
+</p>
+</li>
+
+<li>
+<p>
+If previously set, turn off local coincidence with <a
+href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a> (0).
+</p>
+</li>
+
+<li>
+<p>
+If previously enabled, disable supernova data taking with <a
+href="#DSC_DISABLE_SN">DSC_DISABLE_SN</a>
+</p>
+</li>
+
+<li>
+<p>
+Turn off high voltage (<strong>unless this was a Flasher Board
+run</strong>).  Required messages: <a
+href="#DSC_SET_PMT_HV">DSC_SET_PMT_HV</a> (set to 0), <a
+href="#DSC_DISABLE_PMT_HV">DSC_DISABLE_PMT_HV</a>.
+</p>
+</li>
+
+</ol>
+
+<a name="monitoring"/>
+<h2>MONITORING</h2>
+
+<p>
+The monitoring is configured and read out via DATA_ACCESS messages
+described below.  The basic types of monitoring messages are as
+followed:
+<ul>
+  <li>ASCII (diagnostic) messages</li>
+  <li>Periodic hardware state snapshot</li>
+  <li>Periodic software state snapshot</li>
+  <li>State change (e.g. DAC change) messages</li>
+</ul>
+</p>
+
+<p>
+These are described in more detail a <a
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3799/DOMmonitorfmtbinary_3_8.pdf">document</a>
+in the <a
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-517">DOM
+Data Formats</a> directory on <a
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/HomePage">Docushare</a>.
+</p>
+
+<p>
+<strong>Note:</strong> Triggering in the DOM is now disabled momentarily when the PMT
+High Voltage is read out.
+</p>
+
+<p>
+Scaler readouts now have 1 second coverage and are spaced by a minimum
+of 40,000,000 + 100 clock ticks to avoid duplication of values.
+</p>
+
+<a name="triggering"/>
+<h2>SPE AND CALIBRATION TRIGGERS
+(Heartbeat/Beacon, Pulser, Flasher Issues):</h2>
+
+<p>
+Triggers can occur in the DOM both due to PMT signals, and the firing
+of a DOM calibration source.  In normal operation, both SPE triggers
+and periodic, "forced" triggers will be present.  The latter type of
+event can serve as a so-called "beacon" or "heartbeat" signal for
+higher-level DAQ functions downstream.
+</p>
+
+<p>
+The heartbeat rate for the forced triggers is set by the
+DSC_SET_PULSER_RATE message, below.  The default is roughly 1 Hz.  So,
+when you start a run, you will get hit data at this rate even if high
+voltage is off.
+</p>
+
+<p>
+When operating the DOM main board front end pulser (FE pulser), or the
+DOM flashers, the rate is controlled by the same DSC_SET_PULSER_RATE
+message, and the corresponding events play the role of heartbeat in
+lieu of the empty "forced" triggers that occur in normal data taking.
+</p>
+
+<p>
+Forced triggers are identified as type 1 in the engineering event
+format.  SPE triggers (including those generated by the FE pulser) are
+identified as type 2.  For compressed data, the "Trigger Word" encodes
+this information (see Joshua Sopher's document [need
+link]).
+</p>
+
+<a name="messaging"/>
+<h2>MESSAGING SPECIFICATIONS</h2>
+
+<table cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td><strong>Size / type key:</strong>
+      <table border="1" cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td>B<br>
+            </td>
+            <td>byte<br>
+            </td>
+          </tr>
+          <tr>
+            <td>S<br>
+            </td>
+            <td>short (big-endian)</td>
+          </tr>
+          <tr>
+            <td>L<br>
+            </td>
+            <td>long (big-endian)</td>
+          </tr>
+          <tr>
+            <td>UB
+            </td>
+            <td>unsigned byte</td>
+          </tr>
+          <tr>
+            <td>US
+            </td>
+            <td>unsigned short (big-endian)</td>
+          </tr>
+
+          <tr>
+            <td>UL
+            </td>
+            <td>unsigned long (big-endian)</td>
+          </tr>
+          <tr>
+            <td>C
+            </td>
+            <td>variable length string</td>
+          </tr>
+        </tbody>
+      </table>
+      </td>
+      <td><strong>Message</strong> = <br>
+message header (8 bytes)<br>
++ <br>
+data portion (0 to 4084 bytes)<br>                                      
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Message Header Format (8 bytes):</strong><br>
+      <table border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="354">
+        <col width="42"> <col width="73"> <col width="213"> <thead> <tr valign="top">
+          <th width="42">
+          <p>Size</p>
+          </th>
+          <th width="73">
+          <p>Name</p>
+          </th>
+          <th width="213">
+          <p>Meaning</p>
+          </th>
+        </tr>
+        </thead> <tbody>
+          <tr valign="top">
+            <td width="42">
+            <p>B</p>
+            </td>
+            <td width="73">
+            <p>mt</p>
+            </td>
+            <td width="213">
+            <p>message subtype (&ldquo;service&rdquo;)</p>
+            </td>
+          </tr>
+
+          <tr valign="top">
+            <td width="42">
+            <p>B</p>
+            </td>
+            <td width="73">
+            <p>mst</p>
+            </td>
+            <td width="213">
+            <p>message subtype</p>
+            </td>
+          </tr>
+
+          <tr valign="top">
+            <td width="42">
+            <p>S<br>
+            </p>
+            </td>
+            <td width="73">
+            <p>len</p>
+            </td>
+            <td width="213">
+            <p>data portion length in bytes</p>
+            </td>
+          </tr>
+
+          <tr valign="top">
+            <td width="42">
+            <p>S</p>
+            </td>
+            <td width="73">
+            <p><br>
+            </p>
+            </td>
+            <td width="213">
+            <p>reserved</p>
+            </td>
+
+          </tr>
+
+          <tr valign="top">
+            <td width="42">
+            <p>B</p>
+            </td>
+
+            <td width="73">
+            <p>id</p>
+            </td>
+
+            <td width="213">
+            <p>message id</p>
+            </td>
+          </tr>
+
+          <tr valign="top">
+            <td width="42">
+            <p>B</p>
+            </td>
+            <td width="73">
+            <p>status</p>
+            </td>
+            <td width="213">
+            <p>message status</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <br>
+
+      </td>
+
+      <td><strong>Allowed Message Types:</strong>
+      <table border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="239">
+
+        <col width="32"> <col width="189"> <thead>
+        <tr valign="top">
+          <td width="32">
+          <p>Num</p>
+          </td>
+
+          <td width="189">
+          <p>Name</p>
+          </td>
+        </tr>
+
+        </thead> <tbody>
+          <tr>
+            <td sdval="1" sdnum="1033;" valign="bottom" width="32">
+            <p>1</p>
+            </td>
+            <td valign="top" width="189">
+            <p>MESSAGE_HANDLER</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td sdval="2" sdnum="1033;" valign="bottom" width="32">
+            <p>2</p>
+            </td>
+            <td valign="top" width="189">
+            <p>DOM_SLOW_CONTROL</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td sdval="3" sdnum="1033;" valign="bottom" width="32">
+            <p>3</p>
+            </td>
+            <td valign="top" width="189">
+            <p>DATA_ACCESS</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td sdval="4" sdnum="1033;" valign="bottom" width="32">
+            <p>4</p>
+            </td>
+            <td valign="top" width="189">
+            <p>EXPERIMENT_CONTROL</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td sdval="5" sdnum="1033;" valign="bottom" width="32">
+            <p>5</p>
+            </td>
+            <td valign="top" width="189">
+            <p>TEST_MANAGER</p>
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+
+<p>
+For valid subtypes, see "<a href="#messagesdescribedindetail">MESSAGES
+DESCRIBED IN DETAIL</a>," below.
+</p>
+
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<a name="dataformats"/>
+<h2>DATA FORMATS and Compression Modes</h2>
+
+<p>
+Data formats and compression modes have separate settings because one
+compression mode may have multiple formats, and one format could
+support multiple compression modes (although this is not implemented
+yet in domapp).
+</p>
+
+<strong>Compression Modes
+(<a href="#DATA_ACC_SET_COMP_MODE">DATA_ACC_SET_COMP_MODE</a>)<br>
+</strong></p>
+
+<table border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td>Mode</td>
+      <td>Description<br>
+      </td>
+    </tr>
+    <tr>
+      <td>0<br>
+      </td>
+      <td>None (DEFAULT)<br>
+      </td>
+    </tr>
+    <tr>
+      <td>1<br>
+      </td>
+      <td>Compressed data
+(delta
+compression)<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+Other data compression methods (wavelets, software compression) may be
+available at a later date.  Delta-compression is currently
+implemented.
+</p>
+
+<strong>Data Formats (<a href="#DATA_ACC_SET_DATA_FORMAT">DATA_ACC_SET_DATA_FORMAT</a>)
+</strong></p>
+
+<table border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td>Format<br>
+      </td>
+      <td>Description<br>
+      </td>
+      <td>Allowed
+compression  modes<br>
+      </td>
+    </tr>
+    <tr>
+      <td>0<br>
+      </td>
+      <td>Engineering format
+(DEFAULT)<br>
+      </td>
+      <td>0<br>
+      </td>
+    </tr>
+
+    <tr>
+      <td>1<br>
+      </td>
+      <td>Default compression
+format
+(based on compression modes)<br>
+      </td>
+      <td>1<br>
+      </td>
+    </tr>
+    <tr>
+      <td>2<br>
+      </td>
+      <td>Raw
+(formatted directly as comes
+out of the FPGA, uncompressed)</td>
+      <td>0
+..
+1 (NOT YET IMPLEMENTED)<br>
+      </td>
+    </tr>
+    <tr>
+      <td>3<br>
+      </td>
+      <td>Raw
++
+compressed<br>
+      </td>
+      <td>1<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+
+<p>
+Currently, the only supported valid settings are: compression mode 0,
+data format 0 and compression mode 1, data format 1, but other
+combinations are planned for later releases.
+</p>
+
+<p>
+The Engineering Format (Format 0) is <a
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3144/DOMdatafmtbinary_1_5.pdf">described
+in detail</a> in a document in <a
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-517">the
+DOM Data Formats directory</a> on Docushare.  Variable/truncated
+engineering records are still supported via the DATA_ACC_SET_ENG_FMT
+message.
+</p>
+
+<p>It should be noted that the engineering format
+is <strong>not</strong> compatible with soft local coincidence.  You
+must use the delta-compression format described below when using
+SLC.  </p>
+
+<h2>Compressed Data Format</h2>
+
+<p>
+The compressed data consists of blocks of data in the
+following block data format:
+</p>
+
+<p>
+<h3>BLOCK DATA (up to 4084 bytes):</h3>
+</p>
+
+<table border="0" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td colspan="1" rowspan="1"> 
+      <table border="1" cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td colspan="5" rowspan="1">DOMApp Header<br>
+            </td>
+          </tr>
+          <tr>
+            <td>Word 0:<br>
+            </td>
+            <td>Bit 31: 1 (compressed)
+            </td>
+            <td>Bits 30..28: compression type (0==Road Grader, 1==Delta Compression)</td>
+            <td>Bits 27..16: Spare
+            </td>
+            <td>Bits 15..0: Block length in bytes (including header; BIG ENDIAN) </td>
+          </tr>
+          <tr>
+            <td>Word 1:<br>
+            </td>
+            <td colspan="3" rowspan="1">Bits 31..16: Spare
+            </td>
+            <td>Bits 15..0: Timestamp MSBs of all hits in block (BIG ENDIAN) </td>
+          </tr>
+          <tr>
+            <td colspan="5" rowspan="1">Hit Data from FPGA<br>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="1" rowspan="4">Word 2..M<br>
+            </td>
+            <td colspan="4" rowspan="1">Hit 0  (variable length)<br>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="4" rowspan="1">Hit 1
+            </td>
+          </tr>
+
+          <tr>
+            <td colspan="4" rowspan="1">...
+            </td>
+          </tr>
+          <tr>
+            <td colspan="4" rowspan="1">Hit <em>N</em>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </td>
+    </tr>
+    <tr>
+    </tr>
+    <tr>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+Each of the concatenated "Hits" in the hit data block conforms to "<a
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-16687/delta_123611_format_and_processes.pdf">Delta
+Compressor Data Format</a>" in the <a
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-2465">DOM
+Firmware Directory</a> on DocuShare, except that Header WORD0 defined
+in that document is removed by domapp.  In particular, the hit length
+is encoded in bits 10..0 of WORD1 (the first 11 bits of Hit x, above).
+Unfortunately, header data (e.g., timestamps) in the HITS records are
+LITTLE ENDIAN per the Delta Compression document, whereas the domapp
+header values are BIG ENDIAN (all domapp values are big-endian by
+convention).
+</p>
+
+<p>
+Block length, including header and all hits, will be less than or
+equal to 4084 bytes.  The Most Significant Bits (MSBs) of the hit
+timestamps are the same in every block (resulting in the occasional
+block which has fewer than the average number of hits, when the 16
+LSBs of the DOM timestamp roll over every ~2 minutes).  The least
+significant bits of the timestamps are encoded in the hits themselves.
+</p>
+
+<a name="supernova"/>
+<h2>SUPERNOVA DATA</h2>
+
+<p>
+The supernova data consist of a running tally of SPE or MPE triggers
+in a fixed 1.6384 millisecond (65536 counts of the 40 MHz clock)
+window.  The <a href="#DSC_ENABLE_SN">DSC_ENABLE_SN</a> message lets
+you select SPE (0) or MPE (1) triggers as the basis of the data
+collection.  The programmable dead time argument to DSC_ENABLE_SN
+causes the data collection to be disabled for a short period following
+a trigger (to screen out PMT afterpulsing, for example).  You'll have
+to start an actual run (<a
+href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>) before
+(nonzero) supernova triggers can be successfully read out.
+</p>
+
+<p>
+The data are read out via the <a
+href="#DATA_ACC_GET_SN_DATA">DATA_ACC_GET_SN_DATA</a> message in the
+following block format.  The format is compatible with the general
+scheme for monitoring data (see <a
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3799">monitoring
+data format specification</a>), with a header consisting of a 2 byte
+block length, 2 byte format ID, 6 byte time stamp, all big-endian.
+</p>
+
+<h3>Supernova Block Data Format</h3>
+
+<table border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td colspan="2" rowspan="1">Header<br>
+      </td>
+    </tr>
+    <tr>
+      <td>US<br>
+      </td>
+      <td>block length<br>
+      </td>
+    </tr>
+
+    <tr>
+      <td>US<br>
+      </td>
+      <td>format ID (300
+decimal, 0x012C)
+      </td>
+    </tr>
+    <tr>
+      <td>UB*6
+      </td>
+      <td>complete time stamp of time slice 0<br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1">Scaler Data<br>
+      </td>
+    </tr>
+    <tr>
+      <td>UB
+      </td>
+      <td>trigger count for time slice 0
+      </td>
+    </tr>
+    <tr>
+      <td>UB
+      </td>
+      <td>trigger count for time slice 1
+      </td>
+    </tr>
+    <tr>
+      <td>...<br>
+      </td>
+      <td>...<br>
+      </td>
+    </tr>
+    <tr>
+      <td>UB<br>
+      </td>
+      <td>trigger count for time slice N-1
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+In general, the timestamps for successive slices are separated by
+65536 clock counts.  The block will be populated until this condition
+fails or the maximum block size (4084 B) is reached, which ever comes
+first.
+</p>
+
+<p>
+The trigger counters range from 0..15.  Currently 15 is the maximum
+value, indicating that 15 or more pulses occurred.
+</p>
+
+<p>
+Roughly 10 seconds of data are buffered in the HAL (per Arthur Jones,
+need link).  If the reply to the DATA_ACC_GET_SN_DATA message has a
+message length of zero, no data are available to be read out.
+</p>
+
+<a name="flasher"/>
+<h2>RUN MODES AND FLASHER FUNCTIONALITY</h2>
+
+<p>
+Currently there are two run modes in domapp: "normal" mode and flasher
+mode.  In normal mode one first sets up high voltage and other DAC
+settings, then configures the FPGA for triggering on PMT pulses via <a
+href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>.
+Flasher mode, invoked with <a
+href="api.html#EXPCONTROL_BEGIN_FB_RUN">EXPCONTROL_BEGIN_FB_RUN</a>,
+is similar to normal mode (much of the code is shared), except HV must
+be off and there are several <a
+href="api.html#EXPCONTROL_BEGIN_FB_RUN">parameters</a> to be set.  One
+of these parameters, "mask," is a bit mask specifying which LEDs to
+flash (ref. John Kelley's documentation, need link).  Rather than
+digitizing PMT pulses, the current of the first LED specified in the
+mask is digitized.
+</p>
+
+<p>
+<a href="api.html#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a> and <a href="api.html#EXPCONTROL_END_FB_RUN">EXPCONTROL_END_FB_RUN</a> now have the same function and
+can be
+used interchangeably.
+</p>
+
+<p>
+See the data taking <a href="api.html#procedure">outline</a>, above,
+for a complete summary of the procedure.
+</p>
+
+<a name="messagesdescribedindetail"/>
+<h1>MESSAGES DESCRIBED IN DETAIL</h1>
+
+<p>
+The following tables describe the
+format of messages broken down by type and subtype.
+</p>
+
+<h1>Message Handler Messages  (message type 1)</h1>
+
+<ul class="message">
+  <li class="id"    >10</li>                
+  <li class="name"  >MSGHAND_GET_DOM_ID</li> 
+  <li class="input" >-</li>                  
+  <li class="output">S: DOM ID (12 bytes)    
+  <li class="desc"  >Fetch DOM ID from DOM</li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >14</li>
+  <li class="name"  >MSGHAND_GET_MSG_STATS</li>
+  <li class="input" >-</li>
+  <li class="output">UL: Messages; UL: Loops</li>
+  <li class="desc"  >Get number of messages processed, and number of internal loops (for estimating 'load' in domapp)</li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >18</li>
+  <li class="name"  >MSGHAND_ECHO_MSG</li>
+  <li class="input" >S: Data sent</li>
+  <li class="output">S: Data received</li>
+
+  <li class="desc"  >Echoes the sent data; useful for testing purposes</li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >20</li>
+  <li class="name"  >MSGHAND_ACCESS_MEMORY_CONTENTS</li>
+  <li class="input" >UB (0=byte,1=write); UB (0=read;1=write); US(#of accesses); UL(address)</li>
+  <li class="output">S: actualy bytes or longs read/written</li>
+
+  <li class="desc"  >Peek or poke DOM memory; &ldquo;address&rdquo; is in DOM Application mode</li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >24</li>
+  <li class="name"  >MSGHAND_GET_DOMAPP_RELEASE</li>
+  <li class="input" >-</li>
+  <li class="output">S: domapp release</li>
+
+  <li class="desc"  >
+Returns DOMApp (DOM-MB) release version string,
+e.g., &ldquo;V02-01-10&rdquo;
+   </li>
+</ul>
+
+
+<h1>Slow Control Messages  (message type 2):</h1>
+
+<ul class="message">
+  <li class="id"    >31</li>
+  <li class="name"  >DSC_WRITE_ONE_DAC</li>
+  <li class="input" >UB: DAC number; UB: blank; US: value</li>
+  <li class="output">-</li>
+
+  <li class="desc"  >
+Write "value" to specified DAC
+   </li>
+</ul>
+
+
+<a name="DSC_SET_PMT_HV"/>
+
+<ul class="message">
+  <li class="id"    >14</li>
+  <li class="name"  >DSC_SET_PMT_HV</li>
+  <li class="input" >US: Value</li>
+  <li class="output">-</li>
+
+  <li class="desc"  >
+Set
+PMT high
+voltage to "value" (DAC units, i.e. volts * 2) (must also
+DSC_ENABLE_PMT_HV)
+   </li>
+</ul>
+
+
+<a name="DSC_ENABLE_PMT_HV"/>
+
+<ul class="message">
+  <li class="id"    >16</li>
+  <li class="name"  >DSC_ENABLE_PMT_HV</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+
+  <li class="desc"  >
+Enable PMT high voltage
+   </li>
+</ul>
+
+
+<a name="DSC_DISABLE_PMT_HV"/>
+
+<ul class="message">
+  <li class="id"    >18</li>
+  <li class="name"  >DSC_DISABLE_PMT_HV</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+
+  <li class="desc"  >
+Disable PMT high voltage
+   </li>
+</ul>
+
+
+<a name="DSC_QUERY_PMT_HV"/>
+
+<ul class="message">
+  <li class="id"    >22</li>
+  <li class="name"  >DSC_QUERY_PMT_HV</li>
+  <li class="input" >-</li>
+  <li class="output">US: ADC value (ADC units); US: DAC value (DAC units)</li>
+
+  <li class="desc"  >
+Read PMT voltage (ADC and DAC). If DOM has been softbooted since HV
+was set, DAC value will be undefined (0). DAC/ADC units are Volts * 2.
+   </li>
+</ul>
+
+
+<a name="DSC_SET_TRIG_MODE"/>
+
+<ul class="message">
+  <li class="id"    >31</li>
+  <li class="name"  >DSC_SET_TRIG_MODE</li>
+  <li class="input" >UB: mode</li>
+  <li class="output">-</li>
+
+  <li class="desc"  >
+Modes:<br>
+0 = test pattern data<br>
+1 = CPU triggers<br>
+2 = discriminator triggers, SPE only<br>
+3 = flasher board runs; digitize flasher board LED current<br>
+4 = discriminator triggers, MPE only
+   </li>
+</ul>
+
+<a name="DSC_MUX_SELECT"/>
+
+<ul class="message">
+  <li class="id"    >35</li>
+  <li class="name"  >DSC_MUX_SELECT</li>
+  <li class="input" >UB: value</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Selects analog mux channel. Use 255 (0xFF) to disable analog mux explicitly.
+   </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >37</li>
+  <li class="name"  >DSC_SET_PULSER_RATE</li>
+  <li class="input" >US: rate (Hz)</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set pulser rate (Hz). IMPORTANT NOTE: this is the rate used both for
+the on-board front-end pulser during calibration operations, as well
+as for the generation heartbeat, "forced" triggers . Another note:
+only scaled powers of two are actually used; the HAL rounds the
+requested value to the nearest appropriate value.
+   </li>
+</ul>
+
+
+<ul class="message">
+  <li class="id"    >38</li>
+  <li class="name"  >DSC_GET_PULSER_RATE</li>
+  <li class="input" >-</li>
+  <li class="output">US: Rate (Hz)</li>
+  <li class="desc"  >
+Get pulser rate in Hz. See DSC_SET_PULSER_RATE. Actual rate may be
+slightly lower than what was set because of rounding in the HAL.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >39</li>
+  <li class="name"  >DSC_SET_PULSER_ON</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Enable
+on-board pulser.  Note that this changes the trigger
+configuration
+so that heartbeat events are NOT generated.  Message must be
+sent
+AFTER the trigger type has been set (<a href="#DSC_SET_TRIG_MODE">DSC_SET_TRIG_MODE</a>)
+and before the run has started (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>).
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >40</li>
+  <li class="name"  >DSC_SET_PULSER_OFF</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >Disable on-board pulser.</li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >43</li>
+  <li class="name"  >DSC_SET_SCALER_DEADTIME</li>
+  <li class="input" >UL: deadtime (nsec)</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set scaler deadtime in nsec. Valid range: 100 nsec - 102400 nsec.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >44</li>
+  <li class="name"  >DSC_GET_SCALER_DEADTIME</li>
+  <li class="input" >-</li>
+  <li class="output">UL: deadtime (nsec)</li>
+  <li class="desc"  >Get scaler deadtime.</li>
+</ul>
+
+<a name="DSC_SET_LOCAL_COIN_MODE"/>
+
+<ul class="message">
+  <li class="id"    >45</li>
+  <li class="name"  >DSC_SET_LOCAL_COIN_MODE</li>
+  <li class="input" >UB: mode</li>
+  <li class="output">-</li>
+  <li class="desc"  >  
+Modes:<br>
+
+0 = no local coincidence required<br>
+
+1 = require local coincidence; enable receive from both UPPER and LOWER
+DOMs<br>
+
+2 = require local coincidence; enable receive from UPPER DOM only<br>
+
+3 = require local coincidence; enable receive from LOWER DOM only<br>
+
+4 = require local coincidence in both UPPER and LOWER DOM<br>
+5 = require local coincidence in SOFT local coin mode, but never satisfy it (send header only)
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >46</li>
+  <li class="name"  >DSC_GET_LOCAL_COIN_MODE</li>
+  <li class="input" >-</li>
+  <li class="output">UB: mode</li>
+  <li class="desc"  >  
+Modes: see
+      <a href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a>.
+  </li>
+</ul>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td colspan="5" width="566"> 
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<a name="DSC_SET_LOCAL_COIN_WINDOW"/>
+
+<ul class="message">
+  <li class="id"    >47</li>
+  <li class="name"  >DSC_SET_LOCAL_COIN_WINDOW</li>
+  <li class="input" >UL: up_pre(nsec); UL: up_post(nsec)</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local
+coincidence windows. Units are nsec. Must be between 100 and 1600 nsec
+inclusive.  Default is 200 nsec on each
+side.   Pre- and
+post- refer to
+before and after the ATWD launch window, respectively.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >48</li>
+  <li class="name"  >DSC_GET_LOCAL_COIN_WINDOW</li>
+  <li class="input" >-</li>
+  <li class="output">UL: up_pre(nsec); UL: up_post(nsec)</li>
+  <li class="desc"  >  
+Get local coincidence window.
+  </li>
+</ul>
+
+<a name="DSC_SET_LC_TYPE"/>
+
+<ul class="message">
+  <li class="id"    >49</li>
+  <li class="name"  >DSC_SET_LC_TYPE</li>
+  <li class="input" >UB: type</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby.  Note that only hard LC
+(or no LC) are allowed for engineering events.
+  </li>
+</ul>
+
+
+<ul class="message">
+  <li class="id"    >50</li>
+  <li class="name"  >DSC_GET_LC_TYPE</li>
+  <li class="input" >-</li>
+  <li class="output">UB: type</li>
+  <li class="desc"  >
+Get LC type
+  </li>
+</ul>
+
+<a name="DSC_SET_LC_TX"/>
+
+<ul class="message">
+  <li class="id"    >51</li>
+  <li class="name"  >DSC_SET_LC_TX</li>
+  <li class="input" >UB: type-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local coincidence transmit mode: 0=no transmit, 1=TX down only, 2=TX up only, 3=TX both up and down (DEFAULT)
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >52</li>
+  <li class="name"  >DSC_GET_LC_TX</li>
+  <li class="input" >-</li>
+  <li class="output">UB: type</li>
+  <li class="desc"  >
+Get local coincidence transmit mode.
+  </li>
+</ul>
+
+<a name="DSC_SET_LC_SRC"/>
+
+<ul class="message">
+  <li class="id"    >53</li>
+  <li class="name"  >DSC_SET_LC_SRC</li>
+  <li class="input" >UB: type</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local coincidence source 0=SPE (DEFAULT), 1=MPE
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >54</li>
+  <li class="name"  >DSC_GET_LC_SRC</li>
+  <li class="input" >-</li>
+  <li class="output">UB: type</li>
+  <li class="desc"  >
+Get local coincidence source
+  </li>
+</ul>
+
+<a name="DSC_SET_LC_SPAN"/>
+
+<ul class="message">
+  <li class="id"    >55</li>
+  <li class="name"  >DSC_SET_LC_SPAN</li>
+  <li class="input" >UB: type</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local coincidence span: range 1..4 (DEFAULT: 1)
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >56</li>
+  <li class="name"  >DSC_GET_LC_SPAN</li>
+  <li class="input" >-</li>
+  <li class="output">UB: type</li>
+  <li class="desc"  >
+Get local coincidence span
+  </li>
+</ul>
+
+<a name="DSC_SET_LC_CABLE_LEN"/>
+
+<ul class="message">
+  <li class="id"    >57</li>
+  <li class="name"  >DSC_SET_LC_CABLE_LEN</li>
+  <li class="input" ><br>
+US: up neighbor 0 len;<br>
+US: up neighbor 1 len;<br>
+US: up neighbor 2 len;<br>
+US: up neighbor 3 len;<br>
+US: down neighbor 0 len;<br>
+US: down neighbor 1 len;<br>
+US: down neighbor 2 len;<br>
+US: down neighbor 3 len;
+  </li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local coincidence cable lengths, UP and DowN, for neighbors 0..3.
+Length &lt; 3175.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >58</li>
+  <li class="name"  >DSC_GET_LC_CABLE_LEN</li>
+  <li class="input" >-</li>
+  <li class="output">
+US: up neighbor 0 len;<br>
+US: up neighbor 1 len;<br>
+US: up neighbor 2 len;<br>
+US: up neighbor 3 len;<br>
+US: down neighbor 0 len;<br>
+US: down neighbor 1 len;<br>
+US: down neighbor 2 len;<br>
+US: down neighbor 3 len;
+  </li>
+  <li class="desc"  >
+Get local coincidence cable lengths.  Must DSC_GET_LC_CABLE_LEN first
+or this message will return an error!
+  </li>
+</ul>
+
+<a name="DSC_ENABLE_SN"/>
+<ul class="message">
+  <li class="id"    >59</li>
+  <li class="name"  >DSC_ENABLE_SN</li>
+  <li class="input" >UL: deadtime (nsec); UB: mode</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+      Enable
+supernova data collection (fine-grained trigger rate meter). 
+Deadtime (enforced period of inactivity after each trigger) is in units
+of nsec.  Valid values are 6400 to 512000 inclusive. 
+Mode is
+0 (SPE) or 1 (MPE).  To get actual triggers, you also must </strong><a href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>
+  </li>
+</ul>
+ 
+<a name="DSC_DISABLE_SN"/>
+<ul class="message">
+  <li class="id"    >60</li>
+  <li class="name"  >DSC_DISABLE_SN</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Disable supernova data collection.
+  </li>
+</ul>
+
+<a name="DSC_SET_CHARGE_STAMP_TYPE"/>
+<ul class="message">
+  <li class="id"    >61</li>
+  <li class="name"  >DSC_SET_CHARGE_STAMP_TYPE</li>
+  <li class="input" >UB: mode (0=ATWD, 1=FADC [default]); UB: chSel (0=auto, 1=byChan); UB: chan;</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set charge stamp type for delta-compressed events.  If mode is 0 (default), the FADC will be used.
+If mode is 1, the ATWD is used.  If ATWD, chSel determines whether channel selection is auto (0), or specified 
+in the third argument (1).  Third argument must specify channel 0 or 1.<br>
+See also <a href="#DATA_ACC_HISTO_CHARGE_STAMPS">DATA_ACC_HISTO_CHARGE_STAMPS</a>
+  </li>
+</ul>
+
+<a name="DSC_SELECT_MINBIAS"/>
+<ul class="message">
+  <li class="id"    >62</li>
+  <li class="name"  >DSC_SELECT_MINBIAS</li>
+  <li class="input" >UB: mode (0=disable; 1=enable)</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Enable or disable IceTop minbias hits (1/8192 of non-LC, non-beacon hits will be recorded
+with the corresponding trigger word bit set: WORD1 bit 30 for compressed data).
+</li>
+</ul>
+
+
+<h1>Data Access Messages (message type 3):</h1>
+
+<a name="DATA_ACC_GET_DATA"/>
+
+<ul class="message">
+  <li class="id"    >11</li>
+  <li class="name"  >DATA_ACC_GET_DATA</li>
+  <li class="input" >-</li>
+  <li class="output">UB*N (hit data)</li>
+  <li class="desc"  >
+      Read out hit data buffered by FPGA (must do <a
+href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a> first); mulitple
+records may be returned with each message reply.
+  </li>
+</ul>
+
+<a name="DATA_ACC_GET_NEXT_MONI_REC"/>
+<ul class="message">
+  <li class="id"    >12</li>
+  <li class="name"  >DATA_ACC_GET_NEXT_MONI_REC</li>
+  <li class="input" >-</li>
+  <li class="output">UB*N (moni data)</li>
+  <li class="desc"  >
+Read out monitoring data; multiple records may be returned with each message reply.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >13</li>
+  <li class="name"  >DATA_ACC_SET_MONI_IVAL</li>
+  <li class="input" >UL: HW_ival; UL: SW_ival; OPTIONAL: UL: Fast_Ival</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set monitoring intervals.  Times are in CPU clock ticks
+(40,000,000 ticks = 1 sec) if &gt; 40,000,000, or seconds, if &lt;
+40,000,000.  HW_Ival is time between hardware records.  SW_Ival is
+time between software config. records.  Fast_Ival is the (optional)
+argument indicating desired delay between "fast" monitoring records.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >23</li>
+  <li class="name"  >DATA_ACC_GET_FB_SERIAL</li>
+  <li class="input" >-</li>
+  <li class="output">UB*N: flasher board ID</li>
+  <li class="desc"  >
+Get flasher board ID string (currently 27 bytes, but check message data length)
+  </li>
+</ul>
+
+<a name="DATA_ACC_SET_DATA_FORMAT"/>
+
+<ul class="message">
+  <li class="id"    >24</li>
+  <li class="name"  >DATA_ACC_SET_DATA_FORMAT</li>
+  <li class="input" >UB: mode</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+      Set data format (see table in "<a href="#dataformats">DATA
+FORMATS</a>", above).  When setting engineering format (mode 0), 
+<strong>LC settings are reset (mode 0, type 0).</strong>
+  </li>
+</ul>
+      
+<ul class="message">
+  <li class="id"    >25</li>
+  <li class="name"  >DATA_ACC_GET_DATA_FORMAT</li>
+  <li class="input" >-</li>
+  <li class="output">UB: mode</li>
+  <li class="desc"  >
+Get data format
+  </li>
+</ul>
+
+<a name="DATA_ACC_SET_COMP_MODE"/>
+
+<ul class="message">
+  <li class="id"    >26</li>
+  <li class="name"  >DATA_ACC_SET_COMP_MODE</li>
+  <li class="input" >UB: compMode</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+      Set data compression mode (see table in "<a
+href="#dataformats">DATA FORMATS</a>", above)
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >27</li>
+  <li class="name"  >DATA_ACC_GET_COMP_MODE</li>
+  <li class="input" >-</li>
+  <li class="output">UB: compMode</li>
+  <li class="desc"  >
+Get data compression mode
+  </li>
+</ul>
+
+<a name="DATA_ACC_GET_SN_DATA"/>
+
+<ul class="message">
+  <li class="id"    >28</li>
+  <li class="name"  >DATA_ACC_GET_SN_DATA</li>
+  <li class="input" >-</li>
+  <li class="output">UL*N: data</li>
+  <li class="desc"  >
+      Fetch supernova data.  The data are in the form of 32 bit words
+described in the <a href="#supernova">supernova data</a> section,
+above
+  </li>
+</ul>
+
+<a name="DATA_ACC_RESET_MONI_BUF"/>
+
+<ul class="message">
+  <li class="id"    >29</li>
+  <li class="name"  >DATA_ACC_RESET_MONI_BUF</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Reset monitoring buffer, eliminating any existing monitoring records
+  </li>
+</ul>
+
+<a name="DATA_ACC_MONI_AVAIL"/>
+
+<ul class="message">
+  <li class="id"    >30</li>
+  <li class="name"  >DATA_ACC_MONI_AVAIL</li>
+  <li class="input" >-</li>
+  <li class="output">UB: status</li>
+  <li class="desc"  >
+Returns 1 if any monitoring records are available, else 0
+  </li>
+</ul>
+
+<a name="DATA_ACC_GET_NUMOVERFLOWS"/>
+
+<ul class="message">
+  <li class="id"    >31</li>
+  <li class="name"  >DATA_ACC_GET_NUMOVERFLOWS</li>
+  <li class="input" >-</li>
+  <li class="output">UL: numOverflows</li>
+  <li class="desc"  >
+Returns number of overflows since domapp started
+  </li>
+</ul>
+
+<a name="DATA_ACC_SET_LBM_BIT_DEPTH"/>
+
+<ul class="message">
+  <li class="id"    >32</li>
+  <li class="name"  >DATA_ACC_SET_LBM_BIT_DEPTH</li>
+  <li class="input" >UB: depth</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set bit depth in the range 8 to 24; default is 24. Actual LBM size is (2**(depth))-1
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >33</li>
+  <li class="name"  >DATA_ACC_GET_LBM_SIZE</li>
+  <li class="input" >-</li>
+  <li class="output">UL: LBMSize</li>
+  <li class="desc"  >
+Returns actual LBM size, in bytes
+  </li>
+</ul>
+
+<a name="DATA_ACC_HISTO_CHARGE_STAMPS"/>
+
+<ul class="message">
+  <li class="id"    >34</li>
+  <li class="name"  >DATA_ACC_HISTO_CHARGE_STAMPS</li>
+  <li class="input" >UL: interval (ticks or seconds); US: prescale</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Generate charge stamp histograms in monitoring stream, at &lt;interval&gt; 
+clock ticks (if &ge;40,000,000) or seconds (if &lt;40,000,000).  If interval is zero 
+(default), no records will be generated.  Prescale is the divisor of each charge stamp amplitude before it is histogrammed.
+<a href="#DSC_SET_CHARGE_STAMP_TYPE">DSC_SET_CHARGE_STAMP_TYPE</a> is used to select the type of charge stamp; if FADC (default), 
+only the peak value of the charge stamp is histogrammed.
+<p>
+The histograms will be generated in the monitoring stream in ASCII format, as follows:
+</p>
+<p>
+ATWD CS <em>chip</em> <em>chan</em>--<em>N</em> entries: <em>bin0</em> <em>bin1</em> ... <em>bin127</em><br/>
+(four entries per interval, where <em>chip</em> is A or B and <em>chan</em> is 0 or 1)</p>
+<p>or</p>
+<p>
+FADC CS--<em>N</em> entries: <em>bin0</em> <em>bin1</em> ... <em>bin127</em>
+</p>
+  </li>
+</ul>
+
+<a name="DATA_ACC_SELECT_ATWD"/>
+
+<ul class="message">
+  <li class="id"    >35</li>
+  <li class="name"  >DATA_ACC_SELECT_ATWD</li>
+  <li class="input" >UB: chip select</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Chip select=0: ATWD A; 1: ATWD B; 2: both (<strong>default</strong>).  This enables either one 
+or both ATWDs (the latter case selects ping-pong mode).
+  </li>
+</ul>
+
+<a name="DATA_ACC_GET_F_MONI_RATE_TYPE"/>
+
+<ul class="message">
+  <li class="id"    >36</li>
+  <li class="name"  >DATA_ACC_GET_F_MONI_RATE_TYPE</li>
+  <li class="input" >-</li>
+  <li class="output">UB: type of rate reported in 'F' monitoring records</li>
+  <li class="desc"  >
+Returns 0 (HLC) or 1 (SLC) depending on which type of hits are
+reported in the ASCII 'F' monitoring records.  Note that this is
+actually the number of hits <strong>read out</strong> to the surface
+as opposed to the number actually triggered by the FPGA.
+  </li>
+</ul>
+
+<a name="DATA_ACC_SET_F_MONI_RATE_TYPE"/>
+
+<ul class="message">
+  <li class="id"    >37</li>
+  <li class="name"  >DATA_ACC_SET_F_MONI_RATE_TYPE</li>
+  <li class="input" >UB: type of rate to be reported in 'F' monitoring records</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+See DATA_ACC_GET_F_MONI_RATE_TYPE.
+  </li>
+</ul>
+
+
+<a name="DATA_ACC_GET_LBM_PTRS"/>
+
+<ul class="message">
+  <li class="id"    >38</li>
+  <li class="name"  >DATA_ACC_GET_LBM_PTRS</li>
+  <li class="input" >-</li>
+  <li class="output">UL: write_ptr; UL: read_ptr</li>
+  <li class="desc"  >
+Return current read (FPGA) and write (software) pointers from DOM Look Back Memory.
+Does not include hardware offset of LBM.
+  </li>
+</ul>
+
+
+<h1>Experiment Control Messages (message type 4)</h1>
+
+<a name="EXPCONTROL_BEGIN_RUN"/>
+
+<ul class="message">
+  <li class="id"    >12</li>
+  <li class="name"  >EXPCONTROL_BEGIN_RUN</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Begin collecting hit data
+  </li>
+</ul>
+
+<a name="EXPCONTROL_END_RUN"/>
+<ul class="message">
+  <li class="id"    >13</li>
+  <li class="name"  >EXPCONTROL_END_RUN</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Stop data taking (one can use this message for both flasher runs and regular runs)
+  </li>
+</ul>
+
+<a name="EXPCONTROL_DO_PEDESTAL_COLLECTION"/>
+
+<ul class="message">
+  <li class="id"    >16</li>
+  <li class="name"  >EXPCONTROL_DO_PEDESTAL_COLLECTION</li>
+  <li class="input" >UL: numATWD0; UL: numATWD1; UL: numFADC<br/>
+                     Optional: US*6: atwd0ch0bias, atwd0ch1bias ... atwd1ch2bias</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Collects requested number of pedestal events. Failure to do this while
+HV is off will result in some level of contamination of real SPE hits
+from the PMT. Arguments are number of triggers to collect for each
+ATWD and the FADC (max: 1000 for ATWDs, 2000 for FADC). Message reply
+is sent when pedestals are collected. NOTE: numFADC must be &le;
+numATWD0 + numATWD1.  OPTIONALLY, if six extra short unsigned integers
+are supplied, they are used as the fixed bias/offset values for the
+ATWD pedestal subtraction in channels 0-2 for both ATWDs.  [Channel
+3's bias is NOT programmable.]  These values are subtracted from the
+average ATWD pedestal patterns before programming into the DOMApp
+FPGA.  If these six values are omitted, the average channel value is
+calculated and subtracted instead.  In any case, the resulting
+pedestal pattern, programmed into the FPGA, is then subtracted from
+every hit before storage in LBM.
+  </li>
+</ul>
+
+<a name="EXPCONTROL_GET_NUM_PEDESTALS"/>
+
+<ul class="message">
+  <li class="id"    >19</li>
+  <li class="name"  >EXPCONTROL_GET_NUM_PEDESTALS</li>
+  <li class="input" >-</li>
+  <li class="output">UL: numATWD0; UL: numATWD1; UL: numFADC</li>
+  <li class="desc"  >
+Reports the number of pedestals collected with <a
+href="#EXPCONTROL_DO_PEDESTAL_COLLECTION">EXPCONTROL_DO_PEDESTAL_COLLECTION</a>,
+above.
+  </li>
+</ul>
+
+<a name="EXPCONTROL_GET_PEDESTAL_AVERAGES"/>
+
+<ul class="message">
+  <li class="id"    >20</li>
+  <li class="name"  >EXPCONTROL_GET_PEDESTAL_AVERAGES</li>
+  <li class="input" >-</li>
+  <li class="output"><br>
+US*128: ATWD0 ch 0 pattern<br>
+US*128: ATWD0 ch 1 pattern<br>
+US*128: ATWD0 ch 2 pattern<br>
+US*128: ATWD0 ch 3 pattern<br>
+US*128: ATWD1 ch 0 pattern<br>
+US*128: ATWD1 ch 1 pattern<br>
+US*128: ATWD1 ch 2 pattern<br>
+US*128: ATWD1 ch 3 pattern<br>
+US*256: FADC pattern<br>
+  </li>
+  <li class="desc"  >
+Colects the average pedestal pattern
+  </li>
+</ul>
+
+<a name="EXPCONTROL_BEGIN_FB_RUN"/>
+
+<ul class="message">
+  <li class="id"    >27</li>
+  <li class="name"  >EXPCONTROL_BEGIN_FB_RUN</li>
+  <li class="input" ><br>
+US: brightness (0..127)<br>
+US: window (0..127)<br>
+S: delay (-200..175)<br>
+US: mask<br>
+US: rate (Hz)<br>
+  </li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Starts a flasher board run. High voltage must be off and no run in
+progress.  Units for Window are roughly nsec. Delay is time difference
+between LED trigger and ATWD launch (nsec). Mask selects which LEDs to
+flash (bit 0 -&gt; LED 1; bit 11 -&gt; LED 12). Rate is the actual
+flashing rate in Hz, max. value 610.
+  </li>
+</ul>
+
+<a name="EXPCONTROL_END_FB_RUN"/>
+
+<ul class="message">
+  <li class="id"    >28</li>
+  <li class="name"  >EXPCONTROL_END_FB_RUN</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Stop flasher board run. Equivalent to <a
+href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>
+  </li>
+</ul>
+
+
+<a name="EXPCONTROL_RUN_UNIT_TESTS"/>
+
+<ul class="message">
+  <li class="id"    >30</li>
+  <li class="name"  >EXPCONTROL_RUN_UNIT_TESTS</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Run on-board DOMApp unit tests.  Message success indicates all tests
+passed.  In case of failure, inspect ASCII monitoring records for
+details.
+  </li>
+</ul>
+
+
+<a name="differences"/>
+<h1>DIFFERENCES BETWEEN DOMAPP AND TESTDOMAPP</h1>
+<ul>
+  <li>Test pattern data is not supported by the DOMAPP FPGA.</li>
+  <li>Presence of LC bits in engineering record indicates that the LC
+signals actually occurred (rather than just required as in the Test
+FPGA).</li>
+  <li>Software data compression not implemented (yet)</li>
+  <li>DATA_ACC_RESET_LBM removed. 
+This is now done when starting a data taking run (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>)</li>
+  <li>"Heartbeat events" are now interleaved with SPE triggers to aid
+in upstream Splicer-type operation.  The heartbeat events are "Forced
+Triggers" (formerly known as CPU triggers) and can also be used to
+form a running pedestal average for each ATWD/FADC channel (though
+some small fraction of SPE waveforms may be present).</li>
+  <li>Front end pulser can only be started before the run starts, and
+can only be used in trigger mode 2 (SPE data).</li>
+  <li>Pulser rate is now relevant even if pulser is off!  If the
+pulser is off, the rate is the heartbeat event rate.  THE DEFAULT RATE
+IS 1 HZ.  If the FE pulser is on, the rate is the FE pulser rate.
+This is because both the heartbeat events and the pulser events are
+considered by Thorsten's FPGA design to be calibration sources and
+there is only one rate control.</li>
+  <li>Triggering in the DOM is now disabled momentarily when the PMT
+High Voltage is read out.</li>
+  <li>Scaler readouts now have ONE SECOND COVERAGE (not 9/10ths of a
+second) and are spaced by a minimum of 40,000,000 + 100 clock ticks to
+avoid duplication of values.</li>
+  <li>Data formats/compression: software compression not implemented
+(yet).  DATA_ACCESS software compression messages are no longer
+implemented.  See "<a href="api.html#dataformats">DATA FORMATS</a>"
+below for current treatment of data compression and data formats.</li>
+  <li>In general, domapp tries to log exceptions in the ASCII
+monitoring messages.  Any investigation into unexpected problems in
+DOM operation should include an examination of the DOM monitoring
+stream, e.g. with the decodemoni tool in the domhub-tools
+project.</li>
+  <li>DIFFERENCES IN LOCAL COINCIDENCE: In general, using just <a
+href="api.html#DSC_SET_LOCAL_COIN_MODE">SET_LOCAL_COIN_MODE</a> and <a
+href="api.html#DSC_SET_LOCAL_COIN_WINDOW">DSC_SET_LOCAL_COIN_WINDOW</a>
+will work as in testdomapp, except that there are only two LC windows
+instead of four, and also one has new functionality (e.g., soft or
+flabby local coincidence) as defined by <a
+href="api.html#DSC_SET_LC_TYPE">DSC_SET_LC_TYPE</a>, <a
+href="api.html#DSC_SET_LC_TX">DSC_SET_LC_TX</a>, <a
+href="api.html#DSC_SET_LC_SRC">DSC_SET_LC_SRC</a>, <a
+href="api.html#DSC_SET_LC_SPAN">DSC_SET_LC_SPAN</a>, and <a
+href="api.html#DSC_SET_LC_CABLE_LEN">DSC_SET_LC_CABLE_LEN</a>.</li>
+  <li>Analog MUX is disabled at startup.  <a
+href="#DSC_MUX_SELECT">DSC_MUX_SELECT</a> selects which channel should
+be enabled, but a value of 0xFF (255) now DISABLES the analog MUX
+explicitly.</li>
+  <li>EXPCONTROL_FORCE_RUN_RESET is removed.  Use <a
+href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>.</li>
+  <li><a href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a>
+message was added.</li>
+  <li><a href="#DATA_ACC_MONI_AVAIL">DATA_ACC_MONI_AVAIL</a>
+message was added.</li>
+
+</ul>
+
+</body>
+</html>
