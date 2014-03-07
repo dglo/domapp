@@ -330,7 +330,7 @@ int pedestalRun(ULONG ped0goal, ULONG ped1goal, ULONG pedadcgoal,
     /* Last pedestal averages for light-contamination / consistency check */
     USHORT lastPedestal[2][4][ATWDCHSIZ];
 
-    int maxcontaminated = 10; /* Maximum trials to get a non-light-contaminated average */
+    int maxcontaminated = 25; /* Maximum trials to get a non-light-contaminated average */
 
     int avgtrial=0;
     int avgdone=0;
