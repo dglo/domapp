@@ -21,6 +21,9 @@ UBYTE interval_initialized;
 UBYTE interval_state;
 unsigned long long interval_starttime;
 
+// is supernova data requested
+extern int SNRequested;
+
 #define INTERVAL (FPGA_HAL_TICKS_PER_SEC)
 #define DATA_SEND 0
 #define SN_SEND 1
@@ -91,7 +94,15 @@ int interval_service(MESSAGE_STRUCT *M) {
         Message_setSubtype(M, DATA_ACC_GET_NEXT_MONI_REC );
 	
         fillMsgWithMoniData(M);
-        interval_state = SN_SEND;
+	if(SNRequested) {
+	  interval_state = SN_SEND;
+	} else {
+	  // if supernova data is not requested
+          interval_initialized=FALSE;
+          interval_state = DATA_SEND;
+          interval_starttime = 0;
+	}
+
         return 1;
       } else if (interval_state == SN_SEND) {
         tmpInt = fillMsgWithSNData(data, MAXDATA_VALUE);

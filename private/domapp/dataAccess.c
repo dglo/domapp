@@ -43,8 +43,6 @@ Modification: 5/10/04 Jacobsen :-- put more than one monitoring rec. per request
 extern void formatLong(ULONG value, UBYTE *buf);
 extern UBYTE DOM_state;
 extern UBYTE LCtype, LCmode; /* domSControl.c */
-// has supernova data been requested?
-extern int SNRequested;
 extern USHORT pulser_rate;
 USHORT atwdRGthresh[2][4], fadcRGthresh;
 
@@ -288,13 +286,11 @@ int dataAccess(MESSAGE_STRUCT *M) {
 
     case DATA_ACC_GET_INTERVAL:
       // initialize an interval (ie read out all data for 1 second)
-      if(!SNRequested) {
-	// intervals are supposed to end with a supernova
-	// packet, return an error if you have not
-	// requested supernova data
-	DOERROR(DAC_SN_NOT_INIT,DAC_SN_Not_Init, SEVERE_ERROR);
-	break;
-      }	
+      // Note:
+      // This used to check and see if supernova data was requested
+      // and return an error otherwise.  Apparently SN data is bad on
+      // a few doms and they want to turn it off AND use intervals.
+      // Check removed.
       interval_start();
       Message_setStatus(M, SUCCESS);
       Message_setDataLen(M, 0);
