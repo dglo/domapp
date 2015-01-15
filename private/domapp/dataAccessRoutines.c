@@ -400,16 +400,14 @@ static int lbmPointerOverflow(unsigned wrptr, unsigned rdptr, unsigned mask) {
 }
 
 static int haveOverflow(unsigned lbmp) {
-  //if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > WHOLE_LBM_MASK ) {
-  //if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > sw_lbm_mask) {
-  if(lbmPointerOverflow(hal_FPGA_DOMAPP_lbm_pointer(),
-			     lbmp, sw_lbm_mask)) {
+    return lbmPointerOverflow(hal_FPGA_DOMAPP_lbm_pointer(), lbmp, sw_lbm_mask);
+}
+
+static void handleLBMOverflow() {
     mprintf("LBM OVERFLOW!!! hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
-	    hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
+            hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
     numOverflows++;
-    return 1;
-  }
-  return 0;
+    lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());    
 }
 
 inline int engEventSize(void) { return 1550; } // Make this smarter
@@ -616,7 +614,7 @@ int countMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz) {
       // on an overflow we will return a 0 length message
       // perhaps in the future try some number of times 
       // before returning data
-      lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
+      handleLBMOverflow();
       return 0;
     }
 
@@ -698,7 +696,7 @@ int fillMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz) {
   }
   /* If overflow has occurred, we can't trust the data for this cycle */
   if(haveOverflow(lbmp)) {
-    lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
+    handleLBMOverflow();
     return 0;
   } 
   formatShort(NCUR(), msgBuffer);
@@ -804,8 +802,7 @@ int countMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
     if(haveOverflow(tmp_lbmp)) {
       // actually move the REAL lbm pointer
       // as we want to move PAST the overflow
-      lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
-
+      handleLBMOverflow();
       return 0; // Data is compromised -- kill it
     }
     
@@ -838,9 +835,7 @@ int fillMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
     }
     if(bufsiz - NCUR() < engEventSize()) return NCUR(); 
     if(haveOverflow(lbmp)) {
-      lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
-      //mprintf("Reset LBM pointer, hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
-      //        hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
+      handleLBMOverflow();
       return 0; // Data is compromised -- kill it
     }
     
