@@ -2,12 +2,13 @@
   domapp - IceCube DOM Application program for use with 
            "Real"/"domapp" FPGA
            J. Jacobsen (jacobsen@npxdesigns.com), Chuck McParland
-  $Date: 2005-12-23 21:08:42 $
-  $Revision: 1.35 $
+  $Date: 2007-11-29 18:15:25 $
+  $Revision: 1.35.4.11 $
 */
 
 #include <unistd.h> /* Needed for read/write */
 #include <string.h>
+#include <stdio.h>  /* printf to stdout upon ready */
 
 // DOM-related includes
 #include "hal/DOM_MB_hal.h"
@@ -20,6 +21,7 @@
 #include "moniDataAccess.h"
 #include "msgHandler.h"
 #include "domSControl.h"
+#include "interval.h"
 
 #define STDIN  0
 #define STDOUT 1
@@ -46,18 +48,24 @@ ULONG IDMismatch;
 ULONG CRCproblem;
 
 /* Monitoring buffer, static allocation: */
-UBYTE monibuf[MONI_CIRCBUF_RECS * MONI_REC_SIZE];
+UBYTE monibuf[MONI_CIRCBUF_RECS * sizeof(struct moniRec)];
 
 char halmsg[MAX_TOTAL_MESSAGE];
 int  halmsg_remain = 0;
 
+unsigned long loops = 0, msgs = 0;
+
+unsigned long long moniHdwrIval  = 0,
+                   moniConfIval  = 0,
+                   moniFastIval  = 0,
+                   moniHistoIval = 0; 
+
 int main(void) {
   char message[MAX_TOTAL_MESSAGE];
 
-  unsigned long long t_hw_last, t_cf_last, tcur;
-  unsigned long long moni_hardware_interval, moni_config_interval;
+  unsigned long long t_hw_last, t_cf_last, t_fa_last, t_hi_last, tcur;
 
-  t_hw_last = t_cf_last = hal_FPGA_DOMAPP_get_local_clock();
+  t_hw_last = t_cf_last = t_fa_last = t_hi_last = hal_FPGA_DOMAPP_get_local_clock();
 
   /* Start up monitoring system -- do this before other *Init()'s because
      they may want to insert monitoring information */
@@ -69,6 +77,9 @@ int main(void) {
   domSControlInit();
   expControlInit();
   dataAccessInit();
+  interval_init();
+
+  moniZeroAllChargeStampHistos();
 
   halDisableAnalogMux(); /* John Kelley suggests explicitly disabling this by default */
   
@@ -77,6 +88,7 @@ int main(void) {
   halStartReadTemp();
   USHORT temperature = 0; // Chilly
 
+  printf("DOMAPP READY\n");
   for (;;) {    
     /* Insert periodic monitoring records */
 
@@ -85,38 +97,68 @@ int main(void) {
     /* Guarantee that the HW monitoring records occur no faster than at a
        rate specified by MIN_HW_IVAL -- this guarantees a unique SPE/MPE measurement
        each record: */
-    moni_hardware_interval = moniGetHdwrIval();
-    if(moni_hardware_interval < MIN_HW_IVAL) moni_hardware_interval = MIN_HW_IVAL;
-    moni_config_interval = moniGetConfIval();
+    if(moniHdwrIval > 0 && moniHdwrIval < MIN_HW_IVAL) 
+      moniHdwrIval = MIN_HW_IVAL;
 
     long long dthw = tcur-t_hw_last;    
     long long dtcf = tcur-t_cf_last;
+    long long dtfa = tcur-t_fa_last;
+    long long dthi = tcur-t_hi_last;
+
+    unsigned spe = hal_FPGA_DOMAPP_spe_rate_immediate();
+    unsigned mpe = hal_FPGA_DOMAPP_mpe_rate_immediate();
 
     /* Hardware monitoring */
-    if(   moni_hardware_interval > 0 
-       && (dthw < 0 || dthw > moni_hardware_interval)) {
+    if(   moniHdwrIval > 0 
+       && (dthw < 0 || dthw > moniHdwrIval)) {
       /* Update temperature if it's done; start next one */
       if(halReadTempDone()) {
 	temperature = halFinishReadTemp();
 	halStartReadTemp();
       }
-      moniInsertHdwrStateMessage(tcur, temperature, 
-				 hal_FPGA_DOMAPP_spe_rate_immediate(),
-				 hal_FPGA_DOMAPP_mpe_rate_immediate());
+      moniInsertHdwrStateMessage(tcur, temperature, spe, mpe);
       t_hw_last = tcur;
     }
     
     /* Software monitoring */
-    if(moni_config_interval > 0 && (dtcf < 0 || dtcf > moni_config_interval)) {
+    if(moniConfIval > 0 && (dtcf < 0 || dtcf > moniConfIval)) {
       moniInsertConfigStateMessage(tcur);
       t_cf_last = tcur;
     }
 
+    /* "Fast" monitoring record */
+    if(moniFastIval > 0 && (dtfa < 0 || dtfa > moniFastIval)) {
+      mprintf("F %d %d %d %d", spe, mpe,
+	      getLastHitCount(), 
+	      hal_FPGA_DOMAPP_deadtime_immediate());
+      t_fa_last = tcur;
+    }
+
+    /* Histogramming */
+    if(moniHistoIval > 0 && (dthi < 0 || dthi > moniHistoIval)) {
+      moniDoChargeStampHistos();
+      t_hi_last = tcur;
+    }
+
     /* Check for new message */
     if(getmsg(halmsg, message)) {
-      msgHandler((MESSAGE_STRUCT *) message);
+      // if we get here then someone has sent a message to the
+      // dom.  we want to exit the interval OR datasend service
+      // if that's the case
+      interval_force_stop();
+
+      if(msgHandler((MESSAGE_STRUCT *) message)) {
+	putmsg(message);
+      }
+      msgs++;
+    }
+
+    // service an interval request if its active
+    if(interval_service((MESSAGE_STRUCT *) message)) {
       putmsg(message);
     }
+
+    loops++;
   } /* for(;;) */
 }
 

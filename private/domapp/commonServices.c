@@ -22,6 +22,17 @@ void formatLong(ULONG value, UBYTE *buf) {
 	*buf++=(UBYTE)(value&0xff);
 }
 
+void formatULL(unsigned long long val, UBYTE *buf) {
+  *buf++ = (UBYTE)((val>>54) & 0xff);
+  *buf++ = (UBYTE)((val>>48) & 0xff);
+  *buf++ = (UBYTE)((val>>40) & 0xff);
+  *buf++ = (UBYTE)((val>>32) & 0xff);
+  *buf++ = (UBYTE)((val>>24) & 0xff);
+  *buf++ = (UBYTE)((val>>16) & 0xff);
+  *buf++ = (UBYTE)((val>>8) & 0xff);
+  *buf++ = (UBYTE)(val & 0xff);
+}
+
 void formatTime(unsigned long long time, UBYTE *buf) {
   *buf++ = (UBYTE)((time>>40) & 0xFF);
   *buf++ = (UBYTE)((time>>32) & 0xFF);

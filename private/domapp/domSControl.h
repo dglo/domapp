@@ -10,7 +10,7 @@ void doStopSN();
 
 /* Slow Control version info. */
 #define DSC_MAJOR_VERSION 10
-#define DSC_MINOR_VERSION 1 
+#define DSC_MINOR_VERSION 2
 /* major version 10	10 May 2003
 	beginning icecube domapp code chain, version 10 coded as
 	single threaded version for test purposes.
@@ -18,12 +18,50 @@ void doStopSN();
 /* minor version 1	5 July	2003
 	added pulser and mux routines
 */
+/* minor version 2     18 May 2018
+        added self-LC routines
+*/
 
 /* maximum length of slow control last error string */
 #define DSC_ERROR_STR_LEN 80
 
 /* default maximums for PMT HV anode and dynode */
 #define PMT_HV_DEFAULT_MAX 4095
+
+/* Enum types for local coincidence */
+typedef enum {
+  LC_MODE_NONE        = 0, 
+  LC_MODE_BOTH        = 1,
+  LC_MODE_UP          = 2,
+  LC_MODE_DN          = 3,
+  LC_MODE_UP_AND_DOWN = 4,
+  LC_MODE_SLC_ONLY    = 5,
+} LC_MODE_T;
+#define MAX_LC_MODE LC_MODE_SLC_ONLY /* Must agree with highest LC_MODE_T */
+
+typedef enum {
+  SELF_LC_MODE_NONE=0,
+  SELF_LC_MODE_SPE=1,
+  SELF_LC_MODE_MPE=2
+} SELF_LC_MODE_T;
+#define MAX_SELF_LC_MODE SELF_LC_MODE_MPE
+
+typedef enum {
+  LC_TYPE_NONE=0,
+  LC_TYPE_SOFT=1, 
+  LC_TYPE_HARD=2,
+  LC_TYPE_FLABBY=3 
+} LC_TYPE_T;
+typedef enum {
+  LC_TX_NONE=0,
+  LC_TX_UP  =1,
+  LC_TX_DN  =2,
+  LC_TX_BOTH=3 
+} LC_TX_T;
+typedef enum {
+  LC_SRC_SPE = 0,
+  LC_SRC_MPE = 1 
+} LC_SRC_T;
 
 /* Slow Control error strings */
 /* for COMMON_No_Errors */

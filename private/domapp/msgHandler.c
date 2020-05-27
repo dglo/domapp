@@ -21,7 +21,7 @@
 #include "messageAPIstatus.h"
 #include "commonServices.h"
 #include "commonMessageAPIstatus.h"
-#include "version.h"
+#include "versions.h"
 #include "MSGHANDLERmessageAPIstatus.h"
 
 /* extern functions */
@@ -51,6 +51,8 @@ extern ULONG tooMuchData;
 extern ULONG IDMismatch;
 extern ULONG CRCproblem;
 
+extern unsigned long msgs;
+extern unsigned long loops;
 
 /* struct that contains common service info for
 	this service. */
@@ -68,7 +70,9 @@ void msgHandlerInit(void) {
   msgHand.msgProcessingErr = 0;
 } 
 
-void msgHandler(MESSAGE_STRUCT *M) {
+// return 0 if you do not want to send
+// a response to the stringhub, 1 otherwise
+int msgHandler(MESSAGE_STRUCT *M) {
   UBYTE *data, *tmpPtr;
   
   switch ( Message_getType(M) ) {
@@ -78,8 +82,9 @@ void msgHandler(MESSAGE_STRUCT *M) {
     break;
     
   case DATA_ACCESS: 
-    dataAccess(M);
-    break;
+    // data access has the option of 
+    // not sending a response to the stringhub immediately
+    return dataAccess(M);
     
   case EXPERIMENT_CONTROL:
     expControl(M);
@@ -180,8 +185,6 @@ void msgHandler(MESSAGE_STRUCT *M) {
       Message_setStatus(M,SUCCESS);
       break;
 
-
-
       /* Message Handler specific SubTypes: */
 
     case MSGHAND_GET_DOM_VER:
@@ -239,17 +242,12 @@ void msgHandler(MESSAGE_STRUCT *M) {
       /* init a temporary buffer pointer */
       tmpPtr = data;
       /* get packet driver statistics */
-      formatLong(MSGrecv,tmpPtr);
+      formatLong(msgs, tmpPtr);
       tmpPtr += sizeof(ULONG);
-      formatLong(MSGsent,tmpPtr);
+      formatLong(loops, tmpPtr);
       tmpPtr += sizeof(ULONG);
-      formatLong(tooMuchData,tmpPtr);
-      tmpPtr += sizeof(ULONG);
-      formatLong(IDMismatch,tmpPtr);
-      tmpPtr += sizeof(ULONG);
-      formatLong(CRCproblem,tmpPtr);
-      tmpPtr += sizeof(ULONG);
-      Message_setDataLen(M,MSGHAND_GET_MSG_STATS_LEN);
+      msgs = loops = 0;
+      Message_setDataLen(M,8);
       Message_setStatus(M,SUCCESS);
       break;
     case MSGHAND_CLR_PKT_STATS:
@@ -287,10 +285,22 @@ void msgHandler(MESSAGE_STRUCT *M) {
       Message_setDataLen(M,0);
       break;
     case MSGHAND_GET_DOMAPP_RELEASE:
-      Message_setStatus(M,SUCCESS);
-      int len  =  strlen(DOMAPP_RELEASE);
-      memcpy(data, DOMAPP_RELEASE, len);
-      Message_setDataLen(M,len);
+      {
+	Message_setStatus(M,SUCCESS);
+	char relstr[] = "DOM-MB-";
+#define STR(a) #a
+#define STRING(a) STR(a)
+	char bldstr[] = STRING(ICESOFT_BUILD);
+	int  irel = strlen(relstr);
+	int  brel = strlen(bldstr); // From versions.h
+	if(irel+brel <= MAXDATA_VALUE) {
+	  memcpy(data, relstr, irel);
+	  memcpy(data+irel, bldstr, brel);
+	  Message_setDataLen(M, irel+brel);
+	} else {
+	  Message_setDataLen(M, 0);
+	}
+      }
       break;
       /*----------------------------------- */
       /* unknown service request (i.e. message */
@@ -301,8 +311,7 @@ void msgHandler(MESSAGE_STRUCT *M) {
 	     MSGHAND_ERS_BAD_MSG_SUBTYPE);
       msgHand.lastErrorID = COMMON_Bad_Msg_Subtype;
       msgHand.lastErrorSeverity = WARNING_ERROR;
-      Message_setStatus(M,
-			UNKNOWN_SUBTYPE|WARNING_ERROR);
+      Message_setStatus(M, UNKNOWN_SUBTYPE|WARNING_ERROR);
       break;
     }
     break;
@@ -317,4 +326,5 @@ void msgHandler(MESSAGE_STRUCT *M) {
 		      UNKNOWN_SERVER|WARNING_ERROR);
     break;
   }
+  return 1;
 }

@@ -4,6 +4,7 @@
     Modifications by John Jacobsen 2004 
                   to implement configurable engineering events
     Modifications by Jacobsen 2005 to support production (domapp) FPGA
+    Modifications by Jacobsen 2006 to implement delta-compression and many other features
 */
 
 #include <stddef.h>
@@ -21,19 +22,25 @@
 #include "DOMdata.h"
 #include "DOMstateInfo.h"
 #include "message.h"
+#include "DACmessageAPIstatus.h"
+#include "messageAPIstatus.h"
+#include "dataAccess.h"
 #include "dataAccessRoutines.h"
 #include "DSCmessageAPIstatus.h"
 #include "domSControl.h"
 #include "expControl.h"
+#include "unitTests.h"
 
 extern USHORT pulser_rate;
 extern int pulser_running;
 extern UBYTE SNRequestMode;
 extern unsigned SNRequestDeadTime;
 extern int SNRequested;
+extern int numOverflows;
+extern unsigned long sw_lbm_mask;
 
-/* LC mode, defined via slow control */
-extern UBYTE LCmode;
+extern UBYTE LCmode; /* From domSControl.c */
+extern UBYTE fMoniRateType; /* From dataAccess.c */
 
 /* define size of data buffer in message */
 #define DATA_BUFFER_LEN MAXDATA_VALUE
@@ -45,19 +52,10 @@ extern UBYTE LCmode;
 #define ATWD_TIMEOUT_COUNT 4000
 #define ATWD_TIMEOUT_USEC 5
 
-/* global storage and functions */
 extern UBYTE FPGA_trigger_mode;
 extern int FPGA_ATWD_select;
-
-/* local functions, data */
 extern UBYTE DOM_state;
-extern UBYTE DOM_config_access;
-extern UBYTE DOM_status;
-extern UBYTE DOM_cmdSource;
-extern ULONG DOM_constraints;
-extern char *DOM_errorString;
-extern int SW_compression;
-extern int SW_compression_fmt;
+extern int atwdSelect;
 
 int nTrigsReadOut = 0;
 
@@ -65,6 +63,18 @@ int nTrigsReadOut = 0;
 UBYTE *ATWDShortMove(USHORT *data, UBYTE *buffer, int count);
 UBYTE *FADCMove(USHORT *data, UBYTE *buffer, int count);
 UBYTE *TimeMove(UBYTE *buffer, unsigned long long time);
+
+/* Histogramming */
+extern unsigned long long     moniHistoIval;
+extern unsigned short         histoPrescale;
+extern CHARGE_STAMP_MODE_TYPE chargeStampMode;
+extern CHARGE_STAMP_SEL_TYPE  chargeStampChanSel;
+extern UBYTE                  chargeStampChannel;
+extern unsigned short         ATWDchargeStampHistos[2][2][NUM_HIST_BINS];
+extern unsigned               ATWDchargeStampEntries[2][2];
+extern unsigned short         FADCchargeStampHistos[NUM_HIST_BINS];
+extern unsigned               FADCchargeStampEntries;
+#define doChargeStampHisto(a) (moniHistoIval > 0) /* Do histo if interval is set */
 
 /** Set by initFormatEngineeringEvent: */
 UBYTE ATWDChMask[4];
@@ -82,6 +92,7 @@ USHORT Channel3Data[ATWDCHSIZ];
 USHORT FADCData[FADCSIZ];
 
 unsigned lbmp;
+unsigned hitCounter;
 
 #define TIMELBM
 #undef TIMELBM
@@ -95,6 +106,7 @@ static bench_rec_t bformat, breadout, bbuffer, bcompress;
 # define TEND(b)
 # define TSHOW(a,b)
 #endif
+
 
 int hvOffCheckFails(void) {
 #define MAXHVOFFADC 5
@@ -141,6 +153,30 @@ int fbSetup(USHORT bright, USHORT window, short delay, USHORT mask, USHORT rate)
   return 0;
 }
 
+inline BOOLEAN FBRunIsInProgress(void) { return DOM_state==DOM_FB_RUN_IN_PROGRESS; }
+
+int changeFBsettings(USHORT bright, USHORT window,
+		     short delay, USHORT mask, USHORT rate) {
+  /* Change flasher-board settings 'on-the-fly' so FB doesn't have to
+     be turned off (danger of large, extended afterbursts) */
+  if(!FBRunIsInProgress()) { 
+    mprintf("changeFBsettings: Flasher board run not in progress!");
+    return 0;
+  }
+
+  if(fbSetup(bright, window, delay, mask, rate)) {
+    mprintf("changeFBsettings: ERROR: fbSetup failed!");
+    return 0;
+  }
+
+  hal_FPGA_DOMAPP_cal_atwd_offset(delay);
+  double realRate = hal_FPGA_DOMAPP_FB_set_rate((double) rate);
+  mprintf("Changed flasher board settings!!! bright=%hu window=%hu delay=%d "
+          "mask=%hu rateRequest=%hu realRate=%d",
+          bright, window, (int) delay, mask, rate, (int) realRate);
+  return 1;
+}
+
 int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window, 
 	       short delay, USHORT mask, USHORT rate) {
 
@@ -174,30 +210,48 @@ int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window,
   return 1;
 }
 
-inline BOOLEAN FBRunIsInProgress(void) { return DOM_state==DOM_FB_RUN_IN_PROGRESS; }
 
-void setSPETrigMode(void) {
-  /* Allow for SPE data to be acquired, or periodic forced triggers */
-  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE
-			       | HAL_FPGA_DOMAPP_TRIGGER_FORCED);
-  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
-}
-
-void setSPEPulserTrigMode(void) {
-  /* Disallow periodic forced triggers.  Collect SPEs simulated by
-     on-board front-end pulser */
-  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE);
-  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER);
-}
-
-void setFBTrigMode(void) {
-  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FLASHER);
-  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FLASHER);
-}
-
-void setPeriodicForcedTrigMode(void) {
-  hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FORCED);
-  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
+void updateTriggerModes(void) {
+  if(pulser_running) {
+    /* Only SPE or MPE disc modes allowed w/ pulser */
+    if(FPGA_trigger_mode == SPE_DISC_TRIG_MODE) {
+      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE);
+      hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER);
+      mprintf("Setting pulser rate to %d.", pulser_rate);
+      hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
+    } else if(FPGA_trigger_mode == MPE_DISC_TRIG_MODE) {
+      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_MPE);
+      hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER);
+      mprintf("Setting pulser rate to %d.", pulser_rate);
+      hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
+    } else {
+      mprintf("WARNING: pulser running but trigger mode (%d) is disallowed. "
+	      "Won't allow triggers!", FPGA_trigger_mode);
+    }
+  } else if(DOM_state == DOM_FB_RUN_IN_PROGRESS) {
+    /* For now, only allow triggers on flasher board firing, not on SPE disc. */
+    /* Rate is set by beginFBRun */
+    hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FLASHER);
+    hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FLASHER);
+  } else {
+    /* Default modes - no pulser or flasher */
+    switch(FPGA_trigger_mode) { // This gets set by a DATA_ACCESS message
+    case SPE_DISC_TRIG_MODE:
+      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE
+				   | HAL_FPGA_DOMAPP_TRIGGER_FORCED);
+      break;
+    case MPE_DISC_TRIG_MODE:
+      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_MPE
+				   | HAL_FPGA_DOMAPP_TRIGGER_FORCED);
+      break;
+    case CPU_TRIG_MODE: 
+    default:
+        hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FORCED);
+	break;
+    }
+    hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
+    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
+  }
 }
 
 USHORT domappReadBaseADC() { 
@@ -220,9 +274,11 @@ unsigned long long domappHVSerialRaw(void) {
 
 int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   nTrigsReadOut = 0;
+  numOverflows  = 0;
+  hitCounter    = 0;
 
   if(DOM_state!=DOM_IDLE) {
-    mprintf("beginRun: ERROR: DOM not in idle state, DOM_state=%d", DOM_IDLE);
+    mprintf("beginRun: ERROR: DOM not in idle state (%d), DOM_state=%d", DOM_IDLE, DOM_state);
     return FALSE;
   }
   if(newRunState != DOM_RUN_IN_PROGRESS && newRunState != DOM_FB_RUN_IN_PROGRESS) {
@@ -239,61 +295,55 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   hal_FPGA_DOMAPP_lbm_reset();
   lbmp = hal_FPGA_DOMAPP_lbm_pointer();
 
-  if(pulser_running) {
-    pulser_running = 0;
-    if(FPGA_trigger_mode == TEST_DISC_TRIG_MODE) {
-      setSPEPulserTrigMode();
-    } else {
-      mprintf("WARNING: pulser running but trigger mode (%d) is disallowed. "
-	      "Won't allow triggers!", FPGA_trigger_mode);
-    }
-    mprintf("Setting pulser rate to %d.", pulser_rate);
-    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
-
-  } else if(newRunState == DOM_FB_RUN_IN_PROGRESS) {
-    /* For now, only allow triggers on flasher board firing, not on SPE disc. */
-    setFBTrigMode();
-    /* Rate is set by beginFBRun */
-  } else {
-    /* Default mode */
-    switch(FPGA_trigger_mode) { // This gets set by a DATA_ACCESS message
-    case TEST_DISC_TRIG_MODE: setSPETrigMode();  break; // can change when pulser starts
-    case CPU_TRIG_MODE: 
-    default:                  setPeriodicForcedTrigMode(); break;
-    }
-    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
-  }
-  
-  //hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_FORCED);
+  updateTriggerModes();
 
   hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_REPEAT);    
   hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_ATWD_FADC);
-  hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_TESTING);
-  hal_FPGA_DOMAPP_enable_atwds(HAL_FPGA_DOMAPP_ATWD_A|HAL_FPGA_DOMAPP_ATWD_B);
+  hal_FPGA_DOMAPP_enable_atwds(atwdSelect);
   hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_WRAP);
-  //hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_STOP);
-  if(compressionMode == CMP_NONE) {
+
+  switch(compressionMode) {
+  case CMP_NONE:
+    hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_TESTING);
     hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_OFF);
-  } else if(compressionMode == CMP_RG) {
+    break;
+  case CMP_DELTA:
+    hal_FPGA_DOMAPP_atwd_mode(HAL_FPGA_DOMAPP_ATWD_MODE_BEACON);
     hal_FPGA_DOMAPP_compression_mode(HAL_FPGA_DOMAPP_COMPRESSION_MODE_ON);
-  } else {
+    hal_FPGA_DOMAPP_set_delta_compression_all_avail();
+    mprintf("beginRun: COMP_CONTROL=0x%08x DAQ=0x%08x ICETOP_CONTROL=0x%08x", 
+	    FPGA(COMP_CONTROL), FPGA(DAQ), FPGA(ICETOP_CONTROL)); 
+    break;
+  default:
     mprintf("beginRun: ERROR: invalid compression mode given (%d)", (int) compressionMode);
     return FALSE;
   }
 
   dsc_hal_do_LC_settings(); /* See domSControl.c */
+  unsigned masks = 
+    HAL_FPGA_DOMAPP_RATE_MONITOR_SPE              |
+    HAL_FPGA_DOMAPP_RATE_MONITOR_MPE              |
+    HAL_FPGA_DOMAPP_RATE_MONITOR_DEADTIME_ATWD_A  |
+    HAL_FPGA_DOMAPP_RATE_MONITOR_DEADTIME_ATWD_B;
 
-  hal_FPGA_DOMAPP_rate_monitor_enable(HAL_FPGA_DOMAPP_RATE_MONITOR_SPE|
-  				      HAL_FPGA_DOMAPP_RATE_MONITOR_MPE);
+  hal_FPGA_DOMAPP_rate_monitor_enable(masks);
 
-  if(SNRequested) {
-    if(doStartSN(SNRequestMode, SNRequestDeadTime)) {
-      mprintf("beginRun: ERROR: couldn't start requested supernova datataking.\n");
-      return FALSE;
-    }
+  if(SNRequested && doStartSN(SNRequestMode, SNRequestDeadTime)) {
+    mprintf("beginRun: ERROR: couldn't start requested supernova datataking.\n");
+    return FALSE;
   }
+
   hal_FPGA_DOMAPP_enable_daq(); /* <-- Can get triggers NOW */
+  mprintf("RUN STARTED: DAQ=0x%08x LC_CONTROL=0x%08x", FPGA(DAQ), FPGA(LC_CONTROL));
+
   return TRUE;
+}
+
+void turnOffFlashers(void) {
+  hal_FB_set_brightness(0);
+  hal_FB_enable_LEDs(0);
+  halUSleep(100*1000); /* 100 msec */
+  hal_FB_disable();
 }
 
 int endFBRun(void) { return endRun(); }
@@ -309,8 +359,7 @@ int endRun(void) { /* End either a "regular" or flasher run */
   hal_FPGA_DOMAPP_disable_daq();
   hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_OFF);
   doStopSN();
-  hal_FB_set_brightness(0);
-  hal_FB_disable();
+  turnOffFlashers();
   mprintf("Ended run (run type=%s)", DOM_state==DOM_FB_RUN_IN_PROGRESS?"flasher":"normal");
   DOM_state=DOM_IDLE;
   return TRUE;
@@ -318,39 +367,60 @@ int endRun(void) { /* End either a "regular" or flasher run */
 
 inline BOOLEAN runIsInProgress(void) { return DOM_state==DOM_RUN_IN_PROGRESS; }
 
-void initFillMsgWithData(void) { }
-
-int isDataAvailable() {
-  return ( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) & ~FPGA_DOMAPP_LBM_BLOCKMASK );
+unsigned getLastHitCount(void) {
+  unsigned h = hitCounter;
+  hitCounter = 0;
+  return h;
 }
 
-/* Stolen from Arthur: access lookback event at idx, but changed to byte sense */
-unsigned char *lbmEvent(unsigned idx) {
+unsigned getLastHitCountNoReset(void) { return hitCounter; }
+
+void initFillMsgWithData(void) { }
+
+int isDataAvailable(unsigned wrptr, unsigned rdptr, unsigned eventmask) {
+  return ( (wrptr-rdptr) & ~eventmask );
+}
+
+/* Access lookback event at idx, but changed to byte sense */
+inline unsigned char *lbmEvent(unsigned idx) {
    return
      ((unsigned char *) hal_FPGA_DOMAPP_lbm_address()) + (idx & WHOLE_LBM_MASK);
 }
 
-/* Stolen from Arthur: but changed EVENT_LEN to EVENT_SIZE */
-unsigned nextEvent(unsigned idx) {
-   return idx + HAL_FPGA_DOMAPP_LBM_EVENT_SIZE;
+inline unsigned nextEvent(unsigned idx) {
+  return (idx + HAL_FPGA_DOMAPP_LBM_EVENT_SIZE) & LBM_WRITE_POINTER_MASK;
 }
 
-static unsigned nextValidBlock(unsigned ptr) {
+inline static unsigned nextValidBlock(unsigned ptr) {
   return ((ptr) & ~FPGA_DOMAPP_LBM_BLOCKMASK);
 }
 
-static int haveOverflow(unsigned lbmp) {
-  //if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > WHOLE_LBM_MASK ) {
-  if( (hal_FPGA_DOMAPP_lbm_pointer()-lbmp) > SW_LBM_MASK ) {
-    mprintf("LBM OVERFLOW!!! hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
-	    hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
-    return 1;
-  }
-  return 0;
+static int lbmPointerOverflow(unsigned wrptr, unsigned rdptr, unsigned mask) {
+  return ((wrptr-rdptr) & LBM_WRITE_POINTER_MASK) > mask;
 }
 
-int engEventSize(void) { return 1550; } // Make this smarter
+static int haveOverflow(unsigned lbmp) {
+    return lbmPointerOverflow(hal_FPGA_DOMAPP_lbm_pointer(), lbmp, sw_lbm_mask);
+}
 
+static void handleLBMOverflow() {
+    mprintf("LBM OVERFLOW!!! hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
+            hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
+    numOverflows++;
+    lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());    
+}
+
+inline int engEventSize(void) { return 1550; } // Make this smarter
+
+inline int deltaEventSize(void) { return engEventSize(); } // Make this MUCH smarter
+
+void mDumpEngHeader(struct tstevt * hdr) {
+    mprintf("tlo=0x%04x lbmp=0x%08lx hal_lbm=0x%08lx "
+	    "thi=0x%08lx trig=0x%08lx tdead=0x%04x",
+	    hdr->tlo, lbmp, hal_FPGA_DOMAPP_lbm_pointer(), 
+	    hdr->thi, hdr->trigbits, hdr->tdead);
+}
+  
 int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   unsigned char * e = lbmEvent(lbmp);
   unsigned char * m0 = msgp;
@@ -375,12 +445,8 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   
   unsigned atwdsize = (hdr->trigbits>>19)&0x3;
   if(atwdsize != 3) {
-    mprintf("WARNING: formatDomappEngEvent, trigger bits indicate ATWD size(%u) != 3... "
-	    "stamp 0x%04lx%08lx  tlo=0x%04x lbmp=0x%08lx hal_lbm=0x%08lx "
-	    "thi=0x%08lx trig=0x%08lx tdead=0x%04x",
-	    atwdsize, (unsigned long) ((stamp>>32)&0xFFFFFFFF), 
-	    (unsigned long) (stamp&0xFFFFFFFF), hdr->tlo, lbmp, 
-	    hal_FPGA_DOMAPP_lbm_pointer(), hdr->thi, hdr->trigbits, hdr->tdead);
+    mprintf("WARNING: formatDomappEngEvent, trigger bits indicate ATWD size(%u) != 3... ", atwdsize);
+    mDumpEngHeader(hdr);
   }
 
   // Skip over length
@@ -408,6 +474,7 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
       hadWarning++;
       mprintf("WARNING: formatDomappEngEvent: Disallowed source bits from trigger "
 	      "info in event (source=0x%04x)", source);
+      mDumpEngHeader(hdr);
     }
     trigmask = TRIG_UNKNOWN_MODE;
   }
@@ -426,6 +493,7 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
     msgp = FADCMove((USHORT *) (e+0x10), msgp, (int) FlashADCLen);
   } else {
     mprintf("WARNING: FADC data MISSING from raw event!!!");
+    mDumpEngHeader(hdr);
   }
 
   if(hdr->trigbits & 1<<18) {
@@ -435,6 +503,7 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
     }
   } else {
     mprintf("WARNING: ATWD data MISSING from raw event!!!");
+    mDumpEngHeader(hdr);
   }
 
   int nbytes = msgp-m0;
@@ -443,58 +512,220 @@ int formatDomappEngEvent(UBYTE * msgp, unsigned lbmp) {
   return nbytes;
 }
 
-struct rgevt { unsigned long word0, word1, word2, word3; };
+struct deltaHit {
+  unsigned long word0;
+  unsigned long word1;
+};
 
-int nextRGEventSize(unsigned mylbmp) {
-  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
-  return hdr->word1 & 0x7FF;
+inline unsigned short getDeltaHitTMSB(unsigned lbmp) {
+  return ((struct deltaHit *) lbmEvent(lbmp))->word0 & 0xFFFF;
 }
 
-unsigned char * RGHitBegin(unsigned mylbmp) {
-  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
-  return (unsigned char *) &(hdr->word1);
+inline unsigned short getDeltaHitSize(unsigned lbmp) {
+  return ((struct deltaHit *) lbmEvent(lbmp))->word1 & 0x07FF; /* 11 bit size word */
 }
 
-int formatCmpEvent(UBYTE * msgp, unsigned mylbmp) {
-  int nbytes = nextRGEventSize(mylbmp);
-  memcpy(msgp, RGHitBegin(mylbmp), nbytes);
-  return nbytes;
+inline unsigned char * getDeltaHitStart(unsigned lbmp) {
+  return ((unsigned char *) lbmEvent(lbmp)) + 4; /* Skip WORD0 domapp header word */
 }
 
-int isCompressBitSet(unsigned mylbmp) {
-  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
-  return (hdr->word0 >> 31) & 0x01;
+void histoChargeStamp(unsigned char * hitbuf) {
+  if(chargeStampMode == CHARGE_STAMP_FADC && histoPrescale > 0) { /* FADC mode */
+    unsigned word3 = ((unsigned *) (hitbuf+8))[0];
+    //mprintf("histoChargeStamp: word3=0x%08x", word3);
+    unsigned isHi = (word3 & 0x800000)>>31;
+    //mprintf("histoChargeStamp: isHi: %u", isHi);
+    unsigned peakCount = (word3 >> 9) & 0x1FF;
+    //mprintf("histoChargeStamp: raw peakCount: %u", peakCount);
+    if(isHi) peakCount *= 2;
+    //mprintf("histoChargeStamp: adjusted peakCount: %u", peakCount);
+    unsigned bin = peakCount / histoPrescale;
+    if(bin > (NUM_HIST_BINS-1)) bin = NUM_HIST_BINS-1;
+    //mprintf("histoChargeStamp: bin=%u", bin);
+    FADCchargeStampHistos[bin] ++;
+    FADCchargeStampEntries++;
+  } else if(chargeStampMode == CHARGE_STAMP_ATWD) {   /* ATWD/IceTop mode */
+    unsigned word1  = ((unsigned *) hitbuf)[0];
+    unsigned word3  = ((unsigned *) (hitbuf+8))[0];
+    unsigned charge = word3 & 0x00001FFFF;
+    unsigned bin    = charge / histoPrescale;
+    if(bin > (NUM_HIST_BINS-1)) bin = NUM_HIST_BINS-1;
+    int chan        = (int) ((word3 >> 17) & 0x3);
+    int aorb        = (word1 >> 11) & 0x1;
+    if(chan > 1) { /* Deal w/ overflows per Paul Sullivan */
+      chan = 1;
+      bin  = NUM_HIST_BINS-1;
+    }
+    ATWDchargeStampHistos[aorb][chan][bin] ++;
+    ATWDchargeStampEntries[aorb][chan]++;
+  } else {
+    /* Do nothing if mode is wrong (can't happen due to check in domSControl.c) */
+  }
 }
 
-unsigned short RGTimeLSB16(unsigned mylbmp) {
-  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
-  return hdr->word0 & 0xFFFF;
+static int formatDomappDeltaEvent(UBYTE * msgp, unsigned lbmp, unsigned short tmsb, 
+				  int doHdr, int* isHeaderOnly) {
+  unsigned char * m0 = msgp;
+
+  if(doHdr) {
+    msgp += 2;                 /* Skip length, fill in later */
+    *msgp++ = 0;               /* spare */
+    *msgp++ = 0x90;            /* delta compression header byte */
+
+    formatShort(tmsb, msgp);
+    msgp += 2;
+
+    *msgp++ = 0;               /* spare */
+    *msgp++ = 0;               /* spare */
+  }
+
+  unsigned short hitsize = getDeltaHitSize(lbmp);
+  *isHeaderOnly = (hitsize == 12);
+  memcpy(msgp, getDeltaHitStart(lbmp), hitsize);
+  msgp += hitsize;
+  if(doChargeStampHisto()) histoChargeStamp(getDeltaHitStart(lbmp));
+  return msgp-m0;
 }
 
-void mShowHdr(unsigned mylbmp) {
-  struct rgevt * hdr = (struct rgevt *) lbmEvent(mylbmp);
-  mprintf("lbmp=%u C=%d siz=%d TS16=0x%04x w0=0x%08lx w1=0x%08lx w2=0x%08lx w3=0x%08lx",
-	  mylbmp, isCompressBitSet(mylbmp), nextRGEventSize(mylbmp), RGTimeLSB16(mylbmp),
-	  hdr->word0, hdr->word1, hdr->word2, hdr->word3);
+// figure out if we have a full message worth of data to send
+// to the stringhub, return 0 for no and 1 for yes
+int countMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz) {
+  /* Fill until MSBs of time stamp change; add header if needed */
+  UBYTE *p     = msgBuffer;
+# define NCUR() ((int) (p - msgBuffer))
+  // we aren't going to do anything with the data, so
+  // keep actual data pointer around
+  unsigned tmp_lbmp = lbmp;
+  int doHdr = 1;
+  unsigned short lastMsb = 0;
+  int ret = 0;
+  int isHeaderOnly = 0;
+  int tmpTrigsReadOut = 0;
+  int tmpHitCounter = 0;
+
+  while(1) {
+    if(!isDataAvailable(hal_FPGA_DOMAPP_lbm_pointer(),
+			tmp_lbmp, FPGA_DOMAPP_LBM_BLOCKMASK)) {
+      // if we get here then NO there is not enough data to fill a message
+      return 0;
+    }
+
+    if(haveOverflow(tmp_lbmp)) {
+      // on an overflow we will return a 0 length message
+      // perhaps in the future try some number of times 
+      // before returning data
+      handleLBMOverflow();
+      return 0;
+    }
+
+    /* Stop if not enough room for hit - if data is corrupt due 
+       to LBM overflow, the whole thing gets tossed below. */
+    unsigned short hsiz = getDeltaHitSize(tmp_lbmp);
+    if(bufsiz - NCUR() < hsiz) {
+      // THIS means we have enough data for a full message
+      break;
+    }
+    unsigned short tmsb = getDeltaHitTMSB(tmp_lbmp);
+    if(doHdr) lastMsb = tmsb;
+    if(lastMsb != tmsb) {
+      // THIS ALSO means we have enough data for a full message
+      break;
+    }
+    p += formatDomappDeltaEvent(p, tmp_lbmp, tmsb, doHdr, &isHeaderOnly);
+    doHdr = 0;
+
+    // note this does not appear to do anything with size effects, just some
+    // pointer arithmetic
+    // advance our temporary pointer
+    tmp_lbmp = nextEvent(tmp_lbmp);
+    tmpTrigsReadOut++;
+    /* Count the hit only if we're recording all SLC, or if we're recording
+       HLC and the hit is not an SLC hit */
+    if(fMoniRateType == F_MONI_RATE_SLC || !isHeaderOnly) tmpHitCounter++;
+  }
+
+  ret = NCUR();
+  lbmp = tmp_lbmp;
+  // put the message length in the data
+  formatShort(NCUR(), msgBuffer);
+  hitCounter+=tmpHitCounter;
+  nTrigsReadOut+=tmpTrigsReadOut;
+
+  return ret;
+
 }
 
-#ifdef SNSIM
-#  warning supernova implemented via SIMULATION (hal not ready)
-#  define sn_ready sim_hal_FPGA_DOMAPP_sn_ready
-#  define sn_event sim_hal_FPGA_DOMAPP_sn_event
+int fillMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz) {
+  /* Fill until MSBs of time stamp change; add header if needed */
+  UBYTE *p     = msgBuffer;
+# define NCUR() ((int) (p - msgBuffer))
 
-int sim_hal_FPGA_DOMAPP_sn_ready(void) { return 1; }
-int sim_hal_FPGA_DOMAPP_sn_event(SNEvent *evt) {
-  static unsigned char icount = 0;
-  evt->ticks  = hal_FPGA_DOMAPP_get_local_clock();
-  evt->counts = icount++;
-  return 0;
+  int doHdr = 1;
+  unsigned short lastMsb = 0;
+  int ret = 0;
+  int isHeaderOnly = 0;
+  while(1) {
+    if(!isDataAvailable(hal_FPGA_DOMAPP_lbm_pointer(),
+			lbmp, FPGA_DOMAPP_LBM_BLOCKMASK)) {
+      ret = NCUR();
+      break;
+    }
+
+    if(haveOverflow(lbmp)) break; /* Break here to keep hitCounter, etc. correct */
+
+    /* Stop if not enough room for hit - if data is corrupt due 
+       to LBM overflow, the whole thing gets tossed below. */
+    unsigned short hsiz = getDeltaHitSize(lbmp);
+    if(bufsiz - NCUR() < hsiz) {
+      ret = NCUR();
+      break;
+    }
+    unsigned short tmsb = getDeltaHitTMSB(lbmp);
+    if(doHdr) lastMsb = tmsb;
+    if(lastMsb != tmsb) {
+      ret = NCUR();
+      break;
+    }
+    p += formatDomappDeltaEvent(p, lbmp, tmsb, doHdr, &isHeaderOnly);
+    doHdr = 0;
+    lbmp = nextEvent(lbmp);
+    nTrigsReadOut++;
+    /* Count the hit only if we're recording all SLC, or if we're recording
+       HLC and the hit is not an SLC hit */
+    if(fMoniRateType == F_MONI_RATE_SLC || !isHeaderOnly) hitCounter++;
+  }
+  /* If overflow has occurred, we can't trust the data for this cycle */
+  if(haveOverflow(lbmp)) {
+    handleLBMOverflow();
+    return 0;
+  } 
+  formatShort(NCUR(), msgBuffer);
+  return ret;
 }
 
-#else
-#  define sn_ready hal_FPGA_DOMAPP_sn_ready
-#  define sn_event hal_FPGA_DOMAPP_sn_event
-#endif
+extern unsigned long hal_get_interrupt_enables(void);
+
+int checkTime(unsigned long long t, unsigned long long tblock,
+	      unsigned long long * tprev, unsigned dt) {
+  static int virgin = 1;
+  if(virgin) { virgin = 0; *tprev = t; return 0; }
+  int err = 0;
+  char * why = "";
+  if(((long long) t) - ((long long) *tprev) > dt) { /* Gap in time */
+    why = "SN time gap";
+    err = 1;
+  } else if(((long long) t) - ((long long) *tprev) < dt) { /* Time too short or out of order */
+    why = "SN time out of order: ";
+    err = 1;
+  }
+  if(err) {
+    mprintf("%s: t=%lu tprev=%lu tblock=%lu dt=%ld dtblock=%ld irqEnable=%lx", why,
+	    (unsigned long) t, (unsigned long) *tprev, (unsigned long) tblock, 
+	    (long) (t-*tprev), (long) (t-tblock), FPGA(INT_EN));
+  }
+  *tprev = t;
+  return err;
+}
 
 int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
   UBYTE *p  = msgBuffer;
@@ -502,7 +733,7 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
   static SNEvent sn;
   static SNEvent * psn = &sn;
   static int saved_bin = 0;
-
+  static unsigned long long tprev = 0;
   p += 2; // Skip length portion, fill later
   formatShort(300, p); // Add format ID
   p += 2;
@@ -511,36 +742,37 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
 # define STD_DT 65536
 # define bytelimit(counts) ((unsigned char) ((counts) > 255 ? 255 : (counts)))
 
-  if(saved_bin) {
-    saved_bin = 0;
-  } else {
-    if(!sn_ready()) {
+  if(!saved_bin) {
+    if(!hal_FPGA_DOMAPP_sn_ready()) {
       return 0;
     }
-    if(sn_event(psn)) {
-      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event indicates loss of data in HAL SN buffer");
+    if(hal_FPGA_DOMAPP_sn_event(psn)) {
+      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed (HAL overflow)!");
     }
   }
 
   /* By now, psn is either our saved_bin or a new event */
   unsigned long long t0 = psn->ticks;
+  if(saved_bin) {
+    saved_bin = 0;
+  } else {
+    checkTime(t0, t0, &tprev, STD_DT);
+  }
   p    = TimeMove(p, t0);
   *p++ = bytelimit(psn->counts);
 
   while(1) {
-    if(!sn_ready()) break;
+    if(!hal_FPGA_DOMAPP_sn_ready()) break;
     if(NCUR()+1 > bufsiz) break;
 
     /* Get next event; may have to save it for later if delta-t != STD_DT */
-    if(sn_event(psn)) {
-      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event indicates loss of data in HAL SN buffer");
-      /* Used to exit here, don't do it now because Arthur says the current data is still good - just some data is lost */
+    if(hal_FPGA_DOMAPP_sn_event(psn)) {
+      mprintf("fillMsgWithSNData: WARNING: hal_FPGA_DOMAPP_sn_event failed (HAL overflow)!");
     }
-    if((psn->ticks - t0) != STD_DT) {
+    if(checkTime(psn->ticks, t0, &tprev, STD_DT)) {
       saved_bin = 1;
       break;
-    }
-    t0 = psn->ticks;
+    }      
     *p++ = bytelimit(psn->counts);
   }
 
@@ -548,77 +780,63 @@ int fillMsgWithSNData(UBYTE *msgBuffer, int bufsiz) {
   return NCUR();
 }
 
-int fillMsgWithCmpData(UBYTE *msgBuffer, int bufsiz) {
-  UBYTE *p  = msgBuffer;
-  UBYTE *p0 = msgBuffer;
+int countMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
+  UBYTE *p     = msgBuffer;
+  unsigned tmp_lbmp = lbmp;
+  int tmpNTrigsReadout = 0;
+  int tmpHitCounter = 0;
+  int ret;
 # define NCUR() ((int) (p - msgBuffer))
-
-  // Before forming block, guarantee a hit is there.
-  if(!isDataAvailable()) return 0; 
-
-  if(!isCompressBitSet(lbmp)) {
-    mprintf("WARNING: dataAccessRoutines: fillMsgWithCmpData: have hit data "
-	    "but compress bit is not set!");
-    mShowHdr(lbmp);
-    return 0;
-  }
-
-  /* First 8 bytes are header */
-
-  p += 3; /* Skip length portion and spare byte, fill 2B length later */
-  *p++ = 0x90; /* 0x90 = 0b1000 0000 (compression on) + 0b0001 0000 (delta) */
-
-  unsigned short tshi = RGTimeLSB16(lbmp); 
-  formatShort(tshi, p);
-  p += 2;
-  
-  /* Pack in hit data */
   while(1) {
-    if(RGTimeLSB16(lbmp) != tshi) break;
-
-    if(!isDataAvailable()) break;
-
-    if(!isCompressBitSet(lbmp)) {
-      mprintf("WARNING: dataAccessRoutines: fillMsgWithCmpData: have hit data "
-	      "but compress bit is not set!  Skipping hit...");
-      // Skip this event
-      lbmp = nextEvent(lbmp);
+    if(!isDataAvailable(hal_FPGA_DOMAPP_lbm_pointer(), tmp_lbmp,
+			FPGA_DOMAPP_LBM_BLOCKMASK)) {
+      // once we get here then there is NOT enough
+      // data to fill a buffer
+      return 0;
     }
-
-    if(bufsiz - NCUR() < nextRGEventSize(lbmp)) break;
-    if(haveOverflow(lbmp)) {
-      lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
-      //mprintf("Reset LBM pointer, hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
-      //        hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
+    if(bufsiz - NCUR() < engEventSize()) {
+      // we have enough data to fill a message
       break;
     }
+
+    if(haveOverflow(tmp_lbmp)) {
+      // actually move the REAL lbm pointer
+      // as we want to move PAST the overflow
+      handleLBMOverflow();
+      return 0; // Data is compromised -- kill it
+    }
     
-    //mShowHdr(lbmp);
     // if we get here, we have room for the formatted engineering event
     // and one or more hits are available
-    p += formatCmpEvent(p, lbmp);  // Fill data into user's message buffer,
-				  //   advance both message pointer...
-    lbmp = nextEvent(lbmp);       //          ... and LBM pointer
-    nTrigsReadOut++;
+    p += formatDomappEngEvent(p, tmp_lbmp);  // Fill data into user's message buffer,
+                                         //   advance both message pointer...
+    tmp_lbmp = nextEvent(tmp_lbmp);              //          ... and LBM pointer
+
+    // trigs and hitcount increment
+    tmpNTrigsReadout++;
+    tmpHitCounter++;;
   }
 
-  formatShort(NCUR(), p0); // Finally, fill length of block and return
-  //mprintf("fillMsgWithCmpData: Total block length is %d", NCUR());
-  return NCUR();
-}
+  nTrigsReadOut+=tmpNTrigsReadout;
+  hitCounter+=tmpHitCounter;
 
+  ret = NCUR();
+  lbmp = tmp_lbmp;
+  return ret;
+}
 
 int fillMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
   UBYTE *p     = msgBuffer;
 # define NCUR() ((int) (p - msgBuffer))
   while(1) {
-    if(!isDataAvailable()) return NCUR();
+    if(!isDataAvailable(hal_FPGA_DOMAPP_lbm_pointer(), lbmp,
+			FPGA_DOMAPP_LBM_BLOCKMASK)) {
+      return NCUR();
+    }
     if(bufsiz - NCUR() < engEventSize()) return NCUR(); 
     if(haveOverflow(lbmp)) {
-      lbmp = nextValidBlock(hal_FPGA_DOMAPP_lbm_pointer());
-      //mprintf("Reset LBM pointer, hal_FPGA_DOMAPP_lbm_pointer=0x%08lx lbmp=0x%08lx",
-      //        hal_FPGA_DOMAPP_lbm_pointer(), lbmp);
-      return NCUR();
+      handleLBMOverflow();
+      return 0; // Data is compromised -- kill it
     }
     
     // if we get here, we have room for the formatted engineering event
@@ -627,14 +845,29 @@ int fillMsgWithEngData(UBYTE *msgBuffer, int bufsiz) {
 					 //   advance both message pointer...
     lbmp = nextEvent(lbmp);              //          ... and LBM pointer
     nTrigsReadOut++;
+    hitCounter++;
   }
 }
- 
+
+
+// figure out if we have enough data to fill an entire 4KB message buffer
+// return 0 if no, and 1 if yes
+int countMsgWithData(UBYTE *msgBuffer, int bufsiz, UBYTE format, UBYTE compression) {
+  if(format == FMT_ENG && compression == CMP_NONE) 
+    return countMsgWithEngData(msgBuffer, bufsiz);
+  if(format == FMT_DELTA && compression == CMP_DELTA)
+    return countMsgWithDeltaData(msgBuffer, bufsiz);
+  mprintf("dataAccess: countMsgWithData: WARNING: invalid format/compression combo!  "
+	  "format=%d compression=%d", (int) format, (int) compression);
+  return 0;
+}
+
+
 int fillMsgWithData(UBYTE *msgBuffer, int bufsiz, UBYTE format, UBYTE compression) {
   if(format == FMT_ENG && compression == CMP_NONE) 
     return fillMsgWithEngData(msgBuffer, bufsiz);
-  if(format == FMT_RG  && compression == CMP_RG)
-    return fillMsgWithCmpData(msgBuffer, bufsiz);
+  if(format == FMT_DELTA && compression == CMP_DELTA)
+    return fillMsgWithDeltaData(msgBuffer, bufsiz);
   mprintf("dataAccess: fillMsgWithData: WARNING: invalid format/compression combo!  "
 	  "format=%d compression=%d", (int) format, (int) compression);
   return 0;
@@ -787,4 +1020,74 @@ void initFormatEngineeringEvent(UBYTE fadc_samp_cnt_arg,
   FlashADCData = FADCData;
 }
 
+int lbm_pointer_test(void) {
+  /* Tests for https://bugs.icecube.wisc.edu/view.php?id=4062 */
+  int failures = 0;
+  unsigned max_hal_ptr = LBM_WRITE_POINTER_MASK;
+  /* unsigned and unsigned long are intermingled above - make sure that's ok */
+  if(sizeof(unsigned long) != sizeof(unsigned)) {
+    mprintf("LBM test 0 failed");
+    failures++;
+  }
+  /* No data - overflow condition is false: */
+  if(lbmPointerOverflow(0, 0, sw_lbm_mask)) {
+    mprintf("LBM test 1 failed");
+    failures++;
+  } 
+  /* If read pointer ahead of write pointer, fail... */
+  if(! lbmPointerOverflow(0, 1, sw_lbm_mask)) {
+    mprintf("LBM test 2 failed");
+    failures++;
+  } 
+  /* Make sure a wrapping (FPGA) write pointer doesn't confuse us */
+  unsigned wrptr = 0;
+  unsigned rdptr = max_hal_ptr;
+  if(lbmPointerOverflow(wrptr, rdptr, sw_lbm_mask)) {
+    mprintf("LBM test 3 failed");
+    failures++;
+  }
+  /* Try the same test, moving the pointers way up into the middle of the address space */
+  wrptr += max_hal_ptr/2;
+  rdptr += max_hal_ptr/2;
+  if(lbmPointerOverflow(wrptr, rdptr, sw_lbm_mask)) {
+    mprintf("LBM test 4 failed");
+    failures++;
+  }
+  /* Test more basic edge conditions */
+  wrptr = sw_lbm_mask;
+  rdptr = 0;
+  if(lbmPointerOverflow(wrptr, rdptr, sw_lbm_mask)) {
+    mprintf("LBM test 5 failed");
+    failures++;
+  }
+  wrptr++;
+  if(! lbmPointerOverflow(wrptr, rdptr, sw_lbm_mask)) {
+    mprintf("LBM test 6 failed");
+    failures++;
+  }
+
+  /* Test wrapping at end of hardware buffer (nextEvent and detection of an entire
+     event in the buffer) */
+  rdptr = wrptr = LBM_WRITE_POINTER_MASK; /* Set at the end of the buffer */
+  wrptr += HAL_FPGA_DOMAPP_LBM_EVENT_SIZE; /* Wrap, emulating FPGA */
+  wrptr &= LBM_WRITE_POINTER_MASK;
+  rdptr = nextEvent(rdptr);
+  if(isDataAvailable(wrptr, rdptr, FPGA_DOMAPP_LBM_BLOCKMASK)) {
+    mprintf("LBM WARNING: "
+	    "wrptr=0x%08lx rdptr=0x%08lx %d", wrptr, rdptr,
+	    lbmPointerOverflow(wrptr, rdptr, sw_lbm_mask));
+    mprintf("LBM test 7 failed");
+    failures++;
+  }
+  return failures ? 0 : 1;
+}
+
+int data_access_unit_tests(void) {
+  /* Unit tests for DATA_ACCESS logic */
+  int failures = 0;
+  if(!lbm_pointer_test()) {
+    failures++;
+  }
+  return failures ? 0 : 1;
+}
 

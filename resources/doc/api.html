@@ -1,245 +1,192 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
 <head>
-  <meta http-equiv="CONTENT-TYPE"
- content="text/html; charset=windows-1252">
   <title>DOMApp API</title>
-  <meta name="GENERATOR" content="OpenOffice.org 1.9.79  (Win32)">
-  <meta name="AUTHOR" content="John Jacobsen">
-  <meta name="CREATED" content="20040823;12325500">
-  <meta name="CHANGEDBY" content="John Jacobsen">
-  <meta name="CHANGED" content="20050309;22300700">
-  <meta name="SDFOOTNOTE" content=";;;;P">
-  <meta name="SDENDNOTE" content="ARABIC">
-  <style type="">
-<!--
-body {
-background-color: #F5F5CF;
-font-family: serif;
-font-size: 12pt;
-}
-
-h1 {
-text-align: center;
-font-size: 20pt;
-font-weight: normal;
-background-color: #FFFFFF;
-border-style: ridge none none none;
-border-width: thin 0 0 0;
-padding: .2em 0 0 0;
-}
-
-h2 {
-font-size: 12pt;
-background-color: #FFFFFF;
-border-style: ridge none none none;
-border-width: thin 0 0 0;
-padding: .2em;
-}
-
-h3 {
-font-size: 12pt;
-}
-
-.terminal {
-font: 10pt monospace;
-background-color: #FFFFFF;
-border-style: dashed;
-border-width: thin;
-padding: .2em .2em .2em 1em;
-margin: 0 5% 0 2%;
-}
-
-.terminalOld {
-font: 10pt monospace;
-background-color: #FFFFFF;
-border-style: dashed;
-border-width: thin;
-padding: .2em .2em .2em 1em;
-white-space: pre;
-margin: 0 5% 0 2%;
-}
-
-font.todo {
-color: red;
-}
-
-.footer {
-font: 10pt monospace;
-text-align: right;
-}
-
--->
-  </style>
+  <link rel='stylesheet' type='text/css' href='site.css'> 
 </head>
-<body dir="ltr" lang="en-US">
-<div style="text-align: left;">
-<table style="text-align: left;" border="0" cellpadding="2"
- cellspacing="2">
-  <tbody>
-    <tr>
-      <td style="vertical-align: top;"> <big><big><big>Domapp API </big>&nbsp;&nbsp;
-      </big></big><br>
-      </td>
-      <td style="vertical-align: top;">John Jacobsen <span
- style="font-family: monospace;"></span><br>
-Last revision 11/23/2005<br>
-      <span style="font-family: monospace;">$Id: api.html,v 1.3
-2005/06/10 16:32:32 jacobsen Exp $</span><br>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a href="index.html">Code Status</a> | API | <a
- href="domapp_testing.html">Test SW</a> | <a
- href="domapp_test_status.html">Testing Status</a><br>
-</div>
-<h2><big>CONTENTS</big></h2>
-<span style="font-weight: bold;">
-</span>
-<div style="margin-left: 40px;"><a href="#intro">Introduction</a><br>
-<div style="margin-left: 40px;"><a href="#completion">Completion
-Status</a><br>
-<a href="#links">Links</a><br>
-<a href="#overview">API Overview</a><br>
-</div>
-<a href="#procedure">Outline of
-Procedure for Taking Data</a><br>
-<a href="#monitoring">Monitoring</a><br>
-<a href="#triggering">SPE and Calibration Triggers</a><br>
-<a href="#messaging">Messaging Specification</a><br>
-<a href="#dataformats">Data Formats</a><br>
-<a href="#supernova">Supernova Data</a><br>
-<a href="#flasher">Run Modes and Flasher Functionality</a><br>
-<a href="#messagesdescribedindetail">Messages Described in Detail</a><br>
-<span style="font-style: italic; color: rgb(255, 0, 0);">!!! </span><a
- href="#differences">Differences Between Testdomapp and Domapp</a><span
- style="font-style: italic; color: rgb(255, 0, 0);"> !!!</span><br>
-<a href="#changelog">Changelog</a><br>
-</div>
-<b><br>
-</b>
-<h2><big><small><span style="font-weight: bold;"><a name="intro"></a>INTRODUCTION</span></small></big></h2>
-<big><small>
+
+
+<body>
+
+<h1>DOMApp API</h1>
+<h3>John Jacobsen, NPX Designs, Inc.</h3>
+
+<h2>CONTENTS</h2>
+
+<ul>
+ <li><a href="#intro">Introduction</a></li>
+ <li><a href="#overview">API Overview</a></li>
+<li><a href="#procedure">Outline of Procedure for Taking Data</a></li>
+<li><a href="#monitoring">Monitoring</a></li>
+<li><a href="#triggering">SPE and Calibration Triggers</a></li>
+<li><a href="#messaging">Messaging Specification</a></li>
+<li><a href="#dataformats">Data Formats</a></li>
+<li><a href="#supernova">Supernova Data</a></li>
+<li><a href="#flasher">Run Modes and Flasher Functionality</a></li>
+<li><a href="#messagesdescribedindetail">Messages Described in Detail</a></li>
+<li><a href="#differences">Differences Between Testdomapp and Domapp</a></li>
+</ul>
+
+<a name="intro"/>
+<h2>INTRODUCTION</h2>
+
+<p>
 This document describes the messaging
 interface to the production version of the IceCube DOM Application
-(domapp), which uses the DOMApp FPGA design.</small></big><span
- style="font-weight: bold;"><br>
-</span>
-<h3><span style="font-weight: bold;"><a name="completion"></a>COMPLETION
-STATUS</span></h3>
-Most key messages are added now, some fine tuning is in progress.<span
- style="font-weight: bold;"><br>
-</span>
-<h3><span style="font-weight: bold;"><a name="links"></a>LINKS</span></h3>
-<a href="index.html">Domapp
-Implementation Status</a><br>
-<a href="domapp_testing.html">Domapp Test Scripts</a><br>
-<h3><span style="font-weight: bold;"><a name="overview"></a>API OVERVIEW</span></h3>
-The API to Domapp takes the form of
-fixed-format binary messages (described below).&nbsp; Messages consist
-of an 8 byte header with an additional payload of 0-4084
-bytes.&nbsp;&nbsp; Messages sent by the surface generate reply messages
-from the DOMs.&nbsp; When Domapp is running, the DOM never sends a
-message unless a request
-message has been sent by the surface.
-<h2><b><a name="procedure"></a>OUTLINE OF PROCEDURE FOR TAKING DATA</b></h2>
-<ol start="1">
-  <li> <font size="3">Optionally, reset monitoring buffer to eliminate
-messages from the previous run (</font><font style="font-size: 11pt;"
- size="2"><a href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a>).<br>
-    <br>
-    </font></li>
-  <li><font size="3">Set DACs (except high
-voltage). <b>Flasher Board runs require special DAC settings.</b></font><br>
-    <br>
-  </li>
-  <li><font size="3">Set DOM high voltage, <b>unless doing Flasher
-Board run</b>.</font> <span style="color: rgb(153, 153, 153);">Required
-messages: <a href="#DSC_ENABLE_PMT_HV">DSC_ENABLE_PMT_HV</a>, <a
- href="#DSC_SET_PMT_HV">DSC_SET_PMT_HV</a>, <a href="#DSC_QUERY_PMT_HV">DSC_QUERY_PMT_HV</a>
-(to check
-that the voltage is set).</span><br>
-    <br>
-  </li>
-  <li><font size="3">If desired, turn on
-local coincide<span style=""><span style="font-style: normal;">nce <span
- style="color: rgb(153, 153, 153);">with </span><font
- style="font-size: 11pt; color: rgb(153, 153, 153);" size="2"><a
- href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a>
-(1)
-and <a href="#DSC_SET_LOCAL_COIN_WINDOW">DSC_SET_LOCAL_COIN_WINDOW</a>.
+(domapp), which uses the DOMApp FPGA design.  
+</p>
+
+<p>The original message interface 
+was designed by Chuck McParland at LBNL for use with the Testdomapp
+application, and was adapted for DOMApp by John Jacobsen.
+</p>
+
+<a name="overview"/>
+<h2>API OVERVIEW</h2>
+
+<p>
+The DOMApp API takes the form of fixed-format binary messages
+described in detail in this document. Messages consist of an 8 byte
+header with an additional payload of 0-4084 bytes. Messages sent by
+the surface generate reply messages from the DOMs. When Domapp is
+running (after the "DOMAPP READY" message emitted in ASCII at
+startup), the DOM never sends a message unless a request message has
+been sent by the surface.
+</p>
+
+<a name="procedure"/>
+<h2>OUTLINE OF PROCEDURE FOR TAKING DATA</h2>
+
+<ol>
+
+<li>
+<p>
+Optionally, run onboard unit tests (<a
+href="#EXPCONTROL_RUN_UNIT_TESTS">EXPCONTROL_RUN_UNIT_TESTS</a>).
+</p>
+</li>
+
+<li> 
+<p>
+Optionally, reset monitoring buffer to eliminate messages from
+the previous run (<a
+href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a>).
+</p>
+</li>
+
+<li>
+Set DACs (except high voltage). <strong>Flasher Board runs require
+special DAC settings.</strong>
+</li>
+
+<li>
+<p>
+Set DOM high voltage, <strong>unless doing Flasher Board
+run</strong>. Required messages: <a
+href="#DSC_ENABLE_PMT_HV">DSC_ENABLE_PMT_HV</a>, <a
+href="#DSC_SET_PMT_HV">DSC_SET_PMT_HV</a>, <a
+href="#DSC_QUERY_PMT_HV">DSC_QUERY_PMT_HV</a> (to check that the
+voltage is set).
+</p>
+</li>
+
+<li>
+<p>
+Set the triggering mode (<a
+href="api.html#DSC_SET_TRIG_MODE">DSC_SET_TRIG_MODE</a>) to trigger
+type 2 (discriminator trigger), for both regular PMT triggers and also
+for digitizing LED currents in flasher board data.  Set data
+compression mode and data format type (<a
+href="api.html#DATA_ACC_SET_DATA_FORMAT">DATA_ACC_SET_DATA_FORMAT</a>
+and <a
+href="api.html#DATA_ACC_SET_COMP_MODE">DATA_ACC_SET_COMP_MODE</a>).
+You can also selectively enable ATWD chips (A or B) with <a 
+href="api.html#DATA_ACC_SELECT_ATWD">DATA_ACC_SELECT_ATWD</a>, or enable IceTop 'minbias' mode with
+<a href="api.html#DSC_SELECT_MINBIAS">DSC_SELECT_MINBIAS</a>.
+</p>
+</li>
+
+<li>
+<p>
+If desired, turn on local coincidence with <a
+href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a> (1) and <a
+href="#DSC_SET_LOCAL_COIN_WINDOW">DSC_SET_LOCAL_COIN_WINDOW</a>.
 Optionally, for new DOMAPP FPGA functions, do any of <a
- href="#DSC_SET_LC_TYPE">DSC_SET_LC_TYPE</a>,&nbsp; <a
- href="#DSC_SET_LC_TX">DSC_SET_LC_TX</a>, <a href="#DSC_SET_LC_SRC">DSC_SET_LC_SRC</a>,
-    <a href="#DSC_SET_LC_SPAN">DSC_SET_LC_SPAN</a>, and <a
- href="#DSC_SET_LC_CABLE_LEN">DSC_SET_LC_CABLE_LEN</a>.<br>
-    </font></span></span></font><br>
-  </li>
-  <li><font size="3"><span style=""><span style="font-style: normal;"></span></span></font><font
- size="3">Set
-the triggering mode <span style="color: rgb(153, 153, 153);">(</span><font
- style="font-size: 11pt;" size="2"><span
- style="color: rgb(153, 153, 153);"><a href="api.html#DSC_SET_TRIG_MODE">DSC_SET_TRIG_MODE</a>)</span>
-    </font>to
-trigger type 2 (discriminator trigger), for both regular
-PMT triggers and also for digitizing LED currents in flasher board
-data.&nbsp; Set data compression mode and data format type (<span
- style="color: rgb(153, 153, 153);"><a
- href="api.html#DATA_ACC_SET_DATA_FORMAT">DATA_ACC_SET_DATA_FORMAT</a>
-and <a href="api.html#DATA_ACC_SET_COMP_MODE">DATA_ACC_SET_COMP_MODE</a></span></font>).<br>
-  </li>
-  <br>
-  <li>If desired, enable supernova data collection with <font
- style="font-size: 11pt;" size="2"><a href="#DSC_ENABLE_SN">DSC_ENABLE_SN</a>.<br>
-    <br>
-    </font></li>
-  <li><font size="3">Start collecting
-data: <span style="color: rgb(153, 153, 153);"><a
- href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>
-(normal run) or <a href="api.html#EXPCONTROL_BEGIN_FB_RUN">EXPCONTROL_BEGIN_FB_RUN</a>(...)
-(flasher board run)</span></font> </li>
-  <li>
-    <p style="margin-bottom: 0in;"><font size="3">Wait for data to get
-collected; read out periodically using <a href="#DATA_ACC_GET_DATA">DATA_ACC_GET_DATA</a>.&nbsp;
-Also, fetch monitoring records with </font><font
- style="font-size: 11pt;" size="2"><a href="#DATA_ACC_GET_NEXT_MONI_REC">DATA_ACC_GET_NEXT_MONI_REC</a>.&nbsp;
-And, if desired, fetch supernova data with <a
- href="#DATA_ACC_GET_SN_DATA">DATA_ACC_GET_SN_DATA</a>.<br>
-    </font></p>
-  </li>
-  <li>
-    <p style="margin-bottom: 0in;"><font size="3">Stop collecting data:
-    <span style="color: rgb(153, 153, 153);"><a
- href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a> or <a
- href="#EXPCONTROL_END_FB_RUN">EXPCONTROL_END_FB_RUN</a></span></font></p>
-  </li>
-  <li>
-    <p style="margin-bottom: 0in;"><font size="3">If previously set,
-turn off local coincidence with <span
- style="color: rgb(153, 153, 153);"><span style="font-style: normal;"><a
- href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a>
-(0).<br>
-    </span></span></font></p>
-  </li>
-  <li>
-    <p style="margin-bottom: 0in;"><font size="3">If previously
-enabled, disable supernova data taking with </font><font
- style="font-size: 11pt;" size="2"><a href="#DSC_DISABLE_SN">DSC_DISABLE_SN</a></font></p>
-  </li>
-  <li>
-    <p style="margin-bottom: 0in;"><font size="3">Turn off high voltage
-(<b>unless this was a Flasher Board run</b>).&nbsp;<span
- style="color: rgb(153, 153, 153);"> Required messages: <a
- href="#DSC_SET_PMT_HV">DSC_SET_PMT_HV</a>
-(set to 0), <a href="#DSC_DISABLE_PMT_HV">DSC_DISABLE_PMT_HV</a>.</span><br>
-    </font></p>
-  </li>
+href="#DSC_SET_LC_TYPE">DSC_SET_LC_TYPE</a>, <a
+href="#DSC_SET_LC_TX">DSC_SET_LC_TX</a>, <a
+href="#DSC_SET_LC_SRC">DSC_SET_LC_SRC</a>, <a
+href="#DSC_SET_LC_SPAN">DSC_SET_LC_SPAN</a>, and <a
+href="#DSC_SET_LC_CABLE_LEN">DSC_SET_LC_CABLE_LEN</a>.
+<strong>Note:</strong> as of DOM-MB-438, you should set the data format BEFORE turning on Local Coincidence.
+Soft local coincidence mode can only be run when the delta-compressed data format is used.
+</p>
+</li>
+
+<li>
+<p>
+If desired, enable supernova data collection with <a href="#DSC_ENABLE_SN">DSC_ENABLE_SN</a>.
+</p>
+</li>
+
+<li>
+<p>
+Start collecting data: <a
+href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a> (normal
+run) or <a
+href="api.html#EXPCONTROL_BEGIN_FB_RUN">EXPCONTROL_BEGIN_FB_RUN</a>(...)
+(flasher board run) 
+</p>
+</li>
+
+<li>
+<p>
+Wait
+for data to get
+collected; read out periodically using <a href="#DATA_ACC_GET_DATA">DATA_ACC_GET_DATA</a>. 
+Also, fetch monitoring records with <a href="#DATA_ACC_GET_NEXT_MONI_REC">DATA_ACC_GET_NEXT_MONI_REC</a>. 
+And, if desired, fetch supernova data with <a href="#DATA_ACC_GET_SN_DATA">DATA_ACC_GET_SN_DATA</a>.
+</p>
+</li>
+
+<li>
+<p>
+Stop collecting data: <a
+href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a> or <a
+href="#EXPCONTROL_END_FB_RUN">EXPCONTROL_END_FB_RUN</a></p>
+</p>
+</li>
+
+<li>
+<p>
+If previously set, turn off local coincidence with <a
+href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a> (0).
+</p>
+</li>
+
+<li>
+<p>
+If previously enabled, disable supernova data taking with <a
+href="#DSC_DISABLE_SN">DSC_DISABLE_SN</a>
+</p>
+</li>
+
+<li>
+<p>
+Turn off high voltage (<strong>unless this was a Flasher Board
+run</strong>).  Required messages: <a
+href="#DSC_SET_PMT_HV">DSC_SET_PMT_HV</a> (set to 0), <a
+href="#DSC_DISABLE_PMT_HV">DSC_DISABLE_PMT_HV</a>.
+</p>
+</li>
+
 </ol>
-<h2><a name="monitoring"></a>MONITORING</h2>
-The monitoring is configured and read
-out via DATA_ACCESS messages
-described below.&nbsp; The basic types of monitoring messages are as
+
+<a name="monitoring"/>
+<h2>MONITORING</h2>
+
+<p>
+The monitoring is configured and read out via DATA_ACCESS messages
+described below.  The basic types of monitoring messages are as
 followed:
 <ul>
   <li>ASCII (diagnostic) messages</li>
@@ -247,129 +194,120 @@ followed:
   <li>Periodic software state snapshot</li>
   <li>State change (e.g. DAC change) messages</li>
 </ul>
+</p>
+
+<p>
 These are described in more detail a <a
- href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3799/DOMmonitorfmtbinary_3_8.pdf">document</a>
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3799/DOMmonitorfmtbinary_3_8.pdf">document</a>
 in the <a
- href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-517">DOM
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-517">DOM
 Data Formats</a> directory on <a
- href="http://docushare.icecube.wisc.edu/docushare/dsweb/HomePage">Docushare</a>.&nbsp;
-<big style="font-style: italic;">Note:</big> <font
- style="font-size: 11pt;" size="2">Triggering in the DOM is now <span
- style="font-weight: bold;">disabled </span>momentarily when the PMT
-High Voltage is read out.<br>
-<br>
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/HomePage">Docushare</a>.
+</p>
+
+<p>
+<strong>Note:</strong> Triggering in the DOM is now disabled momentarily when the PMT
+High Voltage is read out.
+</p>
+
+<p>
 Scaler readouts now have 1 second coverage and are spaced by a minimum
-of 40,000,000 + 100 clock ticks to avoid duplication of values.<br>
-</font>
-<br>
-<h2 style="font-weight: bold;"><a name="triggering"></a>SPE AND
-CALIBRATION TRIGGERS
-(Heartbeat/Beacon, Pulser, Flasher
-Issues):</h2>
-Triggers can occur in the DOM both due to PMT signals, and the
-firing
-of a DOM calibration source.&nbsp; In normal operation, both SPE
-triggers and periodic, "forced" triggers will be present.&nbsp; The
-latter type of event can serve as a so-called "beacon" or "heartbeat"
-signal for higher-level DAQ functions downstream.<br>
-<br>
-The heartbeat rate for the forced triggers is set by the <font
- style="font-size: 11pt;" size="2">DSC_SET_PULSER_RATE message,
-below.&nbsp; The default is roughly 1 Hz.&nbsp; So, when you start a
-run, you will get hit data at this rate even if high voltage is off.<br>
-<br>
+of 40,000,000 + 100 clock ticks to avoid duplication of values.
+</p>
+
+<a name="triggering"/>
+<h2>SPE AND CALIBRATION TRIGGERS
+(Heartbeat/Beacon, Pulser, Flasher Issues):</h2>
+
+<p>
+Triggers can occur in the DOM both due to PMT signals, and the firing
+of a DOM calibration source.  In normal operation, both SPE triggers
+and periodic, "forced" triggers will be present.  The latter type of
+event can serve as a so-called "beacon" or "heartbeat" signal for
+higher-level DAQ functions downstream.
+</p>
+
+<p>
+The heartbeat rate for the forced triggers is set by the
+DSC_SET_PULSER_RATE message, below.  The default is roughly 1 Hz.  So,
+when you start a run, you will get hit data at this rate even if high
+voltage is off.
+</p>
+
+<p>
 When operating the DOM main board front end pulser (FE pulser), or the
-DOM flashers, the rate is controlled by the same </font><font
- style="font-size: 11pt;" size="2">DSC_SET_PULSER_RATE </font><font
- style="font-size: 11pt;" size="2">message, and the corresponding
-events play the role of heartbeat in lieu of the empty "forced"
-triggers that occur in normal data taking.<br>
-<br>
+DOM flashers, the rate is controlled by the same DSC_SET_PULSER_RATE
+message, and the corresponding events play the role of heartbeat in
+lieu of the empty "forced" triggers that occur in normal data taking.
+</p>
+
+<p>
 Forced triggers are identified as type 1 in the engineering event
-format.&nbsp; SPE triggers (including those generated by the FE pulser)
-are identified as type 2.&nbsp; For compressed data, the "Trigger Word"
-encodes this information (see Joshua Sopher's document <span
- style="color: rgb(255, 0, 0);">[need link]</span>). <span
- style="color: rgb(255, 0, 0);"></span></font><b><br>
-</b><br>
-<h2><b><a name="messaging"></a>MESSAGING
-SPECIFICATIONS</b></h2>
-<table style="text-align: left;" cellpadding="2" cellspacing="2">
+format.  SPE triggers (including those generated by the FE pulser) are
+identified as type 2.  For compressed data, the "Trigger Word" encodes
+this information (see Joshua Sopher's document [need
+link]).
+</p>
+
+<a name="messaging"/>
+<h2>MESSAGING SPECIFICATIONS</h2>
+
+<table cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
-      <td style="vertical-align: top;"><b>Size / type key:</b>
-      <table style="text-align: left;" border="1" cellpadding="2"
- cellspacing="2">
+      <td><strong>Size / type key:</strong>
+      <table border="1" cellpadding="2" cellspacing="2">
         <tbody>
           <tr>
-            <td
- style="vertical-align: top; text-align: right; font-weight: bold;">B<br>
+            <td>B<br>
             </td>
-            <td style="vertical-align: top; font-style: italic;">byte<br>
+            <td>byte<br>
             </td>
           </tr>
           <tr>
-            <td
- style="vertical-align: top; text-align: right; font-weight: bold;">S<br>
+            <td>S<br>
             </td>
-            <td style="vertical-align: top; font-style: italic;">short
-(big-endian)</td>
+            <td>short (big-endian)</td>
           </tr>
           <tr>
-            <td
- style="vertical-align: top; text-align: right; font-weight: bold;">L<br>
+            <td>L<br>
             </td>
-            <td style="vertical-align: top; font-style: italic;">long
-(big-endian)</td>
+            <td>long (big-endian)</td>
           </tr>
           <tr>
-            <td
- style="vertical-align: top; text-align: right; font-weight: bold;">UB<br>
+            <td>UB
             </td>
-            <td style="vertical-align: top; font-style: italic;">unsigned
-byte</td>
+            <td>unsigned byte</td>
           </tr>
           <tr>
-            <td
- style="vertical-align: top; text-align: right; font-weight: bold;">US<br>
+            <td>US
             </td>
-            <td style="vertical-align: top; font-style: italic;">unsigned
-short (big-endian)</td>
+            <td>unsigned short (big-endian)</td>
+          </tr>
+
+          <tr>
+            <td>UL
+            </td>
+            <td>unsigned long (big-endian)</td>
           </tr>
           <tr>
-            <td
- style="vertical-align: top; text-align: right; font-weight: bold;">UL<br>
+            <td>C
             </td>
-            <td style="vertical-align: top; font-style: italic;">unsigned
-long (big-endian)</td>
-          </tr>
-          <tr>
-            <td
- style="vertical-align: top; text-align: right; font-weight: bold;">C<br>
-            </td>
-            <td style="vertical-align: top; font-style: italic;">variable
-length string</td>
+            <td>variable length string</td>
           </tr>
         </tbody>
       </table>
       </td>
-      <td style="vertical-align: top;"><big><big><big><b>Message</b> = <br>
-message header <small><small>(8</small></small></big></big></big> <big><big><big><small><small>bytes)
-      </small></small><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; + <br>
-data
-portion <small><small>(0 to 4084 bytes)</small></small></big></big></big><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <br>
+      <td><strong>Message</strong> = <br>
+message header (8 bytes)<br>
++ <br>
+data portion (0 to 4084 bytes)<br>                                      
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top;"><b>Message Header Format (8
-bytes):</b><br>
-      <table border="1" bordercolor="#000000" cellpadding="4"
- cellspacing="0" width="354">
-        <col width="42"> <col width="73"> <col width="213"> <thead> <tr
- valign="top">
+      <td><strong>Message Header Format (8 bytes):</strong><br>
+      <table border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="354">
+        <col width="42"> <col width="73"> <col width="213"> <thead> <tr valign="top">
           <th width="42">
           <p>Size</p>
           </th>
@@ -382,67 +320,75 @@ bytes):</b><br>
         </tr>
         </thead> <tbody>
           <tr valign="top">
-            <td style="font-weight: bold;" width="42">
+            <td width="42">
             <p>B</p>
             </td>
-            <td style="font-weight: bold;" width="73">
+            <td width="73">
             <p>mt</p>
             </td>
             <td width="213">
-            <p>message subtype (“service”)</p>
+            <p>message subtype (&ldquo;service&rdquo;)</p>
             </td>
           </tr>
+
           <tr valign="top">
-            <td style="font-weight: bold;" width="42">
+            <td width="42">
             <p>B</p>
             </td>
-            <td style="font-weight: bold;" width="73">
+            <td width="73">
             <p>mst</p>
             </td>
             <td width="213">
             <p>message subtype</p>
             </td>
           </tr>
+
           <tr valign="top">
-            <td style="font-weight: bold;" width="42">
+            <td width="42">
             <p>S<br>
             </p>
             </td>
-            <td style="font-weight: bold;" width="73">
+            <td width="73">
             <p>len</p>
             </td>
             <td width="213">
             <p>data portion length in bytes</p>
             </td>
           </tr>
+
           <tr valign="top">
-            <td style="font-weight: bold;" width="42">
+            <td width="42">
             <p>S</p>
             </td>
-            <td style="font-weight: bold;" width="73">
+            <td width="73">
             <p><br>
             </p>
             </td>
             <td width="213">
             <p>reserved</p>
             </td>
+
           </tr>
+
           <tr valign="top">
-            <td style="font-weight: bold;" width="42">
+            <td width="42">
             <p>B</p>
             </td>
-            <td style="font-weight: bold;" width="73">
+
+            <td width="73">
             <p>id</p>
             </td>
+
             <td width="213">
             <p>message id</p>
             </td>
           </tr>
+
           <tr valign="top">
-            <td style="font-weight: bold;" width="42">
+            <td width="42">
             <p>B</p>
             </td>
-            <td style="font-weight: bold;" width="73">
+            <td width="73">
             <p>status</p>
             </td>
             <td width="213">
@@ -451,279 +397,272 @@ bytes):</b><br>
           </tr>
         </tbody>
       </table>
+
       <br>
+
       </td>
-      <td style="vertical-align: top;"><b>Allowed Message Types:<br>
-      </b>
-      <table border="1" bordercolor="#000000" cellpadding="4"
- cellspacing="0" width="239">
-        <col width="32"> <col width="189"> <thead> <tr valign="top">
+
+      <td><strong>Allowed Message Types:</strong>
+      <table border="1" bordercolor="#000000" cellpadding="4" cellspacing="0" width="239">
+
+        <col width="32"> <col width="189"> <thead>
+        <tr valign="top">
           <td width="32">
           <p>Num</p>
           </td>
+
           <td width="189">
           <p>Name</p>
           </td>
         </tr>
+
         </thead> <tbody>
           <tr>
             <td sdval="1" sdnum="1033;" valign="bottom" width="32">
             <p>1</p>
             </td>
-            <td style="font-weight: bold;" valign="top" width="189">
+            <td valign="top" width="189">
             <p>MESSAGE_HANDLER</p>
             </td>
           </tr>
+
           <tr>
             <td sdval="2" sdnum="1033;" valign="bottom" width="32">
             <p>2</p>
             </td>
-            <td style="font-weight: bold;" valign="top" width="189">
+            <td valign="top" width="189">
             <p>DOM_SLOW_CONTROL</p>
             </td>
           </tr>
+
           <tr>
             <td sdval="3" sdnum="1033;" valign="bottom" width="32">
             <p>3</p>
             </td>
-            <td style="font-weight: bold;" valign="top" width="189">
+            <td valign="top" width="189">
             <p>DATA_ACCESS</p>
             </td>
           </tr>
+
           <tr>
             <td sdval="4" sdnum="1033;" valign="bottom" width="32">
             <p>4</p>
             </td>
-            <td style="font-weight: bold;" valign="top" width="189">
+            <td valign="top" width="189">
             <p>EXPERIMENT_CONTROL</p>
             </td>
           </tr>
+
           <tr>
             <td sdval="5" sdnum="1033;" valign="bottom" width="32">
             <p>5</p>
             </td>
-            <td style="font-weight: bold;" valign="top" width="189">
+            <td valign="top" width="189">
             <p>TEST_MANAGER</p>
             </td>
           </tr>
+
         </tbody>
       </table>
-      <br>
+
+<p>
 For valid subtypes, see "<a href="#messagesdescribedindetail">MESSAGES
-DESCRIBED IN DETAIL</a>," below.<br>
+DESCRIBED IN DETAIL</a>," below.
+</p>
+
       </td>
     </tr>
   </tbody>
 </table>
-<br>
-<b><br>
-</b>
-<h2><b><a name="dataformats"></a>DATA FORMATS and Compression Modes</b></h2>
-<p style="margin-bottom: 0in;">Data formats and compression modes have
-separate settings because one compression mode may have multiple
-formats, and one format could support multiple compression modes
-(although this is not implemented yet in domapp).<br>
-<br>
-<b>Compression Modes
+
+<a name="dataformats"/>
+<h2>DATA FORMATS and Compression Modes</h2>
+
+<p>
+Data formats and compression modes have separate settings because one
+compression mode may have multiple formats, and one format could
+support multiple compression modes (although this is not implemented
+yet in domapp).
+</p>
+
+<strong>Compression Modes
 (<a href="#DATA_ACC_SET_COMP_MODE">DATA_ACC_SET_COMP_MODE</a>)<br>
-</b></p>
-<table style="text-align: left;" border="1" cellpadding="2"
- cellspacing="2">
+</strong></p>
+
+<table border="1" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
-      <td
- style="vertical-align: top; font-weight: bold; text-align: center;">Mode</td>
-      <td style="vertical-align: top; font-weight: bold;">Description<br>
+      <td>Mode</td>
+      <td>Description<br>
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top; text-align: center;">0<br>
+      <td>0<br>
       </td>
-      <td style="vertical-align: top;">None (DEFAULT)<br>
+      <td>None (DEFAULT)<br>
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top; text-align: center;">1<br>
+      <td>1<br>
       </td>
-      <td style="vertical-align: top;">Compressed data (delta
+      <td>Compressed data
+(delta
 compression)<br>
       </td>
     </tr>
   </tbody>
 </table>
-<p style="margin-bottom: 0in;">Other data compression methods
-(wavelets, software compression) may be available at a later
-date.&nbsp; Delta-compression is currently being implemented.<br>
-<b><br>
-Data Formats (<a href="#DATA_ACC_SET_DATA_FORMAT">DATA_ACC_SET_DATA_FORMAT</a>)<br>
-</b></p>
-<table style="text-align: left;" border="1" cellpadding="2"
- cellspacing="2">
+
+<p>
+Other data compression methods (wavelets, software compression) may be
+available at a later date.  Delta-compression is currently
+implemented.
+</p>
+
+<strong>Data Formats (<a href="#DATA_ACC_SET_DATA_FORMAT">DATA_ACC_SET_DATA_FORMAT</a>)
+</strong></p>
+
+<table border="1" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
-      <td
- style="vertical-align: top; font-weight: bold; text-align: center;">Format<br>
+      <td>Format<br>
       </td>
-      <td style="vertical-align: top; font-weight: bold;">Description<br>
+      <td>Description<br>
       </td>
-      <td style="vertical-align: top; font-weight: bold;">Allowed
-compression&nbsp; modes<br>
-      </td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top; text-align: center;">0<br>
-      </td>
-      <td style="vertical-align: top;">Engineering format (DEFAULT)<br>
-      </td>
-      <td style="vertical-align: top;">0<br>
+      <td>Allowed
+compression  modes<br>
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top; text-align: center;">1<br>
+      <td>0<br>
       </td>
-      <td style="vertical-align: top;">Default compression format
+      <td>Engineering format
+(DEFAULT)<br>
+      </td>
+      <td>0<br>
+      </td>
+    </tr>
+
+    <tr>
+      <td>1<br>
+      </td>
+      <td>Default compression
+format
 (based on compression modes)<br>
       </td>
-      <td style="vertical-align: top;">1<br>
+      <td>1<br>
       </td>
     </tr>
     <tr>
-      <td
- style="vertical-align: top; text-align: center; color: rgb(153, 153, 153);">2<br>
+      <td>2<br>
       </td>
-      <td style="vertical-align: top; color: rgb(153, 153, 153);">Raw
+      <td>Raw
 (formatted directly as comes
 out of the FPGA, uncompressed)</td>
-      <td style="vertical-align: top; color: rgb(153, 153, 153);">0 ..
+      <td>0
+..
 1 (NOT YET IMPLEMENTED)<br>
       </td>
     </tr>
     <tr>
-      <td
- style="vertical-align: top; text-align: center; color: rgb(153, 153, 153);">3<br>
+      <td>3<br>
       </td>
-      <td style="vertical-align: top; color: rgb(153, 153, 153);">Raw +
+      <td>Raw
++
 compressed<br>
       </td>
-      <td style="vertical-align: top; color: rgb(153, 153, 153);">1<br>
+      <td>1<br>
       </td>
     </tr>
   </tbody>
 </table>
 <br>
+
+<p>
 Currently, the only supported valid settings are: compression mode 0,
 data format 0 and compression mode 1, data format 1, but other
-combinations are planned for later releases.<br>
-<br>
+combinations are planned for later releases.
+</p>
+
+<p>
 The Engineering Format (Format 0) is <a
- href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3144/DOMdatafmtbinary_1_5.pdf">described
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3144/DOMdatafmtbinary_1_5.pdf">described
 in detail</a> in a document in <a
- href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-517">the
-DOM Data Formats directory</a> on Docushare.&nbsp; Variable/truncated
-engineering records are still supported via the <span
- style="font-family: monospace;">DATA_ACC_SET_ENG_FMT</span> message.<br>
-<br>
-<big><span style="font-weight: bold;">Compressed Data Format</span></big><br>
-<br>
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-517">the
+DOM Data Formats directory</a> on Docushare.  Variable/truncated
+engineering records are still supported via the DATA_ACC_SET_ENG_FMT
+message.
+</p>
+
+<p>It should be noted that the engineering format
+is <strong>not</strong> compatible with soft local coincidence.  You
+must use the delta-compression format described below when using
+SLC.  </p>
+
+<h2>Compressed Data Format</h2>
+
+<p>
 The compressed data consists of blocks of data in the
-following block data format:<br>
-<br>
-<span
- style="font-family: helvetica,arial,sans-serif; font-weight: bold;">BLOCK
-DATA<small> (up to 4084 bytes)</small>:</span><span
- style="font-family: helvetica,arial,sans-serif; font-weight: bold;"></span><br>
-<table style="text-align: left;" border="0" cellpadding="2"
- cellspacing="2">
+following block data format:
+</p>
+
+<p>
+<h3>BLOCK DATA (up to 4084 bytes):</h3>
+</p>
+
+<table border="0" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
-      <td colspan="1" rowspan="1" style="vertical-align: top;"><span
- style="font-family: helvetica,arial,sans-serif;"> </span>
-      <table style="width: 100%; text-align: left;" border="1"
- cellpadding="2" cellspacing="2">
+      <td colspan="1" rowspan="1"> 
+      <table border="1" cellpadding="2" cellspacing="2">
         <tbody>
           <tr>
-            <td colspan="5" rowspan="1" style="vertical-align: top;"><span
- style="font-style: italic;">DOMApp Header</span><br>
+            <td colspan="5" rowspan="1">DOMApp Header<br>
             </td>
           </tr>
           <tr>
-            <td style="vertical-align: top;">Word 0:<br>
+            <td>Word 0:<br>
             </td>
-            <td
- style="width: 10%; vertical-align: top; background-color: rgb(204, 204, 204);">Bit
-31:<span style="font-weight: bold;"> 1 (compressed)</span> </td>
-            <td
- style="width: 15%; vertical-align: top; background-color: rgb(204, 204, 204);">Bits
-30..28: <span style="font-weight: bold;">compression type</span>
-(0==Road Grader,
-1==Delta Compression) </td>
-            <td
- style="width: 25%; vertical-align: top; background-color: rgb(204, 204, 204);">Bits
-27..16:<span style="font-weight: bold;"> Spare</span> </td>
-            <td
- style="width: 50%; vertical-align: top; background-color: rgb(204, 204, 204);">Bits
-15..0: <span style="font-weight: bold;">Block length</span> in bytes
-(including
-header; BIG ENDIAN) </td>
+            <td>Bit 31: 1 (compressed)
+            </td>
+            <td>Bits 30..28: compression type (0==Road Grader, 1==Delta Compression)</td>
+            <td>Bits 27..16: Spare
+            </td>
+            <td>Bits 15..0: Block length in bytes (including header; BIG ENDIAN) </td>
           </tr>
           <tr>
-            <td style="vertical-align: top;">Word 1:<br>
+            <td>Word 1:<br>
             </td>
-            <td colspan="3" rowspan="1"
- style="vertical-align: top; background-color: rgb(204, 204, 204);">Bits
-31..16: <span style="font-weight: bold;">Spare</span> </td>
-            <td
- style="vertical-align: top; background-color: rgb(204, 204, 204);">Bits
-15..0: <span style="font-weight: bold;">Timestamp MSBs</span> of all
-hits in block (BIG ENDIAN) </td>
+            <td colspan="3" rowspan="1">Bits 31..16: Spare
+            </td>
+            <td>Bits 15..0: Timestamp MSBs of all hits in block (BIG ENDIAN) </td>
           </tr>
           <tr>
-            <td colspan="5" rowspan="1" style="vertical-align: top;"><span
- style="font-style: italic;">Hit Data from FPGA</span><br>
+            <td colspan="5" rowspan="1">Hit Data from FPGA<br>
             </td>
           </tr>
           <tr>
-            <td colspan="1" rowspan="4" style="vertical-align: top;">Word
-2..<span style="font-style: italic;">M</span><br>
+            <td colspan="1" rowspan="4">Word 2..M<br>
             </td>
-            <td colspan="4" rowspan="1"
- style="vertical-align: top; background-color: rgb(204, 204, 204);">Hit
-0&nbsp; (variable
-length)<br>
-            <br>
-            <br>
+            <td colspan="4" rowspan="1">Hit 0  (variable length)<br>
             </td>
           </tr>
           <tr>
-            <td colspan="4" rowspan="1"
- style="vertical-align: top; background-color: rgb(204, 204, 204);">Hit
-1<br>
-            <br>
+            <td colspan="4" rowspan="1">Hit 1
+            </td>
+          </tr>
+
+          <tr>
+            <td colspan="4" rowspan="1">...
             </td>
           </tr>
           <tr>
-            <td colspan="4" rowspan="1" style="vertical-align: top;">...<br>
+            <td colspan="4" rowspan="1">Hit <em>N</em>
             </td>
-          </tr>
-          <tr>
-            <td colspan="4" rowspan="1"
- style="background-color: rgb(204, 204, 204); vertical-align: top;">Hit
-            <span style="font-style: italic;">N<br>
-            <br>
-            <br>
-            </span></td>
           </tr>
         </tbody>
       </table>
-      <span style="font-family: courier new,courier,monospace;"><span
- style="font-weight: bold;"></span></span><span
- style="font-family: courier new,courier,monospace;"><span
- style="font-weight: bold;"></span></span><span
- style="font-family: courier new,courier,monospace;"><span
- style="font-weight: bold;"></span></span><br
- style="font-family: courier new,courier,monospace;">
-      <span style="font-family: courier new,courier,monospace;"><span
- style="font-weight: bold;"></span></span></td>
+      </td>
     </tr>
     <tr>
     </tr>
@@ -731,3358 +670,1103 @@ length)<br>
     </tr>
   </tbody>
 </table>
-<br>
+
+<p>
 Each of the concatenated "Hits" in the hit data block conforms to "<a
- href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-16687/delta_123611_format_and_processes.pdf">Delta
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-16687/delta_123611_format_and_processes.pdf">Delta
 Compressor Data Format</a>" in the <a
- href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-2465">DOM
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/View/Collection-2465">DOM
 Firmware Directory</a> on DocuShare, except that Header WORD0 defined
-in that document is
-removed by domapp.&nbsp; In particular, the <span
- style="font-weight: bold;">hit
-length</span> is encoded in bits 10..0
-of WORD1 (the first 11 bits of Hit <span style="font-style: italic;">x</span>,
-above).&nbsp; Unfortunately, header data (e.g., timestamps) in the HITS
-records are
+in that document is removed by domapp.  In particular, the hit length
+is encoded in bits 10..0 of WORD1 (the first 11 bits of Hit x, above).
+Unfortunately, header data (e.g., timestamps) in the HITS records are
 LITTLE ENDIAN per the Delta Compression document, whereas the domapp
-header values are BIG
-ENDIAN (all domapp values are big-endian by convention).<br>
-<br>
-Block length, including header and all hits, will be less than or equal
-to 4084
-bytes.&nbsp; The Most Significant Bits (MSBs) of the hit timestamps are
-the
-same in every block (resulting in the occasional block which has fewer
-than the average number of hits, when the 16 LSBs of the DOM timestamp
-roll over
-every ~2 minutes).&nbsp; The least significant bits of the timestamps
-are encoded in the hits themselves.<br>
-<br>
-<h2><a name="supernova"></a><span style="font-weight: bold;">SUPERNOVA
-DATA</span></h2>
+header values are BIG ENDIAN (all domapp values are big-endian by
+convention).
+</p>
+
+<p>
+Block length, including header and all hits, will be less than or
+equal to 4084 bytes.  The Most Significant Bits (MSBs) of the hit
+timestamps are the same in every block (resulting in the occasional
+block which has fewer than the average number of hits, when the 16
+LSBs of the DOM timestamp roll over every ~2 minutes).  The least
+significant bits of the timestamps are encoded in the hits themselves.
+</p>
+
+<a name="supernova"/>
+<h2>SUPERNOVA DATA</h2>
+
+<p>
 The supernova data consist of a running tally of SPE or MPE triggers
 in a fixed 1.6384 millisecond (65536 counts of the 40 MHz clock)
-window.&nbsp; The <a href="#DSC_ENABLE_SN">DSC_ENABLE_SN</a> message
-lets you select SPE (0) or MPE (1) triggers as the basis of the data
-collection.&nbsp; The programmable dead time argument to DSC_ENABLE_SN
+window.  The <a href="#DSC_ENABLE_SN">DSC_ENABLE_SN</a> message lets
+you select SPE (0) or MPE (1) triggers as the basis of the data
+collection.  The programmable dead time argument to DSC_ENABLE_SN
 causes the data collection to be disabled for a short period following
-a trigger (to screen out PMT afterpulsing, for example).&nbsp; You'll
-have to start an actual run (<font size="3"><span
- style="color: rgb(153, 153, 153);"><a
- href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a></span></font>)
-before (nonzero) supernova triggers can be successfully read out.<br>
-<br>
-The data are read out via the <font style="font-size: 11pt;" size="2"><a
- href="#DATA_ACC_GET_SN_DATA">DATA_ACC_GET_SN_DATA</a> </font>message
-in the following block format.&nbsp; The format is compatible with the
-general scheme for monitoring data (see <a
- href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3799">monitoring
+a trigger (to screen out PMT afterpulsing, for example).  You'll have
+to start an actual run (<a
+href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>) before
+(nonzero) supernova triggers can be successfully read out.
+</p>
+
+<p>
+The data are read out via the <a
+href="#DATA_ACC_GET_SN_DATA">DATA_ACC_GET_SN_DATA</a> message in the
+following block format.  The format is compatible with the general
+scheme for monitoring data (see <a
+href="http://docushare.icecube.wisc.edu/docushare/dsweb/Get/Document-3799">monitoring
 data format specification</a>), with a header consisting of a 2 byte
-block length, 2 byte format ID, 6 byte time stamp, all big-endian.<br>
-<big><br style="font-weight: bold;">
-<span style="font-weight: bold;">Supernova Block Data Format</span></big><br>
-<table style="text-align: left;" border="1" cellpadding="2"
- cellspacing="2">
+block length, 2 byte format ID, 6 byte time stamp, all big-endian.
+</p>
+
+<h3>Supernova Block Data Format</h3>
+
+<table border="1" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
-      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
- style="font-weight: bold; font-style: italic;">Header</span><br>
+      <td colspan="2" rowspan="1">Header<br>
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">US<br>
+      <td>US<br>
       </td>
-      <td style="vertical-align: top;">block length<br>
+      <td>block length<br>
+      </td>
+    </tr>
+
+    <tr>
+      <td>US<br>
+      </td>
+      <td>format ID (300
+decimal, 0x012C)
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">US<br>
+      <td>UB*6
       </td>
-      <td style="vertical-align: top;">format ID (300 decimal, 0x012C)<br>
-      </td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">UB*6<br>
-      </td>
-      <td style="vertical-align: top;">complete time stamp of time
-slice 0<br>
+      <td>complete time stamp of time slice 0<br>
       </td>
     </tr>
     <tr>
-      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
- style="font-weight: bold; font-style: italic;">Scaler Data<br>
-      </span></td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">UB<br>
-      </td>
-      <td style="vertical-align: top;">trigger count for time slice 0<br>
+      <td colspan="2" rowspan="1">Scaler Data<br>
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">UB<br>
+      <td>UB
       </td>
-      <td style="vertical-align: top;">trigger count for time slice 1<br>
-      </td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">...<br>
-      </td>
-      <td style="vertical-align: top;">...<br>
+      <td>trigger count for time slice 0
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">UB<br>
+      <td>UB
       </td>
-      <td style="vertical-align: top;">trigger count for time slice <span
- style="font-style: italic;">N-1</span><br>
+      <td>trigger count for time slice 1
+      </td>
+    </tr>
+    <tr>
+      <td>...<br>
+      </td>
+      <td>...<br>
+      </td>
+    </tr>
+    <tr>
+      <td>UB<br>
+      </td>
+      <td>trigger count for time slice N-1
       </td>
     </tr>
   </tbody>
 </table>
-<br>
-In general, the timestamps for successive slices are separated by 65536
-clock counts.&nbsp; The block will be populated until this condition
+
+<p>
+In general, the timestamps for successive slices are separated by
+65536 clock counts.  The block will be populated until this condition
 fails or the maximum block size (4084 B) is reached, which ever comes
-first.<br>
-<br>
-The trigger counters range from 0..15.&nbsp; Currently 15 is the
-maximum value, indicating that 15 <span style="font-weight: bold;">or
-more</span> pulses occurred.<br>
-<br>
-Roughly 10 seconds of data are buffered in the HAL (per Arthur Jones, <span
- style="font-style: italic; color: rgb(255, 0, 0);">need link</span>).&nbsp;
-If the reply to the <font style="font-size: 11pt;" size="2">DATA_ACC_GET_SN_DATA
-message has a message length of zero, no data are available to be read
-out.</font><br>
-<br>
-<h2><a name="flasher"></a><span style="font-weight: bold;">RUN MODES
-AND
-FLASHER FUNCTIONALITY</span></h2>
+first.
+</p>
+
+<p>
+The trigger counters range from 0..15.  Currently 15 is the maximum
+value, indicating that 15 or more pulses occurred.
+</p>
+
+<p>
+Roughly 10 seconds of data are buffered in the HAL (per Arthur Jones,
+need link).  If the reply to the DATA_ACC_GET_SN_DATA message has a
+message length of zero, no data are available to be read out.
+</p>
+
+<a name="flasher"/>
+<h2>RUN MODES AND FLASHER FUNCTIONALITY</h2>
+
+<p>
 Currently there are two run modes in domapp: "normal" mode and flasher
-mode.&nbsp; In normal mode one first sets up high voltage and other DAC
-settings, then configures the FPGA for triggering on PMT pulses via <font
- size="3"><span style="color: rgb(153, 153, 153);"><a
- href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a></span></font>.
-Flasher mode, invoked with <font size="3"><span
- style="color: rgb(153, 153, 153);"><a
- href="api.html#EXPCONTROL_BEGIN_FB_RUN">EXPCONTROL_BEGIN_FB_RUN</a></span></font>,
+mode.  In normal mode one first sets up high voltage and other DAC
+settings, then configures the FPGA for triggering on PMT pulses via <a
+href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>.
+Flasher mode, invoked with <a
+href="api.html#EXPCONTROL_BEGIN_FB_RUN">EXPCONTROL_BEGIN_FB_RUN</a>,
 is similar to normal mode (much of the code is shared), except HV must
-be off and there are several <a href="api.html#EXPCONTROL_BEGIN_FB_RUN">parameters</a>
-to be set.&nbsp; One of these parameters, "mask," is a bit mask
-specifying which LEDs to flash (ref. John Kelley's documentation, <span
- style="color: rgb(255, 0, 0); font-style: italic;">need link</span>).&nbsp;
-Rather than digitizing PMT pulses, the current of the first LED
-specified in the mask is digitized.<br>
-<font size="3"><span style="color: rgb(153, 153, 153);"></span></font><br>
-<font size="3"><span style="color: rgb(153, 153, 153);"><a
- href="api.html#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a><span
- style="color: rgb(0, 0, 0);"> and </span></span></font><font size="3"><span
- style="color: rgb(153, 153, 153);"><a
- href="api.html#EXPCONTROL_END_FB_RUN">EXPCONTROL_END_FB_RUN</a></span></font><font
- size="3"><span style="color: rgb(153, 153, 153);"><span
- style="color: rgb(0, 0, 0);"> now have the same function and can be
-used interchangeably.<br>
-<br>
-</span></span></font>See the data taking <a href="api.html#procedure">outline</a>,
-above, for a complete summary of the procedure.<br>
-<font size="3"><span style="color: rgb(153, 153, 153);"><span
- style="color: rgb(0, 0, 0);"><br>
-</span></span></font><font size="3"><span
- style="color: rgb(153, 153, 153);"><span style="color: rgb(0, 0, 0);"></span></span></font><font
- size="3"><span style="color: rgb(153, 153, 153);"></span></font>
-<h2><b><a name="messagesdescribedindetail"></a>MESSAGES
-DESCRIBED IN DETAIL<br>
-</b></h2>
+be off and there are several <a
+href="api.html#EXPCONTROL_BEGIN_FB_RUN">parameters</a> to be set.  One
+of these parameters, "mask," is a bit mask specifying which LEDs to
+flash (ref. John Kelley's documentation, need link).  Rather than
+digitizing PMT pulses, the current of the first LED specified in the
+mask is digitized.
+</p>
+
+<p>
+<a href="api.html#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a> and <a href="api.html#EXPCONTROL_END_FB_RUN">EXPCONTROL_END_FB_RUN</a> now have the same function and
+can be
+used interchangeably.
+</p>
+
+<p>
+See the data taking <a href="api.html#procedure">outline</a>, above,
+for a complete summary of the procedure.
+</p>
+
+<a name="messagesdescribedindetail"/>
+<h1>MESSAGES DESCRIBED IN DETAIL</h1>
+
+<p>
 The following tables describe the
-format of messages broken down by type and subtype. <br>
-<b><font size="4"><br>
-Message Handler Messages </font> (message type 1):</b>
-<br>
-<br>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="20"> <col width="251"> <col width="130"> <col
- width="24"> <col width="110"> <thead> <tr valign="top">
-    <th width="20">
-    <p style="">ID</p>
-    </th>
-    <th width="251">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th colspan="2" width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="10" sdnum="1033;" width="20">
-      <p style="" align="center"> 10</p>
-      </td>
-      <td width="251">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">MSGHAND_GET_DOM_ID</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-      <td valign="top" width="24">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UL</font></p>
-      </td>
-      <td valign="top" width="110">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">dom id</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="5" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Fetch
-DOM ID
-from DOM</b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<p style="margin-bottom: 0in;">
-<br>
+format of messages broken down by type and subtype.
 </p>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="20"> <col width="251"> <col width="130"> <col
- width="24"> <col width="110"> <thead
- style="color: rgb(153, 153, 153);"> <tr valign="top">
-    <th width="20">
-    <p style="">ID</p>
-    </th>
-    <th width="251">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th colspan="2" width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr style="color: rgb(153, 153, 153);">
-      <td sdval="11" sdnum="1033;" width="20">
-      <p style="" align="center"> 11</p>
-      </td>
-      <td width="251">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">MSGHAND_GET_DOM_NAME</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-      <td valign="top" width="24">
-      <p style=""><font style="font-size: 9pt;" size="2">S</font></p>
-      </td>
-      <td valign="top" width="110">
-      <p style=""><font style="font-size: 9pt;" size="2">name string</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="5" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b><span
- style="color: rgb(153, 153, 153);">Get ASCII
-representation of DOM name (e.g., “Linguine”; currently not supported
-by HAL)</span><br>
-      </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<p style="margin-bottom: 0in;">
-<br>
-</p>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="27"> <col width="95">
-  <col width="24"> <col width="110"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th colspan="2" width="130">
-    <p style="">Input</p>
-    </th>
-    <th colspan="2" width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="18" sdnum="1033;" width="28">
-      <p style="" align="center"> 18</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">MSGHAND_ECHO_MSG</font></p>
-      </td>
-      <td valign="top" width="27">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">S</font></p>
-      </td>
-      <td valign="top" width="95">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">data sent</font></p>
-      </td>
-      <td valign="top" width="24">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">S</font></p>
-      </td>
-      <td valign="top" width="110">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">data receive<span style="font-weight: bold;">d</span></font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="6" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Echoes
-the
-sent data; useful for testing purposes</b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<p style="margin-bottom: 0in;"><br>
-</p>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="28"> <col width="94">
-  <col width="24"> <col width="110"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th colspan="2" width="130">
-    <p style="">Input</p>
-    </th>
-    <th colspan="2" width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td rowspan="4" sdval="20" sdnum="1033;" width="28">
-      <p style="" align="center"> 20</p>
-      </td>
-      <td rowspan="4" width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">MSGHAND_ACCESS_MEMORY_CONTENTS</font></p>
-      </td>
-      <td valign="top" width="28">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UB</font></p>
-      </td>
-      <td valign="top" width="94">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">0=byte, 1=long</font></p>
-      </td>
-      <td rowspan="4" valign="top" width="24">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">S</font></p>
-      </td>
-      <td rowspan="4" valign="top" width="110">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">actual bytes
-or longs read</font></p>
-      </td>
-    </tr>
-    <tr valign="top">
-      <td width="28">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UB</font></p>
-      </td>
-      <td width="94">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">0=read, 1=write</font></p>
-      </td>
-    </tr>
-    <tr valign="top">
-      <td width="28">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">US</font></p>
-      </td>
-      <td width="94">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2"># of accesses</font></p>
-      </td>
-    </tr>
-    <tr valign="top">
-      <td width="28">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UL</font></p>
-      </td>
-      <td width="94">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">address</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="6" width="566"> <font style="font-size: 11pt;"
- size="2"><b>Peek or poke
-DOM memory; “address” is in DOM Application mode</b></font> </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<p style="margin-bottom: 0in;"><br>
-</p>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="264"> <col width="108"> <col
- width="24"> <col width="110"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="264">
-    <p style="">Subtype</p>
-    </th>
-    <th width="108">
-    <p style="">Input</p>
-    </th>
-    <th colspan="2" width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="24" sdnum="1033;" width="28">
-      <p style="" align="right"> 24</p>
-      </td>
-      <td width="264">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">MSGHAND_GET_DOMAPP_RELEASE</font></p>
-      </td>
-      <td valign="top" width="108">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-      <td valign="top" width="24">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">S</font></p>
-      </td>
-      <td valign="top" width="110">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">domapp release</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="5" width="566"> <font style="font-size: 11pt;"
- size="2"><b>Returns
-DOMApp release version string as it was delivered to BFD, <br>
-e.g., “V02-01-10”</b></font> </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<br>
-<p style="margin-bottom: 0in; page-break-before: always;"><b><font
- size="4">Slow Control Messages </font> (message type 2):</b></p>
-<p style="margin-bottom: 0in;">
-</p>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">13</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_WRITE_ONE_DAC&nbsp; <br>
-      </font></p>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="27">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">whichDAC<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">blank<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:<br>
-            </td>
-            <td style="vertical-align: top;">value<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Write "value"
-to DAC numbered "whichDAC"</span> </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_SET_PMT_HV"></a><br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">14</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_SET_PMT_HV&nbsp; <br>
-      </font></p>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="27">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">US:<br>
-            </td>
-            <td style="vertical-align: top;">value<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Set PMT high
+
+<h1>Message Handler Messages  (message type 1)</h1>
+
+<ul class="message">
+  <li class="id"    >10</li>                
+  <li class="name"  >MSGHAND_GET_DOM_ID</li> 
+  <li class="input" >-</li>                  
+  <li class="output">S: DOM ID (12 bytes)    
+  <li class="desc"  >Fetch DOM ID from DOM</li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >14</li>
+  <li class="name"  >MSGHAND_GET_MSG_STATS</li>
+  <li class="input" >-</li>
+  <li class="output">UL: Messages; UL: Loops</li>
+  <li class="desc"  >Get number of messages processed, and number of internal loops (for estimating 'load' in domapp)</li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >18</li>
+  <li class="name"  >MSGHAND_ECHO_MSG</li>
+  <li class="input" >S: Data sent</li>
+  <li class="output">S: Data received</li>
+
+  <li class="desc"  >Echoes the sent data; useful for testing purposes</li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >20</li>
+  <li class="name"  >MSGHAND_ACCESS_MEMORY_CONTENTS</li>
+  <li class="input" >UB (0=byte,1=write); UB (0=read;1=write); US(#of accesses); UL(address)</li>
+  <li class="output">S: actualy bytes or longs read/written</li>
+
+  <li class="desc"  >Peek or poke DOM memory; &ldquo;address&rdquo; is in DOM Application mode</li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >24</li>
+  <li class="name"  >MSGHAND_GET_DOMAPP_RELEASE</li>
+  <li class="input" >-</li>
+  <li class="output">S: domapp release</li>
+
+  <li class="desc"  >
+Returns DOMApp (DOM-MB) release version string,
+e.g., &ldquo;V02-01-10&rdquo;
+   </li>
+</ul>
+
+
+<h1>Slow Control Messages  (message type 2):</h1>
+
+<ul class="message">
+  <li class="id"    >31</li>
+  <li class="name"  >DSC_WRITE_ONE_DAC</li>
+  <li class="input" >UB: DAC number; UB: blank; US: value</li>
+  <li class="output">-</li>
+
+  <li class="desc"  >
+Write "value" to specified DAC
+   </li>
+</ul>
+
+
+<a name="DSC_SET_PMT_HV"/>
+
+<ul class="message">
+  <li class="id"    >14</li>
+  <li class="name"  >DSC_SET_PMT_HV</li>
+  <li class="input" >US: Value</li>
+  <li class="output">-</li>
+
+  <li class="desc"  >
+Set
+PMT high
 voltage to "value" (DAC units, i.e. volts * 2) (must also
-DSC_ENABLE_PMT_HV)</span> </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_ENABLE_PMT_HV"></a><br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">16</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_ENABLE_PMT_HV&nbsp; <br>
-      </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Enable PMT
-High Voltage</span> </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_DISABLE_PMT_HV"></a><br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">18</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_DISABLE_PMT_HV&nbsp; <br>
-      </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Disable PMT
-High Voltage</span> </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_QUERY_PMT_HV"></a><br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">22<br>
-      </p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_QUERY_PMT_HV&nbsp; <br>
-      </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">US:<br>
-            </td>
-            <td style="vertical-align: top;">ADC value (ADC units)<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US: <br>
-            </td>
-            <td style="vertical-align: top;">DAC value (DAC units)<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left">&nbsp; <span style="font-weight: bold;">Read PMT
-voltage (ADC and DAC).&nbsp; If DOM has been softbooted since HV was
-set, DAC value will be undefined (0).&nbsp; DAC/ADC units are volts * 2.</span>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_SET_TRIG_MODE"></a><br>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="27"> <col width="95">
-  <col width="142"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th colspan="2" width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center"> 31</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_SET_TRIG_MODE</font></p>
-      </td>
-      <td valign="top" width="27">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UB</font></p>
-      </td>
-      <td valign="top" width="95">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">mode</font></p>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="5" width="566">
-      <p align="left"> <font style="font-size: 11pt;" size="2"><b>Modes:<br>
+DSC_ENABLE_PMT_HV)
+   </li>
+</ul>
+
+
+<a name="DSC_ENABLE_PMT_HV"/>
+
+<ul class="message">
+  <li class="id"    >16</li>
+  <li class="name"  >DSC_ENABLE_PMT_HV</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+
+  <li class="desc"  >
+Enable PMT high voltage
+   </li>
+</ul>
+
+
+<a name="DSC_DISABLE_PMT_HV"/>
+
+<ul class="message">
+  <li class="id"    >18</li>
+  <li class="name"  >DSC_DISABLE_PMT_HV</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+
+  <li class="desc"  >
+Disable PMT high voltage
+   </li>
+</ul>
+
+
+<a name="DSC_QUERY_PMT_HV"/>
+
+<ul class="message">
+  <li class="id"    >22</li>
+  <li class="name"  >DSC_QUERY_PMT_HV</li>
+  <li class="input" >-</li>
+  <li class="output">US: ADC value (ADC units); US: DAC value (DAC units)</li>
+
+  <li class="desc"  >
+Read PMT voltage (ADC and DAC). If DOM has been softbooted since HV
+was set, DAC value will be undefined (0). DAC/ADC units are Volts * 2.
+   </li>
+</ul>
+
+
+<a name="DSC_SET_TRIG_MODE"/>
+
+<ul class="message">
+  <li class="id"    >31</li>
+  <li class="name"  >DSC_SET_TRIG_MODE</li>
+  <li class="input" >UB: mode</li>
+  <li class="output">-</li>
+
+  <li class="desc"  >
+Modes:<br>
 0 = test pattern data<br>
 1 = CPU triggers<br>
-2 = discriminator triggers<br>
-3 = flasher board runs; digitize flasher board LED current</b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<p style="margin-bottom: 0in;">
-</p>
-<a name="DSC_MUX_SELECT"></a><br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">35&nbsp;&nbsp; <br>
-      </p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_MUX_SELECT <br>
-      </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">value<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> </p>
-      <div style="text-align: center;">-<br>
-      </div>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left">&nbsp; <span style="font-weight: bold;">Selects
-analog mux channel.&nbsp; Use 255 (0xFF) to disable analog mux
-explicitly.</span> </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">37</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_SET_PULSER_RATE&nbsp; <br>
-      </font></p>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="27">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">US:<br>
-            </td>
-            <td style="vertical-align: top;">rate<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Set pulser
-rate to &lt;rate&gt; (Hz).&nbsp; IMPORTANT NOTE: this is the rate used
-both
-for the on-board front-end pulser during calibration operations, as
-well as for the generation heartbeat, "forced" triggers .&nbsp; Another
-note: only scaled powers of two are actually used; the HAL rounds the
-requested value to the nearest appropriate value.&nbsp; </span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">38</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_GET_PULSER_RATE&nbsp; <br>
-      </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">US:<br>
-            </td>
-            <td style="vertical-align: top;">rate<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Get
-pulser&nbsp; &lt;rate&gt; (Hz).&nbsp; See DSC_SET_PULSER_RATE.&nbsp;
-Actual rate may be slightly lower because of rounding in the HAL.</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">39</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_SET_PULSER_ON&nbsp; <br>
-      </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Enable
-on-board pulser.&nbsp; Note that this changes the trigger configuration
-so that heartbeat events are NOT generated.&nbsp; Message must be sent
+2 = discriminator triggers, SPE only<br>
+3 = flasher board runs; digitize flasher board LED current<br>
+4 = discriminator triggers, MPE only
+   </li>
+</ul>
+
+<a name="DSC_MUX_SELECT"/>
+
+<ul class="message">
+  <li class="id"    >35</li>
+  <li class="name"  >DSC_MUX_SELECT</li>
+  <li class="input" >UB: value</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Selects analog mux channel. Use 255 (0xFF) to disable analog mux explicitly.
+   </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >37</li>
+  <li class="name"  >DSC_SET_PULSER_RATE</li>
+  <li class="input" >US: rate (Hz)</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set pulser rate (Hz). IMPORTANT NOTE: this is the rate used both for
+the on-board front-end pulser during calibration operations, as well
+as for the generation heartbeat, "forced" triggers . Another note:
+only scaled powers of two are actually used; the HAL rounds the
+requested value to the nearest appropriate value.
+   </li>
+</ul>
+
+
+<ul class="message">
+  <li class="id"    >38</li>
+  <li class="name"  >DSC_GET_PULSER_RATE</li>
+  <li class="input" >-</li>
+  <li class="output">US: Rate (Hz)</li>
+  <li class="desc"  >
+Get pulser rate in Hz. See DSC_SET_PULSER_RATE. Actual rate may be
+slightly lower than what was set because of rounding in the HAL.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >39</li>
+  <li class="name"  >DSC_SET_PULSER_ON</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Enable
+on-board pulser.  Note that this changes the trigger
+configuration
+so that heartbeat events are NOT generated.  Message must be
+sent
 AFTER the trigger type has been set (<a href="#DSC_SET_TRIG_MODE">DSC_SET_TRIG_MODE</a>)
-and before the run has started (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>).</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">40</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_SET_PULSER_OFF&nbsp; <br>
-      </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Disable
-on-board pulser.</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<center>
-<br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">43</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_SET_SCALER_DEADTIME <br>
-      </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UL:<br>
-            </td>
-            <td style="vertical-align: top;">deadtime<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Set scaler
-deadtime in nsec.&nbsp; Valid range: 100 nsec - 102400 nsec</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">44</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_GET_SCALER_DEADTIME <br>
-      </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">deadtime<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Get scaler
-deadtime</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_SET_LOCAL_COIN_MODE"></a><br>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="27"> <col width="95">
-  <col width="142"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th colspan="2" width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="45" sdnum="1033;" width="28">
-      <p style="" align="center"> 45</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DSC_SET_LOCAL_COIN_MODE</font></p>
-      </td>
-      <td valign="top" width="27">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UB</font></p>
-      </td>
-      <td valign="top" width="95">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">mode</font></p>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="5" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Modes:<br>
+and before the run has started (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>).
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >40</li>
+  <li class="name"  >DSC_SET_PULSER_OFF</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >Disable on-board pulser.</li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >43</li>
+  <li class="name"  >DSC_SET_SCALER_DEADTIME</li>
+  <li class="input" >UL: deadtime (nsec)</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set scaler deadtime in nsec. Valid range: 100 nsec - 102400 nsec.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >44</li>
+  <li class="name"  >DSC_GET_SCALER_DEADTIME</li>
+  <li class="input" >-</li>
+  <li class="output">UL: deadtime (nsec)</li>
+  <li class="desc"  >Get scaler deadtime.</li>
+</ul>
+
+<a name="DSC_SET_LOCAL_COIN_MODE"/>
+
+<ul class="message">
+  <li class="id"    >45</li>
+  <li class="name"  >DSC_SET_LOCAL_COIN_MODE</li>
+  <li class="input" >UB: mode</li>
+  <li class="output">-</li>
+  <li class="desc"  >  
+Modes:<br>
+
 0 = no local coincidence required<br>
+
 1 = require local coincidence; enable receive from both UPPER and LOWER
 DOMs<br>
+
 2 = require local coincidence; enable receive from UPPER DOM only<br>
-3 = require local coincidence; enable receive from LOWER DOM only</b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<br>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="130"> <col
- width="24"> <col width="110"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th colspan="2" width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="46" sdnum="1033;" width="28">
-      <p style="" align="center"> 46</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DSC_GET_LOCAL_COIN_MODE</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-      <td valign="top" width="24">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UB</font></p>
-      </td>
-      <td valign="top" width="110">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">data received</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="5" width="566"> <font style="font-size: 11pt;"
- size="2"><b>Modes: see <span style="font-style: normal;"><a
- href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a>.</span></b></font>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_SET_LOCAL_COIN_WINDOW"></a><br>
-</center>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="28"> <col width="94">
-  <col width="142"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th colspan="2" width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td rowspan="2" sdval="47" sdnum="1033;" width="28">
-      <p style="" align="right"> 47</p>
-      </td>
-      <td rowspan="2" width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DSC_SET_LOCAL_COIN_WINDOW</font></p>
-      </td>
-      <td valign="top" width="28">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UL</font></p>
-      </td>
-      <td valign="top" width="94">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">up_pre</font></p>
-      </td>
-      <td rowspan="2" valign="top" width="142">
-      <div style="text-align: center;">-</div>
-      </td>
-    </tr>
-    <tr valign="top">
-      <td width="28">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UL</font></p>
-      </td>
-      <td width="94">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">up_post</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="5" width="566"> <font style="font-size: 11pt;"
- size="2"><b>Set local
-coincidence windows. Units are nsec. Must be between 25 and 1550 nsec
-inclusive.&nbsp; Default is 200 nsec on each side.&nbsp;&nbsp; Pre- and
-post- refer to
-before and after the ATWD launch window, respectively (ask Thorsten
-Stezelberger for details).</b></font> </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<br>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="130"> <col
- width="24"> <col width="109"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th colspan="2" width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td rowspan="2" sdval="48" sdnum="1033;" width="28">
-      <p style="" align="right"> 48</p>
-      </td>
-      <td rowspan="2" width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DSC_GET_LOCAL_COIN_WINDOW</font></p>
-      </td>
-      <td rowspan="2" valign="top" width="130">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-      <td valign="top" width="24">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UL</font></p>
-      </td>
-      <td valign="top" width="109">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">up_pre</font></p>
-      </td>
-    </tr>
-    <tr valign="top">
-      <td width="24">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UL</font></p>
-      </td>
-      <td width="109">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">up_post</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="5" width="566"> <font style="font-size: 11pt;"
- size="2"><b>Get local
-coincidence windows.&nbsp;</b></font> </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_SET_LC_TYPE"></a><br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">49<br>
-      </p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_SET_LC_TYPE <br>
-      </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">type<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Set local
-coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">50</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_GET_LC_TYPE </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">type<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Get LC type</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_SET_LC_TX"></a><br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">51</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_SET_LC_TX </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">type<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566"><span style="font-weight: bold;">Set
-local coincidence transmit mode: 0=no transmit, 1=TX down only, 2=TX up
-only, 3=TX both up and down (DEFAULT)</span></td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">52</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_GET_LC_TX</font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">type<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">G</span><span
- style="font-weight: bold;">et local coincidence transmit mode</span> </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_SET_LC_SRC"></a><br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">53</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_SET_LC_SRC<br>
-      </font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">type<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Set local
-coincidence source 0=SPE (DEFAULT), 1=MPE</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">54</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_GET_LC_SRC</font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">type<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Get local
-coincidence source</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_SET_LC_SPAN"></a><br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">55</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_SET_LC_SPAN</font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">type<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Set local
-coincidence span: range 1..4 (DEFAULT: 1)</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">56</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_GET_LC_SPAN</font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">type<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Get local
-coincidence span</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_SET_LC_CABLE_LEN"></a><br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">57</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_SET_LC_CABLE_LEN</font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">US:<br>
-            </td>
-            <td style="vertical-align: top;">UP n0 len.<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:<br>
-            </td>
-            <td style="vertical-align: top;">UP n1 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">UP n2 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">UP n3 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">DN n0 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">DN n1 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">DN n2 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">DN n3 len.</td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Set local
-coincidence cable lengths, UP and DowN, for neighbors 0..3.&nbsp;
-Length &lt; 3175.</span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<table
- style="width: 576px; page-break-before: auto; text-align: left; margin-left: auto; margin-right: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th style="width: 28px; vertical-align: middle; text-align: center;">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="text-align: center; vertical-align: middle;" colspan="1"
- width="130">
-    <p style="">Input</p>
-    </th>
-    <th
- style="width: 142px; vertical-align: middle; text-align: center;">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="31" sdnum="1033;" width="28">
-      <p style="" align="center">58</p>
-      </td>
-      <td width="242">
-      <p style="font-style: normal;" align="center"> <font
- style="font-size: 11pt;" size="2">DSC_GET_LC_CABLE_LEN</font></p>
-      </td>
-      <td style="text-align: center;" colspan="1" rowspan="1"
- valign="top" width="27">-<br>
-      </td>
-      <td colspan="1" rowspan="1" valign="top" width="142">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">US:<br>
-            </td>
-            <td style="vertical-align: top;">UP n0 len.<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:<br>
-            </td>
-            <td style="vertical-align: top;">UP n1 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">UP n2 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">UP n3 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">DN n0 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">DN n1 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">DN n2 len.</td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">US:</td>
-            <td style="vertical-align: top;">DN n3 len.</td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p align="left"> <span style="font-weight: bold;">Get local
-coincidence cable lengths.&nbsp; <span style="color: rgb(255, 0, 0);">Must
-DSC_GET_LC_CABLE_LEN first or this message will return an error!</span></span><br>
-      </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_ENABLE_SN"></a><br>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right"> 59</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DSC_ENABLE_SN<i><b> <br>
-      </b></i></font></p>
-      </td>
-      <td valign="top" width="130">
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UL:<br>
-            </td>
-            <td style="vertical-align: top;">deadtime<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">mode<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p style="" align="center"> </p>
-      </td>
-      <td style="text-align: center;" valign="top" width="142"> -<br>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Enable
-supernova data collection (fine-grained trigger rate meter).&nbsp;
-Deadtime (enforced period of inactivity after each trigger) is in units
-of nsec.&nbsp; Valid values are 6400 to 512000 inclusive.&nbsp; Mode is
-0 (SPE) or 1 (MPE).&nbsp; To get actual triggers, you also must </b></font><font
- size="3"><span style="color: rgb(153, 153, 153);"><a
- href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a></span></font><font
- style="font-size: 11pt;" size="2"><b> </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DSC_DISABLE_SN"></a><br>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right"> 60</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DSC_DISABLE_SN<i><b> <br>
-      </b></i></font></p>
-      </td>
-      <td valign="top" width="130">
-      <div style="text-align: center;">-<br>
-      </div>
-      <p style="" align="center"> </p>
-      </td>
-      <td style="text-align: center;" valign="top" width="142"> -<br>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Disable
-supernova data collection.</b></font><font style="font-size: 11pt;"
- size="2"><b> </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-</center>
-<p style="margin-bottom: 0in;">
-<b><font size="4"><br>
-Data Access Messages</font> (message type 3):<br>
-<a name="DATA_ACC_GET_DATA"></a><br>
-</b></p>
-<div style="text-align: center;">
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right"> 11</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DATA_ACC_GET_DATA&nbsp;<i><b> <br>
-      </b></i></font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> -<br>
-      </p>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UB*N</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Read
-out
-hit data buffered by FPGA (must do <a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>
-first)</b></font><font style="font-size: 11pt;" size="2"><b> </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DATA_ACC_GET_NEXT_MONI_REC"></a><br>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right"> 12</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DATA_ACC_GET_NEXT_MONI_REC&nbsp;<i><b> <br>
-      </b></i></font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> -<br>
-      </p>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UB*N</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Read
-out
-monitoring data <br>
-      </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right"> 13</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DATA_ACC_SET_MONI_IVAL <i><b><br>
-      </b></i></font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UL:<br>
-            </td>
-            <td colspan="1" rowspan="1" style="vertical-align: top;">HW_Ival<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">UL:<br>
-            </td>
-            <td colspan="1" rowspan="1" style="vertical-align: top;">SW_Ival<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Set
-monitoring intervals.&nbsp; Times are in CPU clock ticks (40,000,000
-ticks/sec).&nbsp; HW_Ival is time between hardware records.&nbsp;
-SW_Ival is time between software config. records.<br>
-      </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<br>
-</center>
-</div>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="130"> <col
- width="34"> <col width="100"> <thead> <tr valign="top">
-    <th width="28">
-    <p style=""><br>
-    </p>
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th colspan="2" width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="23" sdnum="1033;" width="28">
-      <p style="" align="right"> 23</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DATA_ACC_GET_FB_SERIAL</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-      <td valign="top" width="34">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">UB*N </font> </p>
-      </td>
-      <td valign="top" width="100">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">Flasher board
-ID</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="5" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Get
-flasher
-board ID string (currently 27 bytes, but check message data length)</b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<p style="margin-bottom: 0in;">
-</p>
-<a name="DATA_ACC_SET_DATA_FORMAT"></a><br>
-<table
- style="width: 576px; text-align: left; margin-left: auto; margin-right: auto; page-break-before: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="width: 130px; text-align: center;">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="text-align: center;">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right">24<br>
-      </p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DATA_ACC_SET_DATA_FORMAT</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">fmtMode<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4"
- style="width: 566px; vertical-align: middle; text-align: center;">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Set
-data format (see table in "<a href="#dataformats">DATA FORMATS</a>",
-above).<br>
-      </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<p style="margin-bottom: 0in; page-break-before: always;"><br>
-</p>
-<table
- style="width: 576px; text-align: left; margin-left: auto; margin-right: auto; page-break-before: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="width: 130px; text-align: center;">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="text-align: center;">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right">25<br>
-      </p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DATA_ACC_GET_DATA_FORMAT</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> </p>
-      <div style="text-align: center;">-<br>
-      </div>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">fmtMode<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4"
- style="width: 566px; vertical-align: middle; text-align: center;">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Get
-data format.<br>
-      </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<p style="margin-bottom: 0in; page-break-before: always;"><a
- name="DATA_ACC_SET_COMP_MODE"></a><br>
-</p>
-<table
- style="width: 576px; text-align: left; margin-left: auto; margin-right: auto; page-break-before: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="width: 130px; text-align: center;">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="text-align: center;">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right">26<br>
-      </p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DATA_ACC_SET_COMP_MODE</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">compMode<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4"
- style="width: 566px; vertical-align: middle; text-align: center;">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Set
-data compression mode (see table in "<a href="#dataformats">DATA FORMATS</a>",
-above).<br>
-      </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<p style="margin-bottom: 0in; page-break-before: always;"><br>
-</p>
-<table
- style="width: 576px; text-align: left; margin-left: auto; margin-right: auto; page-break-before: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="width: 130px; text-align: center;">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="text-align: center;">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right">27<br>
-      </p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DATA_ACC_GET_COMP_MODE</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> </p>
-      <div style="text-align: center;">-<br>
-      </div>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">compMode<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4"
- style="width: 566px; vertical-align: middle; text-align: center;">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Get
-data compression mode.<br>
-      </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DATA_ACC_GET_SN_DATA"></a><br>
-<table
- style="width: 576px; text-align: left; margin-left: auto; margin-right: auto; page-break-before: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="width: 130px; text-align: center;">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="text-align: center;">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right">28<br>
-      </p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DATA_ACC_GET_SN_DATA</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> </p>
-      <div style="text-align: center;">-<br>
-      </div>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> </p>
-      <div style="text-align: center;">UL*N: data<br>
-      </div>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4"
- style="width: 566px; vertical-align: middle; text-align: center;">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Fetch
-supernova data.&nbsp; </b></font><font style="font-size: 11pt;"
- size="2"><b>The data are in the form of 32 bit words described</b></font><font
- style="font-size: 11pt;" size="2"><b> in the <a href="#supernova">supernova
-data</a> section, above.&nbsp; <br>
-      </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DATA_ACC_RESET_MONI_BUF"></a><br>
-<table
- style="width: 576px; text-align: left; margin-left: auto; margin-right: auto; page-break-before: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="width: 130px; text-align: center;">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="text-align: center;">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right">29<br>
-      </p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DATA_ACC_RESET_MONI_BUF</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> </p>
-      <div style="text-align: center;">-<br>
-      </div>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> </p>
-      <div style="text-align: center;">-<br>
-      </div>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4"
- style="width: 566px; vertical-align: middle; text-align: center;">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Reset
-monitoring buffer, eliminating any existing monitoring records<br>
-      </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="DATA_ACC_MONI_AVAIL"></a><br>
-<table
- style="width: 576px; text-align: left; margin-left: auto; margin-right: auto; page-break-before: auto;"
- border="1" bordercolor="#000000" cellpadding="4" cellspacing="0">
-  <thead><tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th style="text-align: center;" width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th style="width: 130px; text-align: center;">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="text-align: center;">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="22" sdnum="1033;" width="28">
-      <p style="" align="right">30<br>
-      </p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">DATA_ACC_MONI_AVAIL</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> </p>
-      <div style="text-align: center;">-<br>
-      </div>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; height: 100%;" border="0"
- bordercolor="#000000" cellpadding="4" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UB:<br>
-            </td>
-            <td style="vertical-align: top;">haveData<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4"
- style="width: 566px; vertical-align: middle; text-align: center;">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Return
-1 if any monitoring records are available, else 0<br>
-      </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<br>
-<p style="margin-bottom: 0in; page-break-before: always;"><b><font
- size="4">Experiment Control Messages</font> (message type 4):</b></p>
-<p style="margin-bottom: 0in;">
-<a name="EXPCONTROL_BEGIN_RUN"></a><br>
-</p>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="130"> <col
- width="142"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="12" sdnum="1033;" width="28">
-      <p style="" align="center"> 12</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">EXPCONTROL_BEGIN_RUN</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Start
-“background” data taking</b></font></p>
-      <p style="" align="left"> </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<p style=""><a name="EXPCONTROL_END_RUN"></a><br>
-</p>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="130"> <col
- width="142"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="13" sdnum="1033;" width="28">
-      <p style="" align="center"> 13</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">EXPCONTROL_END_RUN</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p style="" align="left"> <font style="font-size: 11pt;" size="2"><b>Stop
-“background” data taking.&nbsp; This now works for both flasher runs
-and "regular" runs<br>
-      </b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<br>
-<a name="EXPCONTROL_DO_PEDESTAL_COLLECTION"></a><br>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="130"> <col
- width="142"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="13" sdnum="1033;" width="28"> 16<br>
-      </td>
-      <td width="242">EXPCONTROL_DO_PEDESTAL_COLLECTION<br>
-      </td>
-      <td width="130">
-      <table style="width: 100%; text-align: left;" border="0"
- cellpadding="2" cellspacing="2">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UL<br>
-            </td>
-            <td style="vertical-align: top;">#ATWD0<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">UL<br>
-            </td>
-            <td style="vertical-align: top;">#ATWD1<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">UL<br>
-            </td>
-            <td style="vertical-align: top;">#FADC<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-      <td width="142">
-      <p style="" align="center"> -<br>
-      </p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p style="" align="left"> <span style="font-weight: bold;">Collects
-requested number of pedestal events.&nbsp; Failure to do this while HV
-is off will result in some level of contamination of real SPE hits from
-the PMT.&nbsp; Arguments are number of triggers to collect for each
-ATWD
-and the FADC (max: 1000 for ATWDs, 2000 for FADC).&nbsp; Message reply
-is sent when pedestals
-are collected.&nbsp; NOTE: #FADC must be &lt;= #ATWD0 + #ATWD1.<br>
-      </span></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<a name="EXPCONTROL_GET_NUM_PEDESTALS"></a><br>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="130"> <col
- width="142"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="13" sdnum="1033;" width="28">
-      <p style="" align="center">19<br>
-      </p>
-      </td>
-      <td width="242">EXPCONTROL_GET_NUM_PEDESTALS<br>
-      </td>
-      <td width="130">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-      <td valign="top" width="142">
-      <table style="width: 100%; text-align: left;" border="0"
- cellpadding="2" cellspacing="2">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;">UL<br>
-            </td>
-            <td style="vertical-align: top;">#ATWD0<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">UL<br>
-            </td>
-            <td style="vertical-align: top;">#ATWD1<br>
-            </td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;">UL<br>
-            </td>
-            <td style="vertical-align: top;">#FADC<br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566">
-      <p style="" align="left"> <span style="font-weight: bold;">Reports
-the number of pedestals collected with <a
- href="#EXPCONTROL_DO_PEDESTAL_COLLECTION">EXPCONTROL_DO_PEDESTAL_COLLECTION</a>,
-above.</span></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a name="EXPCONTROL_GET_PEDESTAL_AVERAGES"></a><br>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="130"> <col
- width="142"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="13" sdnum="1033;" width="28">
-      <p style="" align="center">20<br>
-      </p>
-      </td>
-      <td width="242">EXPCONTROL_GET_PEDESTAL_AVERAGES<br>
-      </td>
-      <td width="130">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> </p>
-      <table style="width: 100%; text-align: left;" border="0"
- cellpadding="2" cellspacing="2">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top;"><small>US*128<br>
-            </small></td>
-            <td style="vertical-align: top;"><small>ATWD0 ch 0 pattern<br>
-            </small></td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;"><small>US*128</small></td>
-            <td style="vertical-align: top;"><small>ATWD0 ch 1 pattern</small></td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;"><small>US*128</small></td>
-            <td style="vertical-align: top;"><small>ATWD0 ch 2 pattern</small></td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;"><small>US*128</small></td>
-            <td style="vertical-align: top;"><small>ATWD0 ch 3 pattern</small></td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;"><small>US*128</small></td>
-            <td style="vertical-align: top;"><small>ATWD1 ch 0 pattern</small></td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;"><small>US*128</small></td>
-            <td style="vertical-align: top;"><small>ATWD1 ch 1 pattern</small></td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;"><small>US*128</small></td>
-            <td style="vertical-align: top;"><small>ATWD1 ch 2 pattern</small></td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;"><small>US*128</small></td>
-            <td style="vertical-align: top;"><small>ATWD1 ch 3 pattern</small></td>
-          </tr>
-          <tr>
-            <td style="vertical-align: top;"><small>US*128</small></td>
-            <td style="vertical-align: top;"><small>FADC pattern</small></td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-    <tr style="font-weight: bold;">
-      <td colspan="4" width="566">Collects the average pedestal pattern</td>
-    </tr>
-  </tbody>
-</table>
-</center>
-</center>
-<br>
-<a name="EXPCONTROL_BEGIN_FB_RUN"></a><br>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="28"> <col width="94">
-  <col width="142"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th colspan="2" width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td rowspan="5" sdval="27" sdnum="1033;" width="28">
-      <p style="" align="center"> 27</p>
-      </td>
-      <td rowspan="5" width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">EXPCONTROL_BEGIN_FB_RUN</font></p>
-      </td>
-      <td valign="top" width="28">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">US</font></p>
-      </td>
-      <td valign="top" width="94">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">brightness
-(0..127)</font></p>
-      </td>
-      <td rowspan="5" valign="top" width="142">
-      <p style="" align="center"> <br>
-      <br>
-      </p>
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr valign="top">
-      <td width="28">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">US</font></p>
-      </td>
-      <td width="94">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">window (0..127)</font></p>
-      </td>
-    </tr>
-    <tr valign="top">
-      <td width="28">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">S</font></p>
-      </td>
-      <td width="94">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">delay (-200..175)</font></p>
-      </td>
-    </tr>
-    <tr valign="top">
-      <td width="28">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">US</font></p>
-      </td>
-      <td width="94">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">mask</font></p>
-      </td>
-    </tr>
-    <tr valign="top">
-      <td width="28">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">US</font></p>
-      </td>
-      <td width="94">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">rate</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="5" width="566">
-      <p style="margin-left: 0.35in;" align="left"> <font
- style="font-size: 11pt;" size="2"><b>Starts a
-flasher board run. High voltage must be off and no run in progress.
-Units for Window are roughly nsec. Delay is time difference between LED
-trigger and ATWD launch (nsec). Mask selects which LEDs to flash (bit 0
--&gt; LED 1; bit 11 -&gt; LED 12). Rate is the actual flashing rate in
-Hz, max. value 610.</b></font></p>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<p style="margin-bottom: 0in;"><a name="EXPCONTROL_END_FB_RUN"></a><br>
-</p>
-<center>
-<table style="page-break-before: auto;" border="1" bordercolor="#000000"
- cellpadding="4" cellspacing="0" width="576">
-  <col width="28"> <col width="242"> <col width="130"> <col
- width="142"> <thead> <tr valign="top">
-    <th width="28">
-    <p style="">ID</p>
-    </th>
-    <th width="242">
-    <p style="">Subtype</p>
-    </th>
-    <th width="130">
-    <p style="">Input</p>
-    </th>
-    <th width="142">
-    <p style="">Output</p>
-    </th>
-  </tr>
-  </thead> <tbody>
-    <tr>
-      <td sdval="28" sdnum="1033;" width="28">
-      <p style="" align="center"> 28</p>
-      </td>
-      <td width="242">
-      <p style="" align="center"> <font style="font-size: 11pt;"
- size="2">EXPCONTROL_END_FB_RUN</font></p>
-      </td>
-      <td valign="top" width="130">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-      <td valign="top" width="142">
-      <p style="" align="center"> <font style="font-size: 9pt;"
- size="2">-</font></p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" width="566"><font style="font-size: 11pt;"
- size="2"><b>Stop flasher
-board run.&nbsp; Equivalent to <a href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>.</b></font>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</center>
-<p style="margin-bottom: 0in;"><br>
-</p>
-<p style="margin-bottom: 0in; page-break-before: auto;">
-</p>
-<h2><big><a name="differences"></a>DIFFERENCES BETWEEN DOMAPP AND
-TESTDOMAPP<br>
-</big></h2>
-<ul>
-  <li><span style="font-weight: bold;">Test pattern data is not
-supported</span> by
-the DOMAPP FPGA.</li>
-  <li>Presence of LC bits in engineering
-record indicates that the LC signals actually occurred (rather than
-just required as in the Test FPGA).</li>
-  <li>Software data compression not implemented (yet)</li>
-  <li><font style="font-size: 11pt;" size="2"><span
- style="font-weight: bold;">DATA_ACC_RESET_LBM removed</span>.&nbsp;
-This is now done when starting a data taking run (<a
- href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>)</font></li>
-  <li><font style="font-size: 11pt;" size="2"><span
- style="font-weight: bold;">"Heartbeat events"</span> are now
-interleaved with SPE triggers to aid in upstream Splicer-type
-operation.&nbsp; The heartbeat events are "Forced Triggers" (formerly
-known as CPU triggers) and can also be used to form a running pedestal
-average for each ATWD/FADC channel (though some small fraction of SPE
-waveforms may be present).<br>
-    </font></li>
-  <li><span style="font-weight: bold;">Front end pulser can only be
-started before the run starts</span>, and <span
- style="font-weight: bold;"> can only be used in
-trigger mode 2</span> (SPE data).</li>
-  <li><font style="font-size: 11pt;" size="2"><span
- style="font-weight: bold;">Pulser rate is now relevant even if pulser
-is off!&nbsp; If the pulser is off, the rate is the heartbeat event
-rate.</span>&nbsp; <span style="font-weight: bold;">THE DEFAULT RATE
-IS 1 HZ.</span>&nbsp; If the FE pulser is on, the rate is the FE pulser
-rate.&nbsp; This is because both the heartbeat events and the pulser
-events are considered by Thorsten's FPGA design to be calibration
-sources and there is only one rate control.</font></li>
-  <li><font style="font-size: 11pt;" size="2">Triggering in the DOM is
-now <span style="font-weight: bold;">disabled </span>momentarily when
-the PMT High Voltage is read out.</font></li>
-  <li><font style="font-size: 11pt;" size="2">Scaler readouts now have
-ONE SECOND COVERAGE (not 9/10ths of a second) and are spaced by a
-minimum of 40,000,000 + 100 clock
-ticks to avoid duplication of values.</font></li>
-  <li><font style="font-size: 11pt;" size="2">Data
-formats/compression: software compression not implemented (yet).</font><font
- style="font-size: 11pt;" size="2">&nbsp; <span
- style="font-family: courier new,courier,monospace;"></span></font><font
- style="font-size: 11pt;" size="2"><span
- style="font-family: courier new,courier,monospace;">DATA_ACCESS</span>
-software compression messages are<span
- style="font-family: courier new,courier,monospace;"></span></font><span
- style="font-family: courier new,courier,monospace;"></span><span
- style="font-family: courier new,courier,monospace;"></span><font
- style="font-size: 11pt;" size="2"> no longer implemented.&nbsp;<span
- style="font-weight: bold;"> See "<a href="api.html#dataformats">DATA
-FORMATS</a>"
-below</span>
-for current treatment of data compression and data formats.</font></li>
-  <li><font style="font-size: 11pt;" size="2">In general, domapp tries
-to log exceptions in the ASCII monitoring messages.&nbsp; Any
-investigation into unexpected problems in DOM operation should include
-an examination of the DOM monitoring stream, e.g. with the </font><font
- style="font-size: 11pt;" size="2"><span style="font-family: monospace;">decodemoni</span></font><font
- style="font-size: 11pt;" size="2"> tool in the domhub-tools project.</font></li>
-  <li><font style="font-size: 11pt;" size="2"><span
- style="font-weight: bold;">DIFFERENCES IN LOCAL COINCIDENCE</span>:&nbsp;
-In general, using just </font><font style="color: rgb(0, 0, 0);"
- size="3"><span style=""><span style="font-style: normal;"><font
- style="font-size: 11pt; color: rgb(153, 153, 153);" size="2"><a
- href="api.html#DSC_SET_LOCAL_COIN_MODE">SET_LOCAL_COIN_MODE</a> <span
- style="color: rgb(0, 0, 0);">and </span><a
- href="api.html#DSC_SET_LOCAL_COIN_WINDOW"><span
- style="color: rgb(0, 0, 0);">DSC</span>_SET_LOCAL_COIN_WINDOW</a> <span
- style="color: rgb(0, 0, 0);">will work as in testdomapp, except that
-there are only two LC windows instead of four, and also one has new
-functionality (e.g., soft or flabby local coincidence) as defined by </span><a
- style="color: rgb(0, 0, 0);" href="api.html#DSC_SET_LC_TYPE">DSC_SET_LC_TYPE</a><span
- style="color: rgb(0, 0, 0);">,&nbsp; </span><a
- style="color: rgb(0, 0, 0);" href="api.html#DSC_SET_LC_TX">DSC_SET_LC_TX</a><span
- style="color: rgb(0, 0, 0);">, </span><a style="color: rgb(0, 0, 0);"
- href="api.html#DSC_SET_LC_SRC">DSC_SET_LC_SRC</a><span
- style="color: rgb(0, 0, 0);">, </span><a style="color: rgb(0, 0, 0);"
- href="api.html#DSC_SET_LC_SPAN">DSC_SET_LC_SPAN</a><span
- style="color: rgb(0, 0, 0);">, and</span> <a
- href="api.html#DSC_SET_LC_CABLE_LEN">DSC_SET_LC_CABLE_LEN</a>.</font></span></span></font></li>
-  <li><font style="color: rgb(0, 0, 0);" size="3"><span style=""><span
- style="font-style: normal;"><font
- style="font-size: 11pt; color: rgb(153, 153, 153);" size="2"><span
- style="color: rgb(0, 0, 0);">Analog MUX is disabled at startup.&nbsp; <a
- href="#DSC_MUX_SELECT">DSC_MUX_SELECT</a> selects which channel should
-be enabled, but a value of 0xFF (255) now DISABLES the analog MUX
-explicitly.</span></font></span></span></font></li>
-  <li><font style="color: rgb(0, 0, 0);" size="3"><span style=""><span
- style="font-style: normal;"><font
- style="font-size: 11pt; color: rgb(153, 153, 153);" size="2"><span
- style="color: rgb(0, 0, 0);">EXPCONTROL_FORCE_RUN_RESET is
-removed.&nbsp; Use <a href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>.</span></font></span></span></font></li>
-  <li><font style="font-size: 11pt;" size="2"><a
- href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a> message
-was added.</font></li>
-  <li><font style="font-size: 11pt;" size="2"><a
- href="#DATA_ACC_MONI_AVAIL">DATA_ACC_MONI_AVAIL</a> message was added.<br>
-    </font></li>
+
+3 = require local coincidence; enable receive from LOWER DOM only<br>
+
+4 = require local coincidence in both UPPER and LOWER DOM<br>
+5 = require local coincidence in SOFT local coin mode, but never satisfy it (send header only)
+  </li>
 </ul>
-<b><br>
-</b>
-<p style="margin-bottom: 0in;"><span style=""><font size="3"><br>
-</font></span></p>
+
+<ul class="message">
+  <li class="id"    >46</li>
+  <li class="name"  >DSC_GET_LOCAL_COIN_MODE</li>
+  <li class="input" >-</li>
+  <li class="output">UB: mode</li>
+  <li class="desc"  >  
+Modes: see
+      <a href="#DSC_SET_LOCAL_COIN_MODE">DSC_SET_LOCAL_COIN_MODE</a>.
+  </li>
+</ul>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td colspan="5" width="566"> 
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<a name="DSC_SET_LOCAL_COIN_WINDOW"/>
+
+<ul class="message">
+  <li class="id"    >47</li>
+  <li class="name"  >DSC_SET_LOCAL_COIN_WINDOW</li>
+  <li class="input" >UL: up_pre(nsec); UL: up_post(nsec)</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local
+coincidence windows. Units are nsec. Must be between 100 and 1600 nsec
+inclusive.  Default is 200 nsec on each
+side.   Pre- and
+post- refer to
+before and after the ATWD launch window, respectively.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >48</li>
+  <li class="name"  >DSC_GET_LOCAL_COIN_WINDOW</li>
+  <li class="input" >-</li>
+  <li class="output">UL: up_pre(nsec); UL: up_post(nsec)</li>
+  <li class="desc"  >  
+Get local coincidence window.
+  </li>
+</ul>
+
+<a name="DSC_SET_LC_TYPE"/>
+
+<ul class="message">
+  <li class="id"    >49</li>
+  <li class="name"  >DSC_SET_LC_TYPE</li>
+  <li class="input" >UB: type</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local coincidence type: 1=soft, 2=hard (DEFAULT), 3=flabby.  Note that only hard LC
+(or no LC) are allowed for engineering events.
+  </li>
+</ul>
+
+
+<ul class="message">
+  <li class="id"    >50</li>
+  <li class="name"  >DSC_GET_LC_TYPE</li>
+  <li class="input" >-</li>
+  <li class="output">UB: type</li>
+  <li class="desc"  >
+Get LC type
+  </li>
+</ul>
+
+<a name="DSC_SET_LC_TX"/>
+
+<ul class="message">
+  <li class="id"    >51</li>
+  <li class="name"  >DSC_SET_LC_TX</li>
+  <li class="input" >UB: type-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local coincidence transmit mode: 0=no transmit, 1=TX down only, 2=TX up only, 3=TX both up and down (DEFAULT)
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >52</li>
+  <li class="name"  >DSC_GET_LC_TX</li>
+  <li class="input" >-</li>
+  <li class="output">UB: type</li>
+  <li class="desc"  >
+Get local coincidence transmit mode.
+  </li>
+</ul>
+
+<a name="DSC_SET_LC_SRC"/>
+
+<ul class="message">
+  <li class="id"    >53</li>
+  <li class="name"  >DSC_SET_LC_SRC</li>
+  <li class="input" >UB: type</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local coincidence source 0=SPE (DEFAULT), 1=MPE
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >54</li>
+  <li class="name"  >DSC_GET_LC_SRC</li>
+  <li class="input" >-</li>
+  <li class="output">UB: type</li>
+  <li class="desc"  >
+Get local coincidence source
+  </li>
+</ul>
+
+<a name="DSC_SET_LC_SPAN"/>
+
+<ul class="message">
+  <li class="id"    >55</li>
+  <li class="name"  >DSC_SET_LC_SPAN</li>
+  <li class="input" >UB: type</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local coincidence span: range 1..4 (DEFAULT: 1)
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >56</li>
+  <li class="name"  >DSC_GET_LC_SPAN</li>
+  <li class="input" >-</li>
+  <li class="output">UB: type</li>
+  <li class="desc"  >
+Get local coincidence span
+  </li>
+</ul>
+
+<a name="DSC_SET_LC_CABLE_LEN"/>
+
+<ul class="message">
+  <li class="id"    >57</li>
+  <li class="name"  >DSC_SET_LC_CABLE_LEN</li>
+  <li class="input" ><br>
+US: up neighbor 0 len;<br>
+US: up neighbor 1 len;<br>
+US: up neighbor 2 len;<br>
+US: up neighbor 3 len;<br>
+US: down neighbor 0 len;<br>
+US: down neighbor 1 len;<br>
+US: down neighbor 2 len;<br>
+US: down neighbor 3 len;
+  </li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set local coincidence cable lengths, UP and DowN, for neighbors 0..3.
+Length &lt; 3175.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >58</li>
+  <li class="name"  >DSC_GET_LC_CABLE_LEN</li>
+  <li class="input" >-</li>
+  <li class="output">
+US: up neighbor 0 len;<br>
+US: up neighbor 1 len;<br>
+US: up neighbor 2 len;<br>
+US: up neighbor 3 len;<br>
+US: down neighbor 0 len;<br>
+US: down neighbor 1 len;<br>
+US: down neighbor 2 len;<br>
+US: down neighbor 3 len;
+  </li>
+  <li class="desc"  >
+Get local coincidence cable lengths.  Must DSC_GET_LC_CABLE_LEN first
+or this message will return an error!
+  </li>
+</ul>
+
+<a name="DSC_ENABLE_SN"/>
+<ul class="message">
+  <li class="id"    >59</li>
+  <li class="name"  >DSC_ENABLE_SN</li>
+  <li class="input" >UL: deadtime (nsec); UB: mode</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+      Enable
+supernova data collection (fine-grained trigger rate meter). 
+Deadtime (enforced period of inactivity after each trigger) is in units
+of nsec.  Valid values are 6400 to 512000 inclusive. 
+Mode is
+0 (SPE) or 1 (MPE).  To get actual triggers, you also must </strong><a href="api.html#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>
+  </li>
+</ul>
+ 
+<a name="DSC_DISABLE_SN"/>
+<ul class="message">
+  <li class="id"    >60</li>
+  <li class="name"  >DSC_DISABLE_SN</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Disable supernova data collection.
+  </li>
+</ul>
+
+<a name="DSC_SET_CHARGE_STAMP_TYPE"/>
+<ul class="message">
+  <li class="id"    >61</li>
+  <li class="name"  >DSC_SET_CHARGE_STAMP_TYPE</li>
+  <li class="input" >UB: mode (0=ATWD, 1=FADC [default]); UB: chSel (0=auto, 1=byChan); UB: chan;</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set charge stamp type for delta-compressed events.  If mode is 0 (default), the FADC will be used.
+If mode is 1, the ATWD is used.  If ATWD, chSel determines whether channel selection is auto (0), or specified 
+in the third argument (1).  Third argument must specify channel 0 or 1.<br>
+See also <a href="#DATA_ACC_HISTO_CHARGE_STAMPS">DATA_ACC_HISTO_CHARGE_STAMPS</a>
+  </li>
+</ul>
+
+<a name="DSC_SELECT_MINBIAS"/>
+<ul class="message">
+  <li class="id"    >62</li>
+  <li class="name"  >DSC_SELECT_MINBIAS</li>
+  <li class="input" >UB: mode (0=disable; 1=enable)</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Enable or disable IceTop minbias hits (1/8192 of non-LC, non-beacon hits will be recorded
+with the corresponding trigger word bit set: WORD1 bit 30 for compressed data).
+</li>
+</ul>
+
+
+<h1>Data Access Messages (message type 3):</h1>
+
+<a name="DATA_ACC_GET_DATA"/>
+
+<ul class="message">
+  <li class="id"    >11</li>
+  <li class="name"  >DATA_ACC_GET_DATA</li>
+  <li class="input" >-</li>
+  <li class="output">UB*N (hit data)</li>
+  <li class="desc"  >
+      Read out hit data buffered by FPGA (must do <a
+href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a> first); mulitple
+records may be returned with each message reply.
+  </li>
+</ul>
+
+<a name="DATA_ACC_GET_NEXT_MONI_REC"/>
+<ul class="message">
+  <li class="id"    >12</li>
+  <li class="name"  >DATA_ACC_GET_NEXT_MONI_REC</li>
+  <li class="input" >-</li>
+  <li class="output">UB*N (moni data)</li>
+  <li class="desc"  >
+Read out monitoring data; multiple records may be returned with each message reply.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >13</li>
+  <li class="name"  >DATA_ACC_SET_MONI_IVAL</li>
+  <li class="input" >UL: HW_ival; UL: SW_ival; OPTIONAL: UL: Fast_Ival</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set monitoring intervals.  Times are in CPU clock ticks
+(40,000,000 ticks = 1 sec) if &gt; 40,000,000, or seconds, if &lt;
+40,000,000.  HW_Ival is time between hardware records.  SW_Ival is
+time between software config. records.  Fast_Ival is the (optional)
+argument indicating desired delay between "fast" monitoring records.
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >23</li>
+  <li class="name"  >DATA_ACC_GET_FB_SERIAL</li>
+  <li class="input" >-</li>
+  <li class="output">UB*N: flasher board ID</li>
+  <li class="desc"  >
+Get flasher board ID string (currently 27 bytes, but check message data length)
+  </li>
+</ul>
+
+<a name="DATA_ACC_SET_DATA_FORMAT"/>
+
+<ul class="message">
+  <li class="id"    >24</li>
+  <li class="name"  >DATA_ACC_SET_DATA_FORMAT</li>
+  <li class="input" >UB: mode</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+      Set data format (see table in "<a href="#dataformats">DATA
+FORMATS</a>", above).  When setting engineering format (mode 0), 
+<strong>LC settings are reset (mode 0, type 0).</strong>
+  </li>
+</ul>
+      
+<ul class="message">
+  <li class="id"    >25</li>
+  <li class="name"  >DATA_ACC_GET_DATA_FORMAT</li>
+  <li class="input" >-</li>
+  <li class="output">UB: mode</li>
+  <li class="desc"  >
+Get data format
+  </li>
+</ul>
+
+<a name="DATA_ACC_SET_COMP_MODE"/>
+
+<ul class="message">
+  <li class="id"    >26</li>
+  <li class="name"  >DATA_ACC_SET_COMP_MODE</li>
+  <li class="input" >UB: compMode</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+      Set data compression mode (see table in "<a
+href="#dataformats">DATA FORMATS</a>", above)
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >27</li>
+  <li class="name"  >DATA_ACC_GET_COMP_MODE</li>
+  <li class="input" >-</li>
+  <li class="output">UB: compMode</li>
+  <li class="desc"  >
+Get data compression mode
+  </li>
+</ul>
+
+<a name="DATA_ACC_GET_SN_DATA"/>
+
+<ul class="message">
+  <li class="id"    >28</li>
+  <li class="name"  >DATA_ACC_GET_SN_DATA</li>
+  <li class="input" >-</li>
+  <li class="output">UL*N: data</li>
+  <li class="desc"  >
+      Fetch supernova data.  The data are in the form of 32 bit words
+described in the <a href="#supernova">supernova data</a> section,
+above
+  </li>
+</ul>
+
+<a name="DATA_ACC_RESET_MONI_BUF"/>
+
+<ul class="message">
+  <li class="id"    >29</li>
+  <li class="name"  >DATA_ACC_RESET_MONI_BUF</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Reset monitoring buffer, eliminating any existing monitoring records
+  </li>
+</ul>
+
+<a name="DATA_ACC_MONI_AVAIL"/>
+
+<ul class="message">
+  <li class="id"    >30</li>
+  <li class="name"  >DATA_ACC_MONI_AVAIL</li>
+  <li class="input" >-</li>
+  <li class="output">UB: status</li>
+  <li class="desc"  >
+Returns 1 if any monitoring records are available, else 0
+  </li>
+</ul>
+
+<a name="DATA_ACC_GET_NUMOVERFLOWS"/>
+
+<ul class="message">
+  <li class="id"    >31</li>
+  <li class="name"  >DATA_ACC_GET_NUMOVERFLOWS</li>
+  <li class="input" >-</li>
+  <li class="output">UL: numOverflows</li>
+  <li class="desc"  >
+Returns number of overflows since domapp started
+  </li>
+</ul>
+
+<a name="DATA_ACC_SET_LBM_BIT_DEPTH"/>
+
+<ul class="message">
+  <li class="id"    >32</li>
+  <li class="name"  >DATA_ACC_SET_LBM_BIT_DEPTH</li>
+  <li class="input" >UB: depth</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Set bit depth in the range 8 to 24; default is 24. Actual LBM size is (2**(depth))-1
+  </li>
+</ul>
+
+<ul class="message">
+  <li class="id"    >33</li>
+  <li class="name"  >DATA_ACC_GET_LBM_SIZE</li>
+  <li class="input" >-</li>
+  <li class="output">UL: LBMSize</li>
+  <li class="desc"  >
+Returns actual LBM size, in bytes
+  </li>
+</ul>
+
+<a name="DATA_ACC_HISTO_CHARGE_STAMPS"/>
+
+<ul class="message">
+  <li class="id"    >34</li>
+  <li class="name"  >DATA_ACC_HISTO_CHARGE_STAMPS</li>
+  <li class="input" >UL: interval (ticks or seconds); US: prescale</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Generate charge stamp histograms in monitoring stream, at &lt;interval&gt; 
+clock ticks (if &ge;40,000,000) or seconds (if &lt;40,000,000).  If interval is zero 
+(default), no records will be generated.  Prescale is the divisor of each charge stamp amplitude before it is histogrammed.
+<a href="#DSC_SET_CHARGE_STAMP_TYPE">DSC_SET_CHARGE_STAMP_TYPE</a> is used to select the type of charge stamp; if FADC (default), 
+only the peak value of the charge stamp is histogrammed.
+<p>
+The histograms will be generated in the monitoring stream in ASCII format, as follows:
+</p>
+<p>
+ATWD CS <em>chip</em> <em>chan</em>--<em>N</em> entries: <em>bin0</em> <em>bin1</em> ... <em>bin127</em><br/>
+(four entries per interval, where <em>chip</em> is A or B and <em>chan</em> is 0 or 1)</p>
+<p>or</p>
+<p>
+FADC CS--<em>N</em> entries: <em>bin0</em> <em>bin1</em> ... <em>bin127</em>
+</p>
+  </li>
+</ul>
+
+<a name="DATA_ACC_SELECT_ATWD"/>
+
+<ul class="message">
+  <li class="id"    >35</li>
+  <li class="name"  >DATA_ACC_SELECT_ATWD</li>
+  <li class="input" >UB: chip select</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Chip select=0: ATWD A; 1: ATWD B; 2: both (<strong>default</strong>).  This enables either one 
+or both ATWDs (the latter case selects ping-pong mode).
+  </li>
+</ul>
+
+<a name="DATA_ACC_GET_F_MONI_RATE_TYPE"/>
+
+<ul class="message">
+  <li class="id"    >36</li>
+  <li class="name"  >DATA_ACC_GET_F_MONI_RATE_TYPE</li>
+  <li class="input" >-</li>
+  <li class="output">UB: type of rate reported in 'F' monitoring records</li>
+  <li class="desc"  >
+Returns 0 (HLC) or 1 (SLC) depending on which type of hits are
+reported in the ASCII 'F' monitoring records.  Note that this is
+actually the number of hits <strong>read out</strong> to the surface
+as opposed to the number actually triggered by the FPGA.
+  </li>
+</ul>
+
+<a name="DATA_ACC_SET_F_MONI_RATE_TYPE"/>
+
+<ul class="message">
+  <li class="id"    >37</li>
+  <li class="name"  >DATA_ACC_SET_F_MONI_RATE_TYPE</li>
+  <li class="input" >UB: type of rate to be reported in 'F' monitoring records</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+See DATA_ACC_GET_F_MONI_RATE_TYPE.
+  </li>
+</ul>
+
+
+<a name="DATA_ACC_GET_LBM_PTRS"/>
+
+<ul class="message">
+  <li class="id"    >38</li>
+  <li class="name"  >DATA_ACC_GET_LBM_PTRS</li>
+  <li class="input" >-</li>
+  <li class="output">UL: write_ptr; UL: read_ptr</li>
+  <li class="desc"  >
+Return current read (FPGA) and write (software) pointers from DOM Look Back Memory.
+Does not include hardware offset of LBM.
+  </li>
+</ul>
+
+
+<h1>Experiment Control Messages (message type 4)</h1>
+
+<a name="EXPCONTROL_BEGIN_RUN"/>
+
+<ul class="message">
+  <li class="id"    >12</li>
+  <li class="name"  >EXPCONTROL_BEGIN_RUN</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Begin collecting hit data
+  </li>
+</ul>
+
+<a name="EXPCONTROL_END_RUN"/>
+<ul class="message">
+  <li class="id"    >13</li>
+  <li class="name"  >EXPCONTROL_END_RUN</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Stop data taking (one can use this message for both flasher runs and regular runs)
+  </li>
+</ul>
+
+<a name="EXPCONTROL_DO_PEDESTAL_COLLECTION"/>
+
+<ul class="message">
+  <li class="id"    >16</li>
+  <li class="name"  >EXPCONTROL_DO_PEDESTAL_COLLECTION</li>
+  <li class="input" >UL: numATWD0; UL: numATWD1; UL: numFADC<br/>
+                     Optional: US*6: atwd0ch0bias, atwd0ch1bias ... atwd1ch2bias</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Collects requested number of pedestal events. Failure to do this while
+HV is off will result in some level of contamination of real SPE hits
+from the PMT. Arguments are number of triggers to collect for each
+ATWD and the FADC (max: 1000 for ATWDs, 2000 for FADC). Message reply
+is sent when pedestals are collected. NOTE: numFADC must be &le;
+numATWD0 + numATWD1.  OPTIONALLY, if six extra short unsigned integers
+are supplied, they are used as the fixed bias/offset values for the
+ATWD pedestal subtraction in channels 0-2 for both ATWDs.  [Channel
+3's bias is NOT programmable.]  These values are subtracted from the
+average ATWD pedestal patterns before programming into the DOMApp
+FPGA.  If these six values are omitted, the average channel value is
+calculated and subtracted instead.  In any case, the resulting
+pedestal pattern, programmed into the FPGA, is then subtracted from
+every hit before storage in LBM.
+  </li>
+</ul>
+
+<a name="EXPCONTROL_GET_NUM_PEDESTALS"/>
+
+<ul class="message">
+  <li class="id"    >19</li>
+  <li class="name"  >EXPCONTROL_GET_NUM_PEDESTALS</li>
+  <li class="input" >-</li>
+  <li class="output">UL: numATWD0; UL: numATWD1; UL: numFADC</li>
+  <li class="desc"  >
+Reports the number of pedestals collected with <a
+href="#EXPCONTROL_DO_PEDESTAL_COLLECTION">EXPCONTROL_DO_PEDESTAL_COLLECTION</a>,
+above.
+  </li>
+</ul>
+
+<a name="EXPCONTROL_GET_PEDESTAL_AVERAGES"/>
+
+<ul class="message">
+  <li class="id"    >20</li>
+  <li class="name"  >EXPCONTROL_GET_PEDESTAL_AVERAGES</li>
+  <li class="input" >-</li>
+  <li class="output"><br>
+US*128: ATWD0 ch 0 pattern<br>
+US*128: ATWD0 ch 1 pattern<br>
+US*128: ATWD0 ch 2 pattern<br>
+US*128: ATWD0 ch 3 pattern<br>
+US*128: ATWD1 ch 0 pattern<br>
+US*128: ATWD1 ch 1 pattern<br>
+US*128: ATWD1 ch 2 pattern<br>
+US*128: ATWD1 ch 3 pattern<br>
+US*256: FADC pattern<br>
+  </li>
+  <li class="desc"  >
+Colects the average pedestal pattern
+  </li>
+</ul>
+
+<a name="EXPCONTROL_BEGIN_FB_RUN"/>
+
+<ul class="message">
+  <li class="id"    >27</li>
+  <li class="name"  >EXPCONTROL_BEGIN_FB_RUN</li>
+  <li class="input" ><br>
+US: brightness (0..127)<br>
+US: window (0..127)<br>
+S: delay (-200..175)<br>
+US: mask<br>
+US: rate (Hz)<br>
+  </li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Starts a flasher board run. High voltage must be off and no run in
+progress.  Units for Window are roughly nsec. Delay is time difference
+between LED trigger and ATWD launch (nsec). Mask selects which LEDs to
+flash (bit 0 -&gt; LED 1; bit 11 -&gt; LED 12). Rate is the actual
+flashing rate in Hz, max. value 610.
+  </li>
+</ul>
+
+<a name="EXPCONTROL_END_FB_RUN"/>
+
+<ul class="message">
+  <li class="id"    >28</li>
+  <li class="name"  >EXPCONTROL_END_FB_RUN</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Stop flasher board run. Equivalent to <a
+href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>
+  </li>
+</ul>
+
+
+<a name="EXPCONTROL_RUN_UNIT_TESTS"/>
+
+<ul class="message">
+  <li class="id"    >30</li>
+  <li class="name"  >EXPCONTROL_RUN_UNIT_TESTS</li>
+  <li class="input" >-</li>
+  <li class="output">-</li>
+  <li class="desc"  >
+Run on-board DOMApp unit tests.  Message success indicates all tests
+passed.  In case of failure, inspect ASCII monitoring records for
+details.
+  </li>
+</ul>
+
+
+<a name="differences"/>
+<h1>DIFFERENCES BETWEEN DOMAPP AND TESTDOMAPP</h1>
+<ul>
+  <li>Test pattern data is not supported by the DOMAPP FPGA.</li>
+  <li>Presence of LC bits in engineering record indicates that the LC
+signals actually occurred (rather than just required as in the Test
+FPGA).</li>
+  <li>Software data compression not implemented (yet)</li>
+  <li>DATA_ACC_RESET_LBM removed. 
+This is now done when starting a data taking run (<a href="#EXPCONTROL_BEGIN_RUN">EXPCONTROL_BEGIN_RUN</a>)</li>
+  <li>"Heartbeat events" are now interleaved with SPE triggers to aid
+in upstream Splicer-type operation.  The heartbeat events are "Forced
+Triggers" (formerly known as CPU triggers) and can also be used to
+form a running pedestal average for each ATWD/FADC channel (though
+some small fraction of SPE waveforms may be present).</li>
+  <li>Front end pulser can only be started before the run starts, and
+can only be used in trigger mode 2 (SPE data).</li>
+  <li>Pulser rate is now relevant even if pulser is off!  If the
+pulser is off, the rate is the heartbeat event rate.  THE DEFAULT RATE
+IS 1 HZ.  If the FE pulser is on, the rate is the FE pulser rate.
+This is because both the heartbeat events and the pulser events are
+considered by Thorsten's FPGA design to be calibration sources and
+there is only one rate control.</li>
+  <li>Triggering in the DOM is now disabled momentarily when the PMT
+High Voltage is read out.</li>
+  <li>Scaler readouts now have ONE SECOND COVERAGE (not 9/10ths of a
+second) and are spaced by a minimum of 40,000,000 + 100 clock ticks to
+avoid duplication of values.</li>
+  <li>Data formats/compression: software compression not implemented
+(yet).  DATA_ACCESS software compression messages are no longer
+implemented.  See "<a href="api.html#dataformats">DATA FORMATS</a>"
+below for current treatment of data compression and data formats.</li>
+  <li>In general, domapp tries to log exceptions in the ASCII
+monitoring messages.  Any investigation into unexpected problems in
+DOM operation should include an examination of the DOM monitoring
+stream, e.g. with the decodemoni tool in the domhub-tools
+project.</li>
+  <li>DIFFERENCES IN LOCAL COINCIDENCE: In general, using just <a
+href="api.html#DSC_SET_LOCAL_COIN_MODE">SET_LOCAL_COIN_MODE</a> and <a
+href="api.html#DSC_SET_LOCAL_COIN_WINDOW">DSC_SET_LOCAL_COIN_WINDOW</a>
+will work as in testdomapp, except that there are only two LC windows
+instead of four, and also one has new functionality (e.g., soft or
+flabby local coincidence) as defined by <a
+href="api.html#DSC_SET_LC_TYPE">DSC_SET_LC_TYPE</a>, <a
+href="api.html#DSC_SET_LC_TX">DSC_SET_LC_TX</a>, <a
+href="api.html#DSC_SET_LC_SRC">DSC_SET_LC_SRC</a>, <a
+href="api.html#DSC_SET_LC_SPAN">DSC_SET_LC_SPAN</a>, and <a
+href="api.html#DSC_SET_LC_CABLE_LEN">DSC_SET_LC_CABLE_LEN</a>.</li>
+  <li>Analog MUX is disabled at startup.  <a
+href="#DSC_MUX_SELECT">DSC_MUX_SELECT</a> selects which channel should
+be enabled, but a value of 0xFF (255) now DISABLES the analog MUX
+explicitly.</li>
+  <li>EXPCONTROL_FORCE_RUN_RESET is removed.  Use <a
+href="#EXPCONTROL_END_RUN">EXPCONTROL_END_RUN</a>.</li>
+  <li><a href="#DATA_ACC_RESET_MONI_BUF">DATA_ACC_RESET_MONI_BUF</a>
+message was added.</li>
+  <li><a href="#DATA_ACC_MONI_AVAIL">DATA_ACC_MONI_AVAIL</a>
+message was added.</li>
+
+</ul>
+
 </body>
 </html>

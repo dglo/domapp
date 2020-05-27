@@ -2,12 +2,8 @@
 
 HEADERS = *.h
 
-.c.o: $(HEADERS)
+%.o : %.c $(HEADERS)
 	$(CC) -c -I. $(CFLAGS) $<
-
-.S.o:
-	$(CPP) $(CPPFLAGS) -o $*.i $<
-	$(AS) $(AFLAGS) -o $*.o $*.i
 
 .elf.bin:
 	$(OBJCOPY) -O binary $*.elf $*.bin
@@ -25,7 +21,8 @@ OBJS =  commonServices.o     domSControlRoutines.o \
         dataAccess.o         expControl.o          \
         moniDataAccess.o     message.o             \
         domSControl.o        msgHandler.o          \
-        dataAccessRoutines.o 
+        dataAccessRoutines.o unitTests.o	   \
+	interval.o	
 
 ../bin/domapp: $(OBJS)
 	gcc -o domapp  $(LIBHAL) $(OBJS) -lm
@@ -35,5 +32,6 @@ KOBJS = ../lib/crt0.o ../lib/libkernel.a
 domapp.elf: domapp.o $(OBJS) $(LIBHAL)
 	$(LD) --script=$(KERNELX) -o domapp.elf \
 		$(KOBJS) domapp.o $(OBJS) $(LIBHAL) $(SYSLIBS)
+
 
 ../bin/%.bin.gz: %.bin; gzip -c $< > $@
