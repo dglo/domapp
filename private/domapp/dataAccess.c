@@ -46,10 +46,13 @@ extern UBYTE LCtype, LCmode; /* domSControl.c */
 extern USHORT pulser_rate;
 USHORT atwdRGthresh[2][4], fadcRGthresh;
 
-UBYTE fMoniRateType     = F_MONI_RATE_HLC;
-UBYTE FPGA_trigger_mode = CPU_TRIG_MODE;
-UBYTE dataFormat        = FMT_ENG;
-UBYTE compMode          = CMP_NONE;
+UBYTE fMoniRateType         = F_MONI_RATE_HLC;
+UBYTE FPGA_trigger_mode     = CPU_TRIG_MODE;
+UBYTE FPGA_alt_trigger_mode = CPU_TRIG_MODE;
+UBYTE dataFormat            = FMT_ENG;
+UBYTE compMode              = CMP_NONE;
+UBYTE daqMode               = DAQ_MODE_ATWD_FADC;
+int extendedMode        = 1; // FIXME default to zero
 int FPGA_ATWD_select    = 0;
 int SW_compression      = 0;
 int SW_compression_fmt  = 0;

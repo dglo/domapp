@@ -47,12 +47,16 @@ extern UBYTE DOM_config_access;
 
 /* global storage */
 extern UBYTE FPGA_trigger_mode;
+extern UBYTE FPGA_alt_trigger_mode;
+extern UBYTE daqMode;
 extern int FPGA_ATWD_select;
+extern int extendedMode;
 extern UBYTE dataFormat; /* From dataAccess.c */
 
 /* local functions, data */
 USHORT PMT_HV_max          = PMT_HV_DEFAULT_MAX;
 int   pulser_running       = 0;
+int   mb_led_running       = 0;
 USHORT pulser_rate         = 1; /* By default, now take forced triggers at 1 Hz */
 UBYTE selected_mux_channel = 0;
 ULONG deadTime             = 100;
@@ -61,9 +65,7 @@ UBYTE LCtype               = LC_TYPE_HARD;
 UBYTE LCtx                 = LC_TX_BOTH;
 UBYTE LCsrc                = 0;
 UBYTE LCspan               = 1;
-//UBYTE selfLCmode           = SELF_LC_MODE_NONE;
-// TEMP HACK FIX ME
-UBYTE selfLCmode           = SELF_LC_MODE_MPE;
+UBYTE selfLCmode           = SELF_LC_MODE_NONE;
 
 USHORT LCupLengths[4];
 USHORT LCdnLengths[4];
@@ -239,10 +241,6 @@ void dsc_hal_do_LC_settings(void) {
   updateLClengths();
   updateLCwindows();
   updateSelfLCwindow();
-
-  /* TEMP FIX ME HACK */
-  ULONG *lcctrl = 0x90000450;
-  mprintf("LC control: 0x%08x", *lcctrl);
 }
 
 int doStartSN(UBYTE mode, unsigned deadtime) {
@@ -506,6 +504,31 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setDataLen(M,DSC_GET_TRIG_MODE_LEN);
     Message_setStatus(M,SUCCESS);
     break;
+  case DSC_SET_ALT_TRIG_MODE:
+    /* store secondary trigger mode, data access routines are
+       responsible for checking legal trigger mode values */
+    FPGA_alt_trigger_mode = data[0];
+    Message_setDataLen(M,0);
+    Message_setStatus(M,SUCCESS);
+    break;
+  case DSC_GET_ALT_TRIG_MODE:
+    /* return secondary trigger mode */
+    data[0] = FPGA_alt_trigger_mode;
+    Message_setDataLen(M,DSC_GET_TRIG_MODE_LEN);
+    Message_setStatus(M,SUCCESS);
+    break;
+  case DSC_SET_DAQ_MODE:
+    /* Data access routines responsible for checking legal DAQ modes */
+    daqMode = data[0];
+    Message_setDataLen(M,0);
+    Message_setStatus(M,SUCCESS);
+    break;
+  case DSC_GET_DAQ_MODE:
+    /* return DAQ mode */
+    data[0] = daqMode;
+    Message_setDataLen(M,DSC_GET_DAQ_MODE_LEN);
+    Message_setStatus(M,SUCCESS);
+    break;
   case DSC_SELECT_ATWD:
     /* store ATWD select value */
     if(data[0] == 0) {
@@ -555,7 +578,9 @@ void domSControl(MESSAGE_STRUCT *M) {
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_SET_PULSER_ON:
-    if(FPGA_trigger_mode != SPE_DISC_TRIG_MODE && FPGA_trigger_mode != MPE_DISC_TRIG_MODE) {
+    if ((FPGA_trigger_mode != SPE_DISC_TRIG_MODE) && 
+	(FPGA_trigger_mode != MPE_DISC_TRIG_MODE) &&
+        (!extendedMode)) {
       DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
       break;
     }
@@ -568,11 +593,6 @@ void domSControl(MESSAGE_STRUCT *M) {
 
   case DSC_SET_PULSER_OFF:
     pulser_running = FALSE;
-
-    if(FPGA_trigger_mode != SPE_DISC_TRIG_MODE && FPGA_trigger_mode != MPE_DISC_TRIG_MODE) {
-      DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
-      break;
-    }
     /* Go back to normal SPE mode */
     updateTriggerModes();
     mprintf("Turned off front-end pulser");
@@ -582,6 +602,34 @@ void domSControl(MESSAGE_STRUCT *M) {
   case DSC_PULSER_RUNNING:
     data[0] = pulser_running;
     Message_setDataLen(M,DSC_PULSER_RUNNING_LEN);
+    Message_setStatus(M,SUCCESS);
+    break;
+  case DSC_SET_MB_LED_ON:
+    if (!extendedMode) {
+      DOERROR(DSC_VIOLATES_CONSTRAINTS, DSC_violates_constraints, WARNING_ERROR);
+      break;
+    }
+    mb_led_running = TRUE;
+    halEnableLEDPS();
+    mprintf("Turned on mainboard LED power supply");
+    // Enable the MB LED as calibration source
+    updateTriggerModes();
+    Message_setDataLen(M,0);
+    Message_setStatus(M,SUCCESS);
+    break;
+
+  case DSC_SET_MB_LED_OFF:
+    mb_led_running = FALSE;
+    // Disable the MB LED as calibration source
+    updateTriggerModes();
+    halDisableLEDPS();
+    mprintf("Turned off mainboard LED power supply");
+    Message_setDataLen(M,0);
+    Message_setStatus(M,SUCCESS);
+    break;
+  case DSC_MB_LED_RUNNING:
+    data[0] = mb_led_running;
+    Message_setDataLen(M,DSC_MB_LED_RUNNING_LEN);
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_GET_RATE_METERS:

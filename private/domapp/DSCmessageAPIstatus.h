@@ -68,6 +68,13 @@
 #define DSC_GET_SELF_LC_MODE      64
 #define DSC_SET_SELF_LC_WINDOW    65
 #define DSC_GET_SELF_LC_WINDOW    66
+#define DSC_SET_ALT_TRIG_MODE     67
+#define DSC_GET_ALT_TRIG_MODE     68
+#define DSC_SET_DAQ_MODE          69
+#define DSC_GET_DAQ_MODE          70
+#define DSC_SET_MB_LED_ON         71
+#define DSC_SET_MB_LED_OFF        72
+#define DSC_MB_LED_RUNNING        73
 
 /* Slow Control specific Last error ID values */
 #define DSC_Failed_Challenge 4
@@ -282,6 +289,7 @@ Size of returned values in data portion:
 
 /* Response to:
 	subType: DSC_SET_TRIG_MODE
+	subType: DSC_SET_ALT_TRIG_MODE
    Passed values:
         UBYTE TRIGGER_MODE
 	values: */
@@ -290,6 +298,10 @@ Size of returned values in data portion:
 #define SPE_DISC_TRIG_MODE     2
 #define FB_TRIG_MODE           3
 #define MPE_DISC_TRIG_MODE     4
+#define FE_PULSER_TRIG_MODE    5
+#define MB_LED_TRIG_MODE       6
+#define LC_UP_TRIG_MODE        7
+#define LC_DOWN_TRIG_MODE      8
 
 /* Size of passed values: */
 #define DSC_SET_TRIG_MODE_REQ_LEN 1
@@ -300,9 +312,10 @@ Size of returned values in data portion:
 
 /* Response to:
         subType: DSC_GET_TRIG_MODE
+	subType: DSC_GET_ALT_TRIG_MODE
    Passed values:
         UBYTE TRIGGER_MODE
-	see DSC_SET_TRIG_MODE
+	see DSC_SET_TRIG_MODE	
    Size of passed values: */
 /* Returned values in data portion of message:
         UBYTE TRIGGER_MODE
@@ -396,6 +409,33 @@ Size of returned values in data portion:
 #define DSC_PULSER_RUNNING_LEN 1
 
 /* Response to:
+        subType: DSC_SET_MB_LED_ON
+   Passed values:
+	none
+   Size of passed values: */
+/* Returned values in data portion of message:
+        nono
+   Size of returned values in data portion: */
+
+/* Response to:
+        subType: DSC_SET_MB_LED_OFF
+   Passed values:
+	none
+   Size of passed values: */
+/* Returned values in data portion of message:
+   Size of returned values in data portion: */
+
+/* Response to:
+        subType: DSC_MB_LED_RUNNING
+   Passed values:
+	none
+   Size of passed values: */
+/* Returned values in data portion of message:
+        UBYTE MB_LED_RUNNING
+   Size of returned values in data portion: */
+#define DSC_MB_LED_RUNNING_LEN 1
+
+/* Response to:
         subType: DSC_GET_RATE_METERS
    Passed values:
 	none
@@ -423,5 +463,30 @@ Size of returned values in data portion:
          ULONG SCALER_DEADTIME
     Size of returned values in data portion: */
 #define DSC_GET_SCALER_DEADTIME_LEN 4
+
+/* Response to:
+        subType: DSC_SET_DAQ_MODE
+   Passed values:
+	UBYTE DAQ_MODE
+*/
+#define DAQ_MODE_ATWD_FADC 0
+#define DAQ_MODE_FADC      1
+#define DAQ_MODE_TS        2
+/*
+   Size of passed values: */
+#define DSC_SET_DAQ_MODE_REQ_LEN 1
+/* Returned values in data portion of message:
+        none
+   Size of returned values in data portion: */
+
+/* Response to:
+        subType: DSC_GET_DAQ_MODE
+   Passed values:
+	none
+   Size of passed values: */
+/* Returned values in data portion of message:
+	UBYTE DAQ_MODE       
+   Size of returned values in data portion: */
+#define DSC_GET_DAQ_MODE_LEN 1
 
 #endif

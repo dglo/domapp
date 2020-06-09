@@ -33,6 +33,11 @@ enum {
 #define DEFAULT_LBM_BIT_DEPTH ACTUAL_LBM_BIT_DEPTH /* Used to be 2**21-1 = 2 MB */
 #define WHOLE_LBM_MASK ((1<<ACTUAL_LBM_BIT_DEPTH)-1)
 
+/* PMT HV / Flasherboard interlocks */
+#define MAX_HVADC_OFF 5
+#define MAX_FB_BRIGHTNESS_HV_ON 35
+#define MAX_FB_WIDTH_HV_ON 30
+
 #define FPGA_LBM_WRITE_BIT_DEPTH 28
 /* FPGA write address space is 28 bits, i.e. the write counter wraps
    at 1<<28.  Note that this is larger than the available physical
@@ -69,4 +74,5 @@ unsigned char *lbmEvent(unsigned idx);
 int countMsgWithDeltaData(UBYTE *msgBuffer, int bufsiz);
 int countMsgWithEngData(UBYTE *msgBuffer, int bufsiz);
 int countMsgWithData(UBYTE *msgBuffer, int bufsiz, UBYTE format, UBYTE compression);
+int domappDecodeTriggerMode(UBYTE trigger_mode);
 #endif

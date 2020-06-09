@@ -1,9 +1,13 @@
 Release notes for production domapp -- jkelley@icecube.wisc.edu
 
 domapp V00-03-07 TBD
-       For release as part of DOM-MB-XXX
+       For release as part of DOM-MB-450
 
 - 6716: domapp: add support for self-LC mode
+- 7394: domapp: add support for all triggering modes
+- 8799: domapp: add support for onboard LED
+- 8800: domapp: add bypass of HV / LID interlock
+- 8801: domapp: add support for FADC-only mode
 
 =========================================================
 

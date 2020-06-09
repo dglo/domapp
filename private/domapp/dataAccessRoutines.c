@@ -33,6 +33,7 @@
 
 extern USHORT pulser_rate;
 extern int pulser_running;
+extern int mb_led_running;
 extern UBYTE SNRequestMode;
 extern unsigned SNRequestDeadTime;
 extern int SNRequested;
@@ -53,7 +54,10 @@ extern UBYTE fMoniRateType; /* From dataAccess.c */
 #define ATWD_TIMEOUT_USEC 5
 
 extern UBYTE FPGA_trigger_mode;
+extern UBYTE FPGA_alt_trigger_mode;
+extern UBYTE daqMode;
 extern int FPGA_ATWD_select;
+extern int extendedMode;
 extern UBYTE DOM_state;
 extern int atwdSelect;
 
@@ -107,15 +111,41 @@ static bench_rec_t bformat, breadout, bbuffer, bcompress;
 # define TSHOW(a,b)
 #endif
 
+int pmtFBInterlockFails(USHORT bright, USHORT window, short delay, USHORT mask, USHORT rate) {
+  if (extendedMode) {
+    /* Extended mode operation: single LED OK, if not too emissive */
+    /* Check HV */
+    USHORT hvadc = domappReadBaseADC();
+    if(hvadc > MAX_HVADC_OFF)
+      mprintf("WARNING: HV is on during flasher run (extended mode)!");
 
-int hvOffCheckFails(void) {
-#define MAXHVOFFADC 5
-  USHORT hvadc = domappReadBaseADC();
-  if(hvadc > MAXHVOFFADC) {
-    mprintf("Can't start flasher board run: DOM HV ADC=%hu.", hvadc);
-    return 1;
+    /* Check number of LEDs enabled */
+    int i, leds = 0;
+    for (i = 0; i < 16; i++)
+      leds += (mask >> i) & 0x1;
+    if (leds > 1) {
+      mprintf("Failed PMT / FB interlock: more than 1 LED enabled, mask=%hu.", mask);
+      return 1;
+    }
+    /* Check brightness and width -- limit somewhat arbitrary based on DARD */
+    /* flasher runs */
+    if ((bright > MAX_FB_BRIGHTNESS_HV_ON) || (window > MAX_FB_WIDTH_HV_ON)) {
+      mprintf("Failed PMT / FB interlock: LED emission too high (brightness %d, "
+	      "width %d", bright, window);
+      return 1;
+    }
+    return 0;
   }
-  return 0;
+  else {
+    /* Normal operation: HV must be completely off to enable flasherboard */
+    USHORT hvadc = domappReadBaseADC();
+    halPowerDownBase(); /* Just to be sure, turn off HV */
+    if(hvadc > MAX_HVADC_OFF) {
+      mprintf("Can't start flasher board run: DOM HV ADC=%hu.", hvadc);
+      return 1;
+    }
+    return 0;
+  }
 }
 
 int fbSetup(USHORT bright, USHORT window, short delay, USHORT mask, USHORT rate) {
@@ -164,6 +194,11 @@ int changeFBsettings(USHORT bright, USHORT window,
     return 0;
   }
 
+  if(pmtFBInterlockFails(bright, window, delay, mask, rate)) {
+    mprintf("changeFBsettings: ERROR: pmtFBInterlockFails!\n");
+    return 0;
+  }
+
   if(fbSetup(bright, window, delay, mask, rate)) {
     mprintf("changeFBsettings: ERROR: fbSetup failed!");
     return 0;
@@ -180,8 +215,8 @@ int changeFBsettings(USHORT bright, USHORT window,
 int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window, 
 	       short delay, USHORT mask, USHORT rate) {
 
-  if(hvOffCheckFails()) {
-    mprintf("beginFBRun: ERROR: hvOffCheckFails!\n");
+  if(pmtFBInterlockFails(bright, window, delay, mask, rate)) {
+    mprintf("beginFBRun: ERROR: pmtFBInterlockFails!\n");
     return 0;
   }
 
@@ -189,13 +224,12 @@ int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window,
     mprintf("Can't start flasher board run: DOM_state=%d.", DOM_state);
     return 0;
   }
-
-  halPowerDownBase(); /* Just to be sure, turn off HV */
-
+  
   if(fbSetup(bright, window, delay, mask, rate)) {
     mprintf("beginFBRun: ERROR: fbSetup failed!");
     return 0;
   }
+  
   hal_FPGA_DOMAPP_cal_atwd_offset(delay);
   double realRate = hal_FPGA_DOMAPP_FB_set_rate((double) rate);
 
@@ -210,9 +244,8 @@ int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window,
   return 1;
 }
 
-
 void updateTriggerModes(void) {
-  if(pulser_running) {
+  if (pulser_running && (!extendedMode))  {
     /* Only SPE or MPE disc modes allowed w/ pulser */
     if(FPGA_trigger_mode == SPE_DISC_TRIG_MODE) {
       hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE);
@@ -233,24 +266,107 @@ void updateTriggerModes(void) {
     /* Rate is set by beginFBRun */
     hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FLASHER);
     hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FLASHER);
-  } else {
-    /* Default modes - no pulser or flasher */
-    switch(FPGA_trigger_mode) { // This gets set by a DATA_ACCESS message
-    case SPE_DISC_TRIG_MODE:
-      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_SPE
-				   | HAL_FPGA_DOMAPP_TRIGGER_FORCED);
-      break;
-    case MPE_DISC_TRIG_MODE:
-      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_MPE
-				   | HAL_FPGA_DOMAPP_TRIGGER_FORCED);
-      break;
-    case CPU_TRIG_MODE: 
-    default:
-        hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FORCED);
-	break;
+  } else if (extendedMode) {
+    /* Extended mode allows non-standard trigger modes */
+    int trigger = domappDecodeTriggerMode(FPGA_trigger_mode) |
+                  domappDecodeTriggerMode(FPGA_alt_trigger_mode) |
+                  HAL_FPGA_DOMAPP_TRIGGER_FORCED;
+    mprintf("Extended mode trigger mask: 0x%03x", trigger);
+    hal_FPGA_DOMAPP_trigger_source(trigger);
+    /* Set alternate calibration sources here */
+    /* Only FE pulser and MB LED supported right now */
+    int cal_source = 0;
+    if (mb_led_running) {
+      mprintf("WARNING: setting MB LED as cal source, brightness %d, rate %d",
+	      halReadDAC(DOM_HAL_DAC_LED_BRIGHTNESS), pulser_rate);
+      cal_source |= HAL_FPGA_DOMAPP_CAL_SOURCE_LED;
     }
+    if (pulser_running) {
+      mprintf("Enabling FE pulser, rate %d", pulser_rate);
+      cal_source |= HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER;
+    }    
+    /* Only turn on beacon hits if other cal sources are not on */
+    if (cal_source == 0)
+      cal_source |= HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED;
+    
+    hal_FPGA_DOMAPP_cal_source(cal_source);
+    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
+  } else {
+    /* Default data-taking modes - no pulser or flasher */
+    if ((FPGA_trigger_mode == HAL_FPGA_DOMAPP_TRIGGER_SPE) || 
+	(FPGA_trigger_mode == HAL_FPGA_DOMAPP_TRIGGER_MPE) || 
+	(FPGA_trigger_mode == HAL_FPGA_DOMAPP_TRIGGER_FORCED)) {
+      hal_FPGA_DOMAPP_trigger_source(domappDecodeTriggerMode(FPGA_trigger_mode) |
+				     HAL_FPGA_DOMAPP_TRIGGER_FORCED);      
+    }
+    else {
+      mprintf("WARNING: requested trigger mode (%d) is disallowed in standard "
+	      "data-taking mode. Setting to CPU-only.", FPGA_trigger_mode);
+      FPGA_trigger_mode = CPU_TRIG_MODE;
+      hal_FPGA_DOMAPP_trigger_source(HAL_FPGA_DOMAPP_TRIGGER_FORCED);
+    }
+    /* Mainboard LED not allowed in normal mode.  Shouldn't get here */
+    if (mb_led_running) {
+      mprintf("WARNING: operating the mainboard LED is disallowed in standard "
+	      "data-taking mode. Disabling.");
+      mb_led_running = FALSE;
+    }
+    /* Update the CPU trigger source and rate */
     hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
     hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
+  }
+}
+
+int domappDecodeTriggerMode(UBYTE trigger_mode) {
+  /* Get FPGA bitmask corresponding to domapp trigger mode */
+  switch (trigger_mode) {
+  case SPE_DISC_TRIG_MODE:
+    return HAL_FPGA_DOMAPP_TRIGGER_SPE;
+  case MPE_DISC_TRIG_MODE:
+    return HAL_FPGA_DOMAPP_TRIGGER_MPE;
+  case CPU_TRIG_MODE:
+    return HAL_FPGA_DOMAPP_TRIGGER_FORCED;
+  case FB_TRIG_MODE:
+    return HAL_FPGA_DOMAPP_TRIGGER_FLASHER;
+  case FE_PULSER_TRIG_MODE:
+    return HAL_FPGA_DOMAPP_TRIGGER_FE_PULSER;
+  case MB_LED_TRIG_MODE:
+    return HAL_FPGA_DOMAPP_TRIGGER_LED;
+  case LC_UP_TRIG_MODE:
+    return HAL_FPGA_DOMAPP_TRIGGER_LC_UP;
+  case LC_DOWN_TRIG_MODE:
+    return HAL_FPGA_DOMAPP_TRIGGER_LC_DOWN;
+  case TEST_PATTERN_TRIG_MODE:
+    return HAL_FPGA_DOMAPP_TRIGGER_FE_R2R;
+  }
+  return 0;
+}
+
+void updateDAQMode(void) {
+  /* Set the DAQ mode based on the internal state */
+  /* Only ATWD+FADC mode allowed in normal mode */
+  if ((!extendedMode) && (daqMode != DAQ_MODE_ATWD_FADC)) {
+    mprintf("WARNING: DAQ mode %d not allowed in normal mode.  Setting "
+	    "to ATWD+FADC DAQ mode.", daqMode);
+    daqMode = DAQ_MODE_ATWD_FADC;
+  }
+
+  switch (daqMode) {
+  case DAQ_MODE_ATWD_FADC:
+    hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_ATWD_FADC);
+    break;
+  case DAQ_MODE_FADC:
+    hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_FADC);
+    break;
+  case DAQ_MODE_TS:
+    hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_TS);
+    break;
+  default:
+    mprintf("WARNING: unknown DAQ mode %d requested.  Setting "
+	    "to ATWD+FADC DAQ mode.", daqMode);
+    daqMode = DAQ_MODE_ATWD_FADC;
+    hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_ATWD_FADC);
+    break;    
   }
 }
 
@@ -296,9 +412,9 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
   lbmp = hal_FPGA_DOMAPP_lbm_pointer();
 
   updateTriggerModes();
-
+  updateDAQMode();
+  
   hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_REPEAT);    
-  hal_FPGA_DOMAPP_daq_mode(HAL_FPGA_DOMAPP_DAQ_MODE_ATWD_FADC);
   hal_FPGA_DOMAPP_enable_atwds(atwdSelect);
   hal_FPGA_DOMAPP_lbm_mode(HAL_FPGA_DOMAPP_LBM_MODE_WRAP);
 
@@ -360,6 +476,7 @@ int endRun(void) { /* End either a "regular" or flasher run */
   hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_OFF);
   doStopSN();
   turnOffFlashers();
+  halDisableLEDPS();
   mprintf("Ended run (run type=%s)", DOM_state==DOM_FB_RUN_IN_PROGRESS?"flasher":"normal");
   DOM_state=DOM_IDLE;
   return TRUE;
