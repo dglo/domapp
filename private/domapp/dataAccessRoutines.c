@@ -112,34 +112,34 @@ static bench_rec_t bformat, breadout, bbuffer, bcompress;
 #endif
 
 int pmtFBInterlockFails(USHORT bright, USHORT window, short delay, USHORT mask, USHORT rate) {
+  USHORT hvadc = domappReadBaseADC();
   if (extendedMode) {
     /* Extended mode operation: single LED OK, if not too emissive */
     /* Check HV */
-    USHORT hvadc = domappReadBaseADC();
-    if(hvadc > MAX_HVADC_OFF)
+    if(hvadc > MAX_HVADC_OFF) {
       mprintf("WARNING: HV is on during flasher run (extended mode)!");
-
-    /* Check number of LEDs enabled */
-    int i, leds = 0;
-    for (i = 0; i < 16; i++)
-      leds += (mask >> i) & 0x1;
-    if (leds > 1) {
-      mprintf("Failed PMT / FB interlock: more than 1 LED enabled, mask=%hu.", mask);
-      return 1;
-    }
-    /* Check brightness and width -- limit somewhat arbitrary based on DARD */
-    /* flasher runs */
-    if ((bright > MAX_FB_BRIGHTNESS_HV_ON) || (window > MAX_FB_WIDTH_HV_ON)) {
-      mprintf("Failed PMT / FB interlock: LED emission too high (brightness %d, "
-	      "width %d", bright, window);
-      return 1;
+    
+      /* Check number of LEDs enabled */
+      int i, leds = 0;
+      for (i = 0; i < 16; i++)
+	leds += (mask >> i) & 0x1;
+      if (leds > 1) {
+	mprintf("Failed PMT / FB interlock: more than 1 LED enabled, mask=%hu.", mask);
+	return 1;
+      }
+      /* Check brightness and width -- limit somewhat arbitrary based on DARD */
+      /* flasher runs */
+      if ((bright > MAX_FB_BRIGHTNESS_HV_ON) || (window > MAX_FB_WIDTH_HV_ON)) {
+	mprintf("Failed PMT / FB interlock: LED emission too high (brightness %d, "
+		"width %d)", bright, window);
+	return 1;
+      }
     }
     return 0;
   }
   else {
     /* Normal operation: HV must be completely off to enable flasherboard */
-    USHORT hvadc = domappReadBaseADC();
-    halPowerDownBase(); /* Just to be sure, turn off HV */
+    halPowerDownBase(); /* Just to be sure, turn off power to HV base */
     if(hvadc > MAX_HVADC_OFF) {
       mprintf("Can't start flasher board run: DOM HV ADC=%hu.", hvadc);
       return 1;
