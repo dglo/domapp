@@ -57,7 +57,7 @@ extern UBYTE FPGA_trigger_mode;
 extern UBYTE FPGA_alt_trigger_mode;
 extern UBYTE daqMode;
 extern int FPGA_ATWD_select;
-extern int extendedMode;
+extern UBYTE extendedMode;
 extern UBYTE DOM_state;
 extern int atwdSelect;
 
@@ -449,6 +449,19 @@ int beginRun(UBYTE compressionMode, UBYTE newRunState) {
     return FALSE;
   }
 
+  /* We've set up the mainboard LED, finall turn on its power supply */
+  if (mb_led_running) {
+    /* Check that we're in extended mode */
+    if (extendedMode) {
+      mprintf("beginRun: enabling mainboard LED power");
+      halEnableLEDPS();
+    }
+    else {
+      mprintf("beginRun: attemped to operated mainboard LED in normal run!");
+      return FALSE;
+    }    
+  }
+
   hal_FPGA_DOMAPP_enable_daq(); /* <-- Can get triggers NOW */
   mprintf("RUN STARTED: DAQ=0x%08x LC_CONTROL=0x%08x", FPGA(DAQ), FPGA(LC_CONTROL));
 
@@ -474,9 +487,13 @@ int endRun(void) { /* End either a "regular" or flasher run */
 	  hal_FPGA_DOMAPP_lbm_pointer(), FPGA(FW_DEBUGGING));
   hal_FPGA_DOMAPP_disable_daq();
   hal_FPGA_DOMAPP_cal_mode(HAL_FPGA_DOMAPP_CAL_MODE_OFF);
+  hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
   doStopSN();
   turnOffFlashers();
   halDisableLEDPS();
+  extendedMode = mb_led_running = pulser_running = FALSE;
+  FPGA_trigger_mode = FPGA_alt_trigger_mode = CPU_TRIG_MODE;
+  daqMode = DAQ_MODE_ATWD_FADC;
   mprintf("Ended run (run type=%s)", DOM_state==DOM_FB_RUN_IN_PROGRESS?"flasher":"normal");
   DOM_state=DOM_IDLE;
   return TRUE;

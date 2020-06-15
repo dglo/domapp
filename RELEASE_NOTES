@@ -8,6 +8,7 @@ domapp V00-03-07 TBD
 - 8799: domapp: add support for onboard LED
 - 8800: domapp: add bypass of HV / LID interlock
 - 8801: domapp: add support for FADC-only mode
+- 8811: domapp: add extended mode control
 
 =========================================================
 

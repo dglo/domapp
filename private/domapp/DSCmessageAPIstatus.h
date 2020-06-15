@@ -75,6 +75,9 @@
 #define DSC_SET_MB_LED_ON         71
 #define DSC_SET_MB_LED_OFF        72
 #define DSC_MB_LED_RUNNING        73
+#define DSC_SET_EXTENDED_MODE_ON  74
+#define DSC_SET_EXTENDED_MODE_OFF 75
+#define DSC_EXTENDED_MODE_ENABLED 76
 
 /* Slow Control specific Last error ID values */
 #define DSC_Failed_Challenge 4
@@ -414,7 +417,7 @@ Size of returned values in data portion:
 	none
    Size of passed values: */
 /* Returned values in data portion of message:
-        nono
+        none
    Size of returned values in data portion: */
 
 /* Response to:
@@ -434,6 +437,33 @@ Size of returned values in data portion:
         UBYTE MB_LED_RUNNING
    Size of returned values in data portion: */
 #define DSC_MB_LED_RUNNING_LEN 1
+
+/* Response to:
+        subType: DSC_SET_EXTENDED_MODE_ON
+   Passed values:
+	none
+   Size of passed values: */
+/* Returned values in data portion of message:
+        none
+   Size of returned values in data portion: */
+
+/* Response to:
+        subType: DSC_SET_EXTENDED_MODE_OFF
+   Passed values:
+	none
+   Size of passed values: */
+/* Returned values in data portion of message:
+   Size of returned values in data portion: */
+
+/* Response to:
+        subType: DSC_EXTENDED_MODE_ENABLED
+   Passed values:
+	none
+   Size of passed values: */
+/* Returned values in data portion of message:
+        UBYTE extendedMode
+   Size of returned values in data portion: */
+#define DSC_EXTENDED_MODE_ENABLED_LEN 1
 
 /* Response to:
         subType: DSC_GET_RATE_METERS

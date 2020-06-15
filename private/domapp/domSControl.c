@@ -50,13 +50,13 @@ extern UBYTE FPGA_trigger_mode;
 extern UBYTE FPGA_alt_trigger_mode;
 extern UBYTE daqMode;
 extern int FPGA_ATWD_select;
-extern int extendedMode;
+extern UBYTE extendedMode;
 extern UBYTE dataFormat; /* From dataAccess.c */
 
 /* local functions, data */
 USHORT PMT_HV_max          = PMT_HV_DEFAULT_MAX;
-int   pulser_running       = 0;
-int   mb_led_running       = 0;
+int   pulser_running       = FALSE;
+int   mb_led_running       = FALSE;
 USHORT pulser_rate         = 1; /* By default, now take forced triggers at 1 Hz */
 UBYTE selected_mux_channel = 0;
 ULONG deadTime             = 100;
@@ -610,26 +610,43 @@ void domSControl(MESSAGE_STRUCT *M) {
       break;
     }
     mb_led_running = TRUE;
-    halEnableLEDPS();
-    mprintf("Turned on mainboard LED power supply");
-    // Enable the MB LED as calibration source
+    mprintf("Mainboard LED will be enabled at run start")
+    // Enable the MB LED as calibration source, but don't power it yet
+    halDisableLEDPS();
     updateTriggerModes();
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
     break;
-
   case DSC_SET_MB_LED_OFF:
     mb_led_running = FALSE;
+    // Turn off the LED power
+    halDisableLEDPS();
     // Disable the MB LED as calibration source
     updateTriggerModes();
-    halDisableLEDPS();
-    mprintf("Turned off mainboard LED power supply");
+    mprintf("Turned off mainboard LED");
     Message_setDataLen(M,0);
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_MB_LED_RUNNING:
     data[0] = mb_led_running;
     Message_setDataLen(M,DSC_MB_LED_RUNNING_LEN);
+    Message_setStatus(M,SUCCESS);
+    break;
+  case DSC_SET_EXTENDED_MODE_ON:
+    extendedMode = TRUE;
+    mprintf("Enabled DOMApp extended mode");
+    Message_setDataLen(M,0);
+    Message_setStatus(M,SUCCESS);
+    break;
+  case DSC_SET_EXTENDED_MODE_OFF:
+    extendedMode = FALSE;
+    mprintf("Disabled DOMApp extended mode");
+    Message_setDataLen(M,0);
+    Message_setStatus(M,SUCCESS);
+    break;
+  case DSC_EXTENDED_MODE_ENABLED:
+    data[0] = extendedMode;
+    Message_setDataLen(M,DSC_EXTENDED_MODE_ENABLED_LEN);
     Message_setStatus(M,SUCCESS);
     break;
   case DSC_GET_RATE_METERS:
