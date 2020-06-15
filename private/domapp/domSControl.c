@@ -610,7 +610,7 @@ void domSControl(MESSAGE_STRUCT *M) {
       break;
     }
     mb_led_running = TRUE;
-    mprintf("Mainboard LED will be enabled at run start")
+    mprintf("Mainboard LED will be enabled at run start");
     // Enable the MB LED as calibration source, but don't power it yet
     halDisableLEDPS();
     updateTriggerModes();
