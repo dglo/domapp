@@ -245,33 +245,66 @@ int beginFBRun(UBYTE compressionMode, USHORT bright, USHORT window,
 }
 
 void updateTriggerModes(void) {
-  /* Only SPE or MPE disc modes allowed w/ front-end pulser */  
-  if (pulser_running && (!extendedMode))  {
-    if ((FPGA_trigger_mode == SPE_DISC_TRIG_MODE) ||
-	(FPGA_trigger_mode == MPE_DISC_TRIG_MODE)) {
-      hal_FPGA_DOMAPP_trigger_source(domappDecodeTriggerMode(FPGA_trigger_mode));
+  if (!extendedMode) {
+    /* Only SPE or MPE disc modes allowed w/ front-end pulser */  
+    if (pulser_running)  {
+      if ((FPGA_trigger_mode == SPE_DISC_TRIG_MODE) ||
+	  (FPGA_trigger_mode == MPE_DISC_TRIG_MODE)) {
+	hal_FPGA_DOMAPP_trigger_source(domappDecodeTriggerMode(FPGA_trigger_mode));
+      }
+      else {
+	mprintf("WARNING: pulser running but trigger mode (%d) is disallowed. "
+		"Won't allow triggers!", FPGA_trigger_mode);
+      }
+      hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER);
+      mprintf("Setting pulser rate to %d.", pulser_rate);
+      hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
+    } else if (DOM_state == DOM_FB_RUN_IN_PROGRESS) {
+      /* For now, only allow triggers on flasher board firing, not on SPE disc. */
+      /* Rate is set by beginFBRun */
+      hal_FPGA_DOMAPP_trigger_source(domappDecodeTriggerMode(FB_TRIG_MODE));
+      hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FLASHER);
     }
     else {
-      mprintf("WARNING: pulser running but trigger mode (%d) is disallowed. "
-	      "Won't allow triggers!", FPGA_trigger_mode);
+      /* Default data-taking modes - no pulser or flasher, extended mode not enabled */
+      if ((FPGA_trigger_mode == SPE_DISC_TRIG_MODE) || 
+	  (FPGA_trigger_mode == MPE_DISC_TRIG_MODE) || 
+	  (FPGA_trigger_mode == CPU_TRIG_MODE)) {
+	hal_FPGA_DOMAPP_trigger_source(domappDecodeTriggerMode(FPGA_trigger_mode) |
+				       domappDecodeTriggerMode(CPU_TRIG_MODE));
+      }
+      else {
+	mprintf("WARNING: requested trigger mode (%d) is disallowed in standard "
+		"data-taking mode. Setting to CPU-only.", FPGA_trigger_mode);
+	FPGA_trigger_mode = CPU_TRIG_MODE;
+	hal_FPGA_DOMAPP_trigger_source(domappDecodeTriggerMode(FPGA_trigger_mode));
+      }
+      /* Mainboard LED not allowed in normal mode.  Shouldn't get here */
+      if (mb_led_running) {
+	mprintf("WARNING: operating the mainboard LED is disallowed in standard "
+		"data-taking mode. Disabling.");
+	mb_led_running = FALSE;
+      }
+      /* We don't allow alternate trigger modes to be added if not in extended mode */
+      if (FPGA_alt_trigger_mode != CPU_TRIG_MODE) {
+	mprintf("WARNING: alternate trigger mode %d ignored in standard data-taking mode.",
+		FPGA_alt_trigger_mode);
+	FPGA_alt_trigger_mode = CPU_TRIG_MODE;
+      }
+      /* Update the CPU trigger source and rate */
+      hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
+      hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
     }
-    hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER);
-    mprintf("Setting pulser rate to %d.", pulser_rate);
-    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
-  } else if (DOM_state == DOM_FB_RUN_IN_PROGRESS) {
-    /* For now, only allow triggers on flasher board firing, not on SPE disc. */
-    /* Rate is set by beginFBRun */
-    hal_FPGA_DOMAPP_trigger_source(domappDecodeTriggerMode(FB_TRIG_MODE));
-    hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FLASHER);
-  } else if (extendedMode) {
+  }
+  else {
     /* Extended mode allows non-standard trigger modes */
+    /* This includes flasher runs in extended mode */
     int trigger = domappDecodeTriggerMode(FPGA_trigger_mode) |
                   domappDecodeTriggerMode(FPGA_alt_trigger_mode) |
                   domappDecodeTriggerMode(CPU_TRIG_MODE);
     mprintf("Extended mode trigger mask: 0x%03x", trigger);
     hal_FPGA_DOMAPP_trigger_source(trigger);
     /* Set alternate calibration sources here */
-    /* Only FE pulser and MB LED supported right now */
     int cal_source = 0;
     if (mb_led_running) {
       mprintf("WARNING: setting MB LED as cal source, brightness %d, rate %d",
@@ -279,45 +312,21 @@ void updateTriggerModes(void) {
       cal_source |= HAL_FPGA_DOMAPP_CAL_SOURCE_LED;
     }
     if (pulser_running) {
-      mprintf("Enabling FE pulser, rate %d", pulser_rate);
+      mprintf("WARNING: enabling FE pulser, rate %d", pulser_rate);
       cal_source |= HAL_FPGA_DOMAPP_CAL_SOURCE_FE_PULSER;
-    }    
+    }
+    if (DOM_state == DOM_FB_RUN_IN_PROGRESS) {
+      mprintf("WARNING: setting flasherboard as cal source");
+      cal_source |= HAL_FPGA_DOMAPP_CAL_SOURCE_FLASHER;
+    }
+
     /* Only turn on beacon hits if other cal sources are not on */
     if (cal_source == 0)
       cal_source |= HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED;
     
     hal_FPGA_DOMAPP_cal_source(cal_source);
     hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
-  } else {
-    /* Default data-taking modes - no pulser or flasher, extended mode not enabled */
-    if ((FPGA_trigger_mode == SPE_DISC_TRIG_MODE) || 
-	(FPGA_trigger_mode == MPE_DISC_TRIG_MODE) || 
-	(FPGA_trigger_mode == CPU_TRIG_MODE)) {
-      hal_FPGA_DOMAPP_trigger_source(domappDecodeTriggerMode(FPGA_trigger_mode) |
-				     domappDecodeTriggerMode(CPU_TRIG_MODE));
-    }
-    else {
-      mprintf("WARNING: requested trigger mode (%d) is disallowed in standard "
-	      "data-taking mode. Setting to CPU-only.", FPGA_trigger_mode);
-      FPGA_trigger_mode = CPU_TRIG_MODE;
-      hal_FPGA_DOMAPP_trigger_source(domappDecodeTriggerMode(FPGA_trigger_mode));
-    }
-    /* Mainboard LED not allowed in normal mode.  Shouldn't get here */
-    if (mb_led_running) {
-      mprintf("WARNING: operating the mainboard LED is disallowed in standard "
-	      "data-taking mode. Disabling.");
-      mb_led_running = FALSE;
-    }
-    /* We don't allow alternate trigger modes to be added if not in extended mode */
-    if (FPGA_alt_trigger_mode != CPU_TRIG_MODE) {
-      mprintf("WARNING: alternate trigger mode %d ignored in standard data-taking mode.",
-	      FPGA_alt_trigger_mode);
-      FPGA_alt_trigger_mode = CPU_TRIG_MODE;
-    }
-    /* Update the CPU trigger source and rate */
-    hal_FPGA_DOMAPP_cal_source(HAL_FPGA_DOMAPP_CAL_SOURCE_FORCED);
-    hal_FPGA_DOMAPP_cal_pulser_rate(pulser_rate);
-  }
+  } 
 }
 
 int domappDecodeTriggerMode(UBYTE trigger_mode) {
